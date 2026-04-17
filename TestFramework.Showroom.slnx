@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Azure/">
+    <Project Path="Azure/FunctionApp/FunctionApp.csproj" />
+  </Folder>
+  <Project Path="TestFramework.Showroom.Azure/TestFramework.Showroom.Azure.csproj" Id="3693a847-a10a-47e7-81c4-701302411d71" />
+  <Project Path="TestFramework.Showroom.Basic/TestFramework.Showroom.Basic.csproj" />
+</Solution>
