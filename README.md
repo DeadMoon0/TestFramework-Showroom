@@ -1,11 +1,39 @@
 # TestFramework-Showroom
 
-## What TestFramework Is
-
 TestFramework is a timeline-based test framework for building integration-style test workflows.
 Instead of scattering setup, actions, waits, and assertions across ad-hoc test code, it lets you model the whole run as one readable execution flow.
 
 This solution is the example and learning space for that ecosystem.
+
+## Quickstart
+
+Run the basic example suite:
+
+```bash
+dotnet test TestFramework.Showroom.Basic/TestFramework.Showroom.Basic.csproj --configuration Release
+```
+
+Start with these files in order:
+
+- `TestFramework.Showroom.Basic/01_MinimalTimeline.cs`
+- `TestFramework.Showroom.Basic/04_Variables.cs`
+- `TestFramework.Showroom.Basic/05_Artifacts.cs`
+- `TestFramework.Showroom.Basic/09_StepValidations.cs`
+
+## Azure Example Setup
+
+The Azure examples in `TestFramework.Showroom.Azure` require real configuration and supporting infrastructure.
+
+1. Review and update `TestFramework.Showroom.Azure/local.testSettings.json` with your own values.
+2. Make sure the identifiers used by the samples exist in your environment, especially `MainStorage`, `MainSql`, `SampleSubmission`, `ProcessingReply`, and `FunctionApp:Default`.
+3. If you want to run the Azure Function scenarios locally or against a controlled endpoint, inspect `Azure/FunctionApp` and the Azure showroom samples together.
+4. Do not commit secrets or production credentials to the repository.
+
+Run the Azure sample suite:
+
+```bash
+dotnet test TestFramework.Showroom.Azure/TestFramework.Showroom.Azure.csproj --configuration Release
+```
 
 ## What This Solution Covers
 
@@ -35,3 +63,10 @@ With this solution you can:
 - Begin with `TestFramework.Showroom.Basic/01_MinimalTimeline.cs` to see the smallest possible timeline
 - Continue with `04_Variables.cs`, `05_Artifacts.cs`, and `09_StepValidations.cs` to understand the core workflow model
 - Move to `10_IOContracts.cs` for local IO-oriented thinking, then to `TestFramework.Showroom.Azure/A1_BlobStorage.cs` and `A6_IntegratedAzure.cs` when you want cloud-backed scenarios
+
+## Documentation Map
+
+- Architecture overview: [Documentation/Arc42.md](./Documentation/Arc42.md)
+- Basic examples: [TestFramework.Showroom.Basic](./TestFramework.Showroom.Basic)
+- Azure examples: [TestFramework.Showroom.Azure](./TestFramework.Showroom.Azure)
+- Local Azure Functions support app: [Azure/FunctionApp](./Azure/FunctionApp)
