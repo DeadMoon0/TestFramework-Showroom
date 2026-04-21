@@ -17,8 +17,8 @@ namespace TestFramework.Showroom.Azure;
 //  The Timeline framework can wait for that message on your behalf.
 //  It is a patient framework. We trained it ourselves over many, many builds.
 //
-//  IMPORTANT: The message identifier in these examples is "MainSBTopic."
-//  Your topic, subscription, and session config must match local.testSettings.json.
+//  IMPORTANT: The message identifiers in these examples are "MainSBQueue" and "MainSBTopic."
+//  Your queue/topic config must match local.testSettings.json.
 //  If they don't match, the WaitForEvent step will time out.
 //  The timeout window is 10 seconds. The error message is clear.
 //  The situation is manageable. We have managed worse situations.
@@ -74,6 +74,43 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
                 m => m!.CorrelationId == "showroom-42",
                 "CorrelationId must be 'showroom-42'");
         // ^ Confirm it was YOUR message that arrived, not someone else's lunch.
+    }
+}
+
+[Collection("ServiceBus")]
+public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
+{
+    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
+        .Build();
+
+    private static readonly Timeline _timeline = Timeline.Create()
+        .Trigger(
+            AzureTF.Trigger.ServiceBus.Send(
+                "MainSBQueue",
+                new ServiceBusMessage("Queue delivery. Clean and direct.") { CorrelationId = "showroom-queue-42" }))
+        .WaitForEvent(
+            AzureTF.Event.ServiceBus.MessageReceived(
+                "MainSBQueue",
+                correlationId: "showroom-queue-42",
+                completeMessage: true))
+            .WithTimeOut(TimeSpan.FromSeconds(10))
+        .Build();
+
+    [Fact(Skip = "Requires a queue-backed Service Bus entity configured as ServiceBus:MainSBQueue in local.testSettings.json.")]
+    public async Task Run()
+    {
+        var configSub = _config.SetupSubInstance().LoadAzureConfig().Build();
+
+        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .RunAsync();
+
+        run.EnsureRanToCompletion();
+
+        run.Variable<ServiceBusReceivedMessage>("out")
+            .Should().Exist().And().NotBeNull()
+            .And().Match(
+                m => m!.CorrelationId == "showroom-queue-42",
+                "CorrelationId must be 'showroom-queue-42'");
     }
 }
 
