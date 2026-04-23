@@ -51,10 +51,10 @@ namespace TestFramework.Showroom.Azure;
 //      CosmosContainerName                → BaseContainer
 //      StorageAccountConnectionString     → Storage account connection string
 //      IntegrationTableName               → MainTable
-//    In local.testSettings.json:
-//      FunctionApp:Default:BaseUrl + Code → deployed function app URL and key
+//    In the shared Azure showroom container config:
 //      ServiceBus:SampleSubmission        → sbt-int-in  (non-session)
 //      ServiceBus:ProcessingReply         → sbt-int-out (non-session)
+//    FunctionApp:Default is intentionally not part of the current container-backed showroom.
 // ══════════════════════════════════════════════════════════════════════════════
 
 // ─── Data models ──────────────────────────────────────────────────────────────
@@ -112,33 +112,27 @@ public class LabDbContext(DbContextOptions<LabDbContext> options) : DbContext(op
 // ─── Shared config helper (same pattern as ShowroomSqlSetup in A5) ────────────
 internal static class LabSqlSetup
 {
-    internal static ConfigInstance BuildConfig(ConfigInstance root) =>
-        root.SetupSubInstance()
-            .LoadAzureConfig()
-            .AddService((services, config) =>
-            {
-                services.AddDbContext<LabDbContext>(opts =>
-                    opts.UseSqlServer(config["SqlDatabase:MainSql:ConnectionString"]));
+    internal static ConfigInstance BuildConfig() =>
+        AzureShowroom.BuildConfig((services, config) =>
+        {
+            services.AddDbContext<LabDbContext>(opts =>
+                opts.UseSqlServer(config["SqlDatabase:MainSql:ConnectionString"]));
 
-                services.AddSqlArtifactContexts(reg =>
-                {
-                    reg.AddDefault<LabDbContext>();
-                    reg.ApplyMigrationsOnFirstUse();
-                });
-            })
-            .Build();
+            services.AddSqlArtifactContexts(reg =>
+            {
+                reg.AddDefault<LabDbContext>();
+                reg.ApplyMigrationsOnFirstUse();
+            });
+        });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  The Test Class
 // ══════════════════════════════════════════════════════════════════════════════
 
-[Collection("LabOrchestration")]
+[Collection("AzureShowroom")]
 public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
 {
-    private static readonly ConfigInstance _config =
-        ConfigInstance.FromJsonFile("local.testSettings.json").Build();
-
     // ── Static Timeline ───────────────────────────────────────────────────────
     // Declared once for all invocations. Per-run values (runId, correlation IDs,
     // queries, HTTP payloads) are injected at run time via Var.Ref<T>.
@@ -232,7 +226,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
 
         .Build();
 
-    [Fact]
+    [Fact(Skip = "Integrated Function App sample is not part of the container-backed Azure showroom yet.")]
     public async Task Run()
     {
         // ── Per-run identity ──────────────────────────────────────────────────
@@ -243,9 +237,9 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         string ingestionCorr = $"ing-{runId}";        // SampleIngestion echoes this on its reply
         string analysisCorr  = $"ana-{runId}";        // AnalysisProcessor echoes this on its reply
 
-        var configSub = LabSqlSetup.BuildConfig(_config);
+        var configSub = LabSqlSetup.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
 
             // ── Step 1: Setup artifacts ───────────────────────────────────────
 
