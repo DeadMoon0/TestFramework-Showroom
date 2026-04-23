@@ -18,14 +18,14 @@ namespace TestFramework.Showroom.Azure;
 //  It is a patient framework. We trained it ourselves over many, many builds.
 //
 //  IMPORTANT: The message identifiers in these examples are "MainSBQueue" and "MainSBTopic."
-//  Your queue/topic config must match local.testSettings.json.
+//  Their queue/topic config comes from the shared Azure showroom container setup.
 //  If they don't match, the WaitForEvent step will time out.
 //  The timeout window is 10 seconds. The error message is clear.
 //  The situation is manageable. We have managed worse situations.
 //  We don't want to talk about those situations.
 // ══════════════════════════════════════════════════════════════════════════════
 
-[Collection("ServiceBus")]
+[Collection("AzureShowroom")]
 public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
 {
     // The classic "did it actually go?" test.
@@ -33,9 +33,6 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
     // Correlate using a CorrelationId so you know it's YOUR message coming back.
     // This is important. Other messages exist on the bus. They are not yours.
     // Do not assert on messages that are not yours. We've seen what that leads to.
-
-    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
-        .Build();
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
@@ -60,9 +57,9 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = _config.SetupSubInstance().LoadAzureConfig().Build();
+        var configSub = AzureShowroom.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
             .RunAsync();
 
         run.EnsureRanToCompletion();
@@ -77,12 +74,9 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
     }
 }
 
-[Collection("ServiceBus")]
+[Collection("AzureShowroom")]
 public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
 {
-    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
-        .Build();
-
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
             AzureTF.Trigger.ServiceBus.Send(
@@ -96,12 +90,12 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
             .WithTimeOut(TimeSpan.FromSeconds(10))
         .Build();
 
-    [Fact(Skip = "Requires a queue-backed Service Bus entity configured as ServiceBus:MainSBQueue in local.testSettings.json.")]
+    [Fact(Skip = "Requires a queue-backed Service Bus entity configured in the shared Azure showroom container setup.")]
     public async Task Run()
     {
-        var configSub = _config.SetupSubInstance().LoadAzureConfig().Build();
+        var configSub = AzureShowroom.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
             .RunAsync();
 
         run.EnsureRanToCompletion();
@@ -114,7 +108,7 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
     }
 }
 
-[Collection("ServiceBus")]
+[Collection("AzureShowroom")]
 public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
 {
     // If your message content is dynamic — built at test setup time, values you only know
@@ -124,9 +118,6 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
     // The actual message is injected per-run.
     // Clean separation. Very professional.
     // We clean up our separations. We are professional.
-
-    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
-        .Build();
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
@@ -147,9 +138,9 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = _config.SetupSubInstance().LoadAzureConfig().Build();
+        var configSub = AzureShowroom.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
             .AddVariable("outboundMessage",
                 new ServiceBusMessage("Payload assembled at runtime. It is what it is.")
                 {

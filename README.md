@@ -22,12 +22,11 @@ Start with these files in order:
 
 ## Azure Example Setup
 
-The Azure examples in `TestFramework.Showroom.Azure` require real configuration and supporting infrastructure.
+`TestFramework.Showroom.Azure` runs against the container-backed Azure environment by default.
 
-1. Review and update `TestFramework.Showroom.Azure/local.testSettings.json` with your own values.
-2. Make sure the identifiers used by the samples exist in your environment, especially `MainStorage`, `MainSql`, `SampleSubmission`, `ProcessingReply`, and `FunctionApp:Default`.
-3. If you want to run the Azure Function scenarios locally or against a controlled endpoint, inspect `Azure/FunctionApp` and the Azure showroom samples together.
-4. Do not commit secrets or production credentials to the repository.
+1. Start Docker Desktop.
+2. Run the Azure showroom tests. Blob, Table, Cosmos, SQL, and Service Bus samples use `DockerAzureEnvironment` from `TestFramework.Container`.
+3. The integrated Function App sample in `A6_IntegratedAzure.cs` is currently skipped until there is a clean container-backed Function App path.
 
 Run the Azure sample suite:
 

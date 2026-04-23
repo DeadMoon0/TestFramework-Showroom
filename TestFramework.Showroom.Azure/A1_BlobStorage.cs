@@ -22,17 +22,12 @@ namespace TestFramework.Showroom.Azure;
 //  The cost report was... colorful.
 // ══════════════════════════════════════════════════════════════════════════════
 
+[Collection("AzureShowroom")]
 public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
 {
     // STEP ONE: Upload something. Anything.
     // We're not judging the contents. We're definitely not reading the contents.
     // (We have a system that reads the contents. It's for quality assurance.)
-
-    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
-        //                                                                         ^ Points to local.testSettings.json in the output directory.
-        //                                                                           Fill in your connection strings there.
-        //                                                                           Guard it like it's the only copy of your thesis. Because it is.
-        .Build();
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("blob")
@@ -44,14 +39,12 @@ public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = _config.SetupSubInstance()
-            .LoadAzureConfig()  // Reads CosmosDb, Storage, ServiceBus, SQL — all from your settings file.
-            .Build();
+        var configSub = AzureShowroom.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
             .AddBlobArtifact(
                 "blob",                                    // artifact name — used later to assert against
-                "MainStorage",                             // identifier from local.testSettings.json
+                "MainStorage",                             // shared Azure showroom storage identifier
                 "showroom/greetings.txt",                  // path inside the container
                 Encoding.UTF8.GetBytes("Hello, Blob!"))    // the actual bytes. simple. elegant. bytes.
             .RunAsync();
@@ -62,15 +55,13 @@ public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
     }
 }
 
+[Collection("AzureShowroom")]
 public class BlobStorage_WithMetadata(ITestOutputHelper outputHelper)
 {
     // STEP TWO: Metadata. The data about your data.
     // Think of it as a sticky note on your bytes.
     // Except the sticky note survives a server reboot.
     // Your actual sticky notes do not. We did a study.
-
-    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
-        .Build();
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("blob")
@@ -79,9 +70,9 @@ public class BlobStorage_WithMetadata(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = _config.SetupSubInstance().LoadAzureConfig().Build();
+        var configSub = AzureShowroom.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
             .AddBlobArtifact(
                 "blob",
                 "MainStorage",

@@ -1,0 +1,43 @@
+{
+  "UserConfig": {
+    "Namespaces": [
+      {
+        "Name": "sbemulatorns",
+        "Queues": [
+          {
+            "Name": "sbq-main"
+          }
+        ],
+        "Topics": [
+          {
+            "Name": "sbt-main",
+            "Subscriptions": [
+              {
+                "Name": "Default"
+              }
+            ]
+          },
+          {
+            "Name": "sbt-int-in",
+            "Subscriptions": [
+              {
+                "Name": "Default"
+              }
+            ]
+          },
+          {
+            "Name": "sbt-int-out",
+            "Subscriptions": [
+              {
+                "Name": "Default"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "Logging": {
+      "Type": "Console"
+    }
+  }
+}
