@@ -90,7 +90,7 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
             .WithTimeOut(TimeSpan.FromSeconds(10))
         .Build();
 
-    [Fact(Skip = "Requires a queue-backed Service Bus entity configured in the shared Azure showroom container setup.")]
+    [Fact]
     public async Task Run()
     {
         var configSub = AzureShowroom.BuildConfig();

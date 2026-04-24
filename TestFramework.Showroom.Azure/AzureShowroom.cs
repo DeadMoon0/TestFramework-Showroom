@@ -2,6 +2,7 @@ using System.Net.Http;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using FunctionApp;
 using TestFramework.Azure.Configuration;
 using TestFramework.Azure.Configuration.SpecificConfigs;
 using TestFramework.Azure.Extensions;
@@ -15,48 +16,44 @@ namespace TestFramework.Showroom.Azure;
 
 internal static class AzureShowroom
 {
-    private static readonly Dictionary<string, string?> DefaultConfig = new()
+    private static readonly StorageAccountConfig MainStorageConfig = new()
     {
-        ["StorageAccount:MainStorage:ConnectionString"] = "UseDevelopmentStorage=true",
-        ["StorageAccount:MainStorage:BlobContainerName"] = "showroom-blob",
-        ["StorageAccount:MainStorage:QueueContainerName"] = "showroom-queue",
-        ["StorageAccount:MainStorage:TableContainerName"] = "MainTable",
-        ["CosmosDb:MainDb:ConnectionString"] = "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==;",
-        ["CosmosDb:MainDb:DatabaseName"] = "BaseDB",
-        ["CosmosDb:MainDb:ContainerName"] = "BaseContainer",
-        ["CosmosDb:MainDb:PartitionKeyPath"] = "/PartitionKey",
-        ["SqlDatabase:MainSql:ConnectionString"] = "Server=localhost;Database=master;User Id=sa;Password=TestFramework_Container1!;TrustServerCertificate=True",
-        ["SqlDatabase:MainSql:DatabaseName"] = "master",
-        ["ServiceBus:MainSBQueue:ConnectionString"] = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
-        ["ServiceBus:MainSBQueue:QueueName"] = "sbq-main",
-        ["ServiceBus:MainSBQueue:RequiredSession"] = "false",
-        ["ServiceBus:MainSBTopic:ConnectionString"] = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
-        ["ServiceBus:MainSBTopic:TopicName"] = "sbt-main",
-        ["ServiceBus:MainSBTopic:SubscriptionName"] = "Default",
-        ["ServiceBus:MainSBTopic:RequiredSession"] = "false",
-        ["ServiceBus:SampleSubmission:ConnectionString"] = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
-        ["ServiceBus:SampleSubmission:TopicName"] = "sbt-int-in",
-        ["ServiceBus:SampleSubmission:SubscriptionName"] = "Default",
-        ["ServiceBus:SampleSubmission:RequiredSession"] = "false",
-        ["ServiceBus:ProcessingReply:ConnectionString"] = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
-        ["ServiceBus:ProcessingReply:TopicName"] = "sbt-int-out",
-        ["ServiceBus:ProcessingReply:SubscriptionName"] = "Default",
-        ["ServiceBus:ProcessingReply:RequiredSession"] = "false",
+        ConnectionString = "UseDevelopmentStorage=true",
+        BlobContainerName = "showroom-blob",
+        QueueContainerName = "showroom-queue",
+        TableContainerName = "MainTable",
     };
 
-    private static readonly ConfigInstance RootConfig = ConfigInstance.Create()
-        .OverrideConfig(DefaultConfig)
-        .Build();
+    private static readonly CosmosContainerDbConfig MainCosmosConfig = new()
+    {
+        ConnectionString = "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==;",
+        DatabaseName = "BaseDB",
+        ContainerName = "BaseContainer",
+    };
+
+    private static readonly SqlDatabaseConfig MainSqlConfig = new()
+    {
+        ConnectionString = "Server=localhost;Database=master;User Id=sa;Password=TestFramework_Container1!;TrustServerCertificate=True",
+        DatabaseName = "master",
+    };
+
+    private static readonly FunctionAppConfig DefaultFunctionAppConfig = new()
+    {
+        BaseUrl = "http://localhost/",
+        Code = "unused",
+        AdminCode = "unused",
+    };
 
     internal static ConfigInstance BuildConfig(Action<IServiceCollection, IConfiguration>? configureAdditionalServices = null)
     {
-        return RootConfig.SetupSubInstance()
+        return ConfigInstance.Create()
             .AddService((services, configuration) =>
             {
                 RegisterAzureStores(services);
                 services.ConfigureCosmosClientOptions(_ => new CosmosClientOptions
                 {
                     ConnectionMode = ConnectionMode.Gateway,
+                    LimitToEndpoint = true,
                     HttpClientFactory = () => new HttpClient(new HttpClientHandler
                     {
                         ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
@@ -75,73 +72,60 @@ internal static class AzureShowroom
             {
                 RequiredCosmosIdentifiers = ["MainDb"],
                 ServiceBusTopologyConfigPath = Path.Combine("ShowroomAzure", "ServiceBus", "config.json"),
+                FunctionApps =
+                [
+                    DockerFunctionAppRegistration.Create<AnalysisProcessor>("Default", app => app
+                        .UseStorage("MainStorage")
+                        .UseCosmos("MainDb")
+                        .UseServiceBusTrigger("SampleSubmission")
+                        .UseServiceBusReply("ProcessingReply"))
+                ],
             }));
     }
 
     private static void RegisterAzureStores(IServiceCollection services)
     {
-        services.AddSingleton(CreateStore("MainStorage", new StorageAccountConfig
-        {
-            ConnectionString = DefaultConfig["StorageAccount:MainStorage:ConnectionString"]!,
-            BlobContainerName = DefaultConfig["StorageAccount:MainStorage:BlobContainerName"],
-            QueueContainerName = DefaultConfig["StorageAccount:MainStorage:QueueContainerName"],
-            TableContainerName = DefaultConfig["StorageAccount:MainStorage:TableContainerName"],
-        }));
+        services.AddSingleton(ConfigStore<StorageAccountConfig>.Create("MainStorage", MainStorageConfig));
 
-        services.AddSingleton(CreateStore("MainDb", new CosmosContainerDbConfig
-        {
-            ConnectionString = DefaultConfig["CosmosDb:MainDb:ConnectionString"]!,
-            DatabaseName = DefaultConfig["CosmosDb:MainDb:DatabaseName"]!,
-            ContainerName = DefaultConfig["CosmosDb:MainDb:ContainerName"]!,
-            PartitionKeyPath = DefaultConfig["CosmosDb:MainDb:PartitionKeyPath"],
-        }));
+        services.AddSingleton(ConfigStore<CosmosContainerDbConfig>.Create("MainDb", MainCosmosConfig));
 
-        services.AddSingleton(CreateStore("MainSql", new SqlDatabaseConfig
-        {
-            ConnectionString = DefaultConfig["SqlDatabase:MainSql:ConnectionString"]!,
-            DatabaseName = DefaultConfig["SqlDatabase:MainSql:DatabaseName"]!,
-        }));
+        services.AddSingleton(ConfigStore<SqlDatabaseConfig>.Create("MainSql", MainSqlConfig));
+
+        services.AddSingleton(ConfigStore<FunctionAppConfig>.Create("Default", DefaultFunctionAppConfig));
 
         ConfigStore<ServiceBusConfig> serviceBusStore = new();
         serviceBusStore.AddConfig("MainSBQueue", new ServiceBusConfig
         {
-            ConnectionString = DefaultConfig["ServiceBus:MainSBQueue:ConnectionString"]!,
-            QueueName = DefaultConfig["ServiceBus:MainSBQueue:QueueName"],
+            ConnectionString = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
+            QueueName = "sbq-main",
             TopicName = null,
             SubscriptionName = null,
             RequiredSession = false,
         });
         serviceBusStore.AddConfig("MainSBTopic", new ServiceBusConfig
         {
-            ConnectionString = DefaultConfig["ServiceBus:MainSBTopic:ConnectionString"]!,
+            ConnectionString = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
             QueueName = null,
-            TopicName = DefaultConfig["ServiceBus:MainSBTopic:TopicName"],
-            SubscriptionName = DefaultConfig["ServiceBus:MainSBTopic:SubscriptionName"],
+            TopicName = "sbt-main",
+            SubscriptionName = "Default",
             RequiredSession = false,
         });
         serviceBusStore.AddConfig("SampleSubmission", new ServiceBusConfig
         {
-            ConnectionString = DefaultConfig["ServiceBus:SampleSubmission:ConnectionString"]!,
+            ConnectionString = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
             QueueName = null,
-            TopicName = DefaultConfig["ServiceBus:SampleSubmission:TopicName"],
-            SubscriptionName = DefaultConfig["ServiceBus:SampleSubmission:SubscriptionName"],
+            TopicName = "sbt-int-in",
+            SubscriptionName = "Default",
             RequiredSession = false,
         });
         serviceBusStore.AddConfig("ProcessingReply", new ServiceBusConfig
         {
-            ConnectionString = DefaultConfig["ServiceBus:ProcessingReply:ConnectionString"]!,
+            ConnectionString = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
             QueueName = null,
-            TopicName = DefaultConfig["ServiceBus:ProcessingReply:TopicName"],
-            SubscriptionName = DefaultConfig["ServiceBus:ProcessingReply:SubscriptionName"],
+            TopicName = "sbt-int-out",
+            SubscriptionName = "Default",
             RequiredSession = false,
         });
         services.AddSingleton(serviceBusStore);
-    }
-
-    private static ConfigStore<TConfig> CreateStore<TConfig>(string identifier, TConfig config)
-    {
-        ConfigStore<TConfig> store = new();
-        store.AddConfig(identifier, config);
-        return store;
     }
 }

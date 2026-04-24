@@ -19,6 +19,10 @@ public sealed record SampleAnalysisRequest(
     string SampleDocId,
     string AnalysisReplyCorrelationId);
 
+public sealed record SampleIngestionRequest(
+    string RunId,
+    string ReplyCorrelationId);
+
 /// <summary>
 /// Shape of the Cosmos document that Sample Ingestion registers.
 /// Used by the Analysis Processor to verify cross-service data flow.
@@ -31,29 +35,28 @@ internal sealed record CandidateProfileDoc(
     string status);
 
 // ─── Sample Ingestion: Service Bus trigger ────────────────────────────────────
-// Triggered by a message on the "sbt-int-in" topic (sent by the test).
-// Registers the candidate profile in Cosmos, then confirms on "sbt-int-out".
+// Registers the candidate profile in Cosmos.
 
 public class SampleIngestionFunction(
     CosmosClient cosmosClient,
-    ServiceBusSender replyQueueSender,
-    IConfiguration config)
+    ServiceBusClient serviceBusClient,
+    IConfiguration configuration)
 {
     [Function("SampleIngestion")]
     public async Task Run(
-        [ServiceBusTrigger(
-            "%ServiceBusTriggerTopicName%",
-            "%ServiceBusTriggerSubscriptionName%",
-            Connection = "ServiceBusTriggerConnection")]
-        ServiceBusReceivedMessage message,
-        ServiceBusMessageActions messageActions)
+        [ServiceBusTrigger("%ServiceBusTriggerTopicName%", "%ServiceBusTriggerSubscriptionName%", Connection = "ServiceBusTriggerConnection")] string body,
+        CancellationToken cancellationToken)
     {
-        string runId              = message.Body.ToString();
-        string replyCorrelationId = message.CorrelationId;
+        SampleIngestionRequest? request = JsonSerializer.Deserialize<SampleIngestionRequest>(body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (request is null)
+            throw new InvalidOperationException("Invalid sample ingestion payload. Expected RunId and ReplyCorrelationId.");
 
-        string databaseName  = config["CosmosDatabaseName"]  ?? "BaseDB";
-        string containerName = config["CosmosContainerName"] ?? "BaseContainer";
-        Container container  = cosmosClient.GetDatabase(databaseName).GetContainer(containerName);
+        string runId = request.RunId;
+
+        string databaseName = GetRequiredSetting("CosmosDatabaseName");
+        string containerName = GetRequiredSetting("CosmosContainerName");
+        Database database = await cosmosClient.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken);
+        Container container = await database.CreateContainerIfNotExistsAsync(containerName, "/PartitionKey", cancellationToken: cancellationToken);
 
         // Register the candidate profile so the test can discover it via FindArtifactMulti.
         var profile = new
@@ -65,34 +68,36 @@ public class SampleIngestionFunction(
             status       = "registered",
             processedAt  = DateTime.UtcNow.ToString("O"),
         };
-        await container.UpsertItemAsync(profile, new PartitionKey("samples"));
+        await container.UpsertItemAsync(profile, new PartitionKey("samples"), cancellationToken: cancellationToken);
 
-        // Send the ingestion confirmation so the test's first WaitForEvent unblocks.
-        await replyQueueSender.SendMessageAsync(new ServiceBusMessage($"sample ingested for run {runId}")
+        string replyEntityName = GetRequiredSetting("ServiceBusReplyTopicName");
+        await using ServiceBusSender sender = serviceBusClient.CreateSender(replyEntityName);
+        await sender.SendMessageAsync(new ServiceBusMessage($"Sample ingested for run {runId}")
         {
-            CorrelationId = replyCorrelationId,
-            Subject       = "sample.ingested",
-            ContentType   = "text/plain",
-        });
+            CorrelationId = request.ReplyCorrelationId,
+            Subject = "sample-ingested",
+        }, cancellationToken).ConfigureAwait(false);
+    }
 
-        await messageActions.CompleteMessageAsync(message);
+    private string GetRequiredSetting(string key)
+    {
+        return configuration[key] ?? throw new InvalidOperationException($"The required Function App setting '{key}' was not configured.");
     }
 }
 
 // ─── Analysis Processor: HTTP trigger ────────────────────────────────────────
 // Called by the test via AzureTF.Trigger.FunctionApp.Http.
-// Reads the Cosmos candidate profile, writes the analysis result to Table Storage,
-// then sends a completion confirmation.
+// Reads the Cosmos candidate profile and writes the analysis result to Table Storage.
 
 public class AnalysisProcessor(
     CosmosClient cosmosClient,
     TableServiceClient tableServiceClient,
-    ServiceBusSender replyQueueSender,
-    IConfiguration config)
+    ServiceBusClient serviceBusClient,
+    IConfiguration configuration)
 {
     [Function("AnalysisProcessing")]
     public async Task<IActionResult> Run(
-        [HttpTrigger(AuthorizationLevel.Function, "post")] HttpRequest req)
+        [HttpTrigger(AuthorizationLevel.Anonymous, "post")] HttpRequest req)
     {
         using StreamReader reader = new(req.Body);
         string body = await reader.ReadToEndAsync();
@@ -103,9 +108,9 @@ public class AnalysisProcessor(
         if (request is null)
             return new BadRequestObjectResult("Invalid payload. Expected RunId, SampleDocId, AnalysisReplyCorrelationId.");
 
-        string databaseName  = config["CosmosDatabaseName"]  ?? "BaseDB";
-        string containerName = config["CosmosContainerName"] ?? "BaseContainer";
-        Container container  = cosmosClient.GetDatabase(databaseName).GetContainer(containerName);
+        string databaseName = GetRequiredSetting("CosmosDatabaseName");
+        string containerName = GetRequiredSetting("CosmosContainerName");
+        Container container = cosmosClient.GetDatabase(databaseName).GetContainer(containerName);
 
         // Read the candidate profile — proves the analysis has data from the ingestion step.
         await container.ReadItemAsync<CandidateProfileDoc>(
@@ -113,7 +118,7 @@ public class AnalysisProcessor(
             new PartitionKey("samples"));
 
         // Write the analysis result to Table Storage.
-        string tableName    = config["IntegrationTableName"] ?? "MainTable";
+        string tableName = GetRequiredSetting("StorageTableName");
         TableClient tableClient = tableServiceClient.GetTableClient(tableName);
         await tableClient.CreateIfNotExistsAsync();
         await tableClient.UpsertEntityAsync(new TableEntity("samples", request.RunId)
@@ -123,15 +128,20 @@ public class AnalysisProcessor(
             ["ProcessedAt"] = DateTime.UtcNow.ToString("O"),
         });
 
-        // Send the analysis completion reply so the test's second WaitForEvent unblocks.
-        await replyQueueSender.SendMessageAsync(new ServiceBusMessage($"analysis complete for run {request.RunId}")
+        string replyEntityName = GetRequiredSetting("ServiceBusReplyTopicName");
+        await using ServiceBusSender sender = serviceBusClient.CreateSender(replyEntityName);
+        await sender.SendMessageAsync(new ServiceBusMessage($"Analysis complete for run {request.RunId}")
         {
             CorrelationId = request.AnalysisReplyCorrelationId,
-            Subject       = "analysis.complete",
-            ContentType   = "text/plain",
+            Subject = "analysis-complete",
         });
 
         return new OkObjectResult($"Analysis complete for run {request.RunId}");
+    }
+
+    private string GetRequiredSetting(string key)
+    {
+        return configuration[key] ?? throw new InvalidOperationException($"The required Function App setting '{key}' was not configured.");
     }
 }
 
