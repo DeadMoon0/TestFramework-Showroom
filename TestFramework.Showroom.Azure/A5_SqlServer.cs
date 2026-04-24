@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
+using TestFramework.Azure.Configuration;
+using TestFramework.Azure.Configuration.SpecificConfigs;
 using TestFramework.Azure.DB.SqlServer;
 using TestFramework.Azure.Extensions;
 using TestFramework.Config;
@@ -79,11 +81,10 @@ public class ShowroomDbContext(DbContextOptions<ShowroomDbContext> options) : Db
 internal static class ShowroomSqlSetup
 {
     internal static ConfigInstance BuildConfig() =>
-        AzureShowroom.BuildConfig((services, config) =>
+        AzureShowroom.BuildConfig((services, _) =>
         {
-            services.AddDbContext<ShowroomDbContext>(opts =>
-                opts.UseSqlServer(config["SqlDatabase:MainSql:ConnectionString"]));
-            //                                      ^ config key follows the pattern: SqlDatabase:{identifier}:{property}
+            services.AddDbContext<ShowroomDbContext>((serviceProvider, opts) =>
+                opts.UseSqlServer(serviceProvider.GetRequiredService<ConfigStore<SqlDatabaseConfig>>().GetConfig("MainSql").ConnectionString));
 
             services.AddSqlArtifactContexts(reg =>
             {
