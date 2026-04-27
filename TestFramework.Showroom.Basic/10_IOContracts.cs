@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using TestFramework.Core.Exceptions;
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using TestFrameworkLocalIO;
@@ -49,6 +50,26 @@ public class IOContracts_RunExclusively(ITestOutputHelper outputHelper)
             .AddVariable("cmdCommand", "echo exclusive")
             .RunAsync();
         run.EnsureRanToCompletion();
+    }
+}
+
+public class IOContracts_MissingInputDiagnosis(ITestOutputHelper outputHelper)
+{
+    // This example shows the failure path on purpose.
+    // If you forget to provide a required input, the run fails during planning,
+    // before any external work starts. That is the point: fail early, fail specifically.
+
+    private readonly Timeline _timeline = Timeline.Create()
+        .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
+        .Build();
+
+    [Fact]
+    public async Task Run_ShowsMissingVariableNameInValidationFailure()
+    {
+        IOContractViolationException exception = await Assert.ThrowsAsync<IOContractViolationException>(() =>
+            this._timeline.SetupRun(outputHelper).RunAsync());
+
+        Assert.Contains("cmdCommand", exception.Message);
     }
 }
 
