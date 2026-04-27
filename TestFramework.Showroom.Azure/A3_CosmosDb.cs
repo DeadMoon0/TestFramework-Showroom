@@ -40,14 +40,12 @@ public record CosmosShowroomItem
     public int Score { get; init; }
 }
 
+[Collection("AzureShowroom")]
 public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
 {
     // The simplest possible Cosmos operation: put something in. Verify it's in. Clean it up.
     // You will notice we said "clean it up." We meant: the framework cleans it up.
     // You are here to write assertions. That is your one job. Do it proudly.
-
-    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
-        .Build();
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("cosmosDoc")
@@ -59,9 +57,9 @@ public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = _config.SetupSubInstance().LoadAzureConfig().Build();
+        var configSub = AzureShowroom.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
             .AddCosmosItemArtifact(
                 "cosmosDoc",    // artifact name — ties everything together
                 "MainDb",       // identifier found under CosmosDb:MainDb in settings
@@ -82,14 +80,12 @@ public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
     }
 }
 
+[Collection("AzureShowroom")]
 public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
 {
     // When you need to find documents you didn't track by ID, use a query.
     // The query language is SQL-adjacent. "Adjacent" is doing a lot of work in that sentence.
     // Point is: SELECT * FROM c WHERE c.score = 42. You know how this goes.
-
-    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
-        .Build();
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("candidate1")
@@ -108,9 +104,9 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = _config.SetupSubInstance().LoadAzureConfig().Build();
+        var configSub = AzureShowroom.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
             .AddCosmosItemArtifact("candidate1", "MainDb",
                 new CosmosShowroomItem { Id = "q-001", PartitionKey = "showroom-query", Name = "High Achiever A", Score = 99 })
             .AddCosmosItemArtifact("candidate2", "MainDb",
@@ -124,8 +120,8 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        // Results arrive named: topScorers_0, topScorers_1, topScorers_2, etc.
-        run.CosmosArtifact<CosmosShowroomItem>("topScorers_0").Should().Exist();
+        // Results use the base name for the first match, then _1, _2, ... for subsequent matches.
+        run.CosmosArtifact<CosmosShowroomItem>("topScorers").Should().Exist();
         run.CosmosArtifact<CosmosShowroomItem>("topScorers_1").Should().Exist();
         // Candidate 3 (score: 40) should not appear in results.
         // We trust the query. The query has never let us down.

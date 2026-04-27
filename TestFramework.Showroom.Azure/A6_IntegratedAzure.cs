@@ -9,6 +9,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 using TestFramework.Azure;
+using TestFramework.Azure.Configuration;
+using TestFramework.Azure.Configuration.SpecificConfigs;
 using TestFramework.Azure.DB.SqlServer;
 using TestFramework.Azure.Extensions;
 using TestFramework.Config;
@@ -26,35 +28,24 @@ namespace TestFramework.Showroom.Azure;
 //  Controlled environments. Predictable. Comfortable. Nothing breaking.
 //  This module is the uncontrolled environment. Welcome.
 //
-//  A6 orchestrates a complete sample processing pipeline across six services:
+//  A6 orchestrates a complete sample processing pipeline across five services:
 //    1. Setup:    The test submits a sample manifest (Blob) and work order (SQL).
 //    2. Trigger:  A Service Bus message initiates sample ingestion (Phase 1 Function).
-//    3. Wait:     Phase 1 registers the candidate profile in Cosmos and confirms.
+//    3. Collect:  Phase 1 registers the candidate profile in Cosmos and acknowledges over Service Bus.
 //    4. Trigger:  An HTTP call drives the Analysis Processor (Phase 2 Function),
-//                 which reads the profile, writes the result to Table Storage, and confirms.
+//                 which reads the profile, writes the result to Table Storage, and acknowledges over Service Bus.
 //    5. Collect:  The framework retrieves artifacts from every storage layer.
 //    6. Validate: Every result is asserted. None are assumed.
 //
 //  INFRASTRUCTURE PREREQUISITES (beyond A1–A5):
 //    In Azure:
-//      • Service Bus Topic "sbt-int-in"  (non-session) + subscription "Default"  — ingestion trigger
-//      • Service Bus Topic "sbt-int-out" (non-session) + subscription "Default"  — processing replies
 //      • Function App with SampleIngestion + AnalysisProcessing deployed
 //    In Azure Function App settings:
-//      ServiceBusTriggerConnection        → SB namespace connection string
-//      ServiceBusTriggerTopicName         → sbt-int-in
-//      ServiceBusTriggerSubscriptionName  → Default
-//      ServiceBusReplyConnectionString    → SB namespace connection string
-//      ServiceBusReplyTopicName           → sbt-int-out
-//      CosmosDbConnectionString           → Cosmos account connection string
-//      CosmosDatabaseName                 → BaseDB
-//      CosmosContainerName                → BaseContainer
-//      StorageAccountConnectionString     → Storage account connection string
-//      IntegrationTableName               → MainTable
-//    In local.testSettings.json:
-//      FunctionApp:Default:BaseUrl + Code → deployed function app URL and key
-//      ServiceBus:SampleSubmission        → sbt-int-in  (non-session)
-//      ServiceBus:ProcessingReply         → sbt-int-out (non-session)
+//      TestFramework:Azure:CosmosIdentifier       → MainDb
+//      TestFramework:Azure:StorageIdentifier      → MainStorage
+//      TestFramework:Azure:ServiceBusTriggerIdentifier → SampleSubmission
+//      TestFramework:Azure:ServiceBusReplyIdentifier   → ProcessingReply
+//    FunctionApp:Default is intentionally not part of the current container-backed showroom.
 // ══════════════════════════════════════════════════════════════════════════════
 
 // ─── Data models ──────────────────────────────────────────────────────────────
@@ -112,33 +103,27 @@ public class LabDbContext(DbContextOptions<LabDbContext> options) : DbContext(op
 // ─── Shared config helper (same pattern as ShowroomSqlSetup in A5) ────────────
 internal static class LabSqlSetup
 {
-    internal static ConfigInstance BuildConfig(ConfigInstance root) =>
-        root.SetupSubInstance()
-            .LoadAzureConfig()
-            .AddService((services, config) =>
-            {
-                services.AddDbContext<LabDbContext>(opts =>
-                    opts.UseSqlServer(config["SqlDatabase:MainSql:ConnectionString"]));
+    internal static ConfigInstance BuildConfig() =>
+        AzureShowroom.BuildConfig((services, _) =>
+        {
+            services.AddDbContext<LabDbContext>((serviceProvider, opts) =>
+                opts.UseSqlServer(serviceProvider.GetRequiredService<ConfigStore<SqlDatabaseConfig>>().GetConfig("MainSql").ConnectionString));
 
-                services.AddSqlArtifactContexts(reg =>
-                {
-                    reg.AddDefault<LabDbContext>();
-                    reg.ApplyMigrationsOnFirstUse();
-                });
-            })
-            .Build();
+            services.AddSqlArtifactContexts(reg =>
+            {
+                reg.AddDefault<LabDbContext>();
+                reg.ApplyMigrationsOnFirstUse();
+            });
+        });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  The Test Class
 // ══════════════════════════════════════════════════════════════════════════════
 
-[Collection("LabOrchestration")]
+[Collection("AzureShowroom")]
 public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
 {
-    private static readonly ConfigInstance _config =
-        ConfigInstance.FromJsonFile("local.testSettings.json").Build();
-
     // ── Static Timeline ───────────────────────────────────────────────────────
     // Declared once for all invocations. Per-run values (runId, correlation IDs,
     // queries, HTTP payloads) are injected at run time via Var.Ref<T>.
@@ -168,26 +153,22 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         //   The entity doesn't exist yet — the framework fetches it via
         //   CaptureArtifactVersion after the Analysis Processor completes.
 
-        // ═══ Step 2: Trigger — Service Bus message → Sample Ingestion function ═
+        // ═══ Step 2: Trigger — Service Bus → Sample Ingestion function ═════════
 
         .Trigger(
             AzureTF.Trigger.ServiceBus.Send(
                 "SampleSubmission",
-                Var.Ref<ServiceBusMessage>("submissionMsg")))
-        // ^ Sends the ingestion trigger to "sbt-int-in".
-        //   The Sample Ingestion function consumes it, registers the candidate profile
-        //   in Cosmos, and sends a confirmation reply to "sbt-int-out".
-
-        // ═══ Step 3: Wait — ingestion confirmation from Sample Ingestion ═══════
+                Var.Ref<ServiceBusMessage>("ingestionMessage")))
+        // ^ Sends the ingestion request over Service Bus.
+        //   The Sample Ingestion function registers the candidate profile in Cosmos.
 
         .WaitForEvent(
             AzureTF.Event.ServiceBus.MessageReceived(
                 "ProcessingReply",
-                correlationId:   Var.Ref<string>("ingestionCorrelation"),
+                correlationId: Var.Ref<string>("ingestionReplyCorrelationId"),
                 completeMessage: true))
-            .WithTimeOut(TimeSpan.FromSeconds(60))
-        // ^ Waits on "sbt-int-out" for the ingestion confirmation.
-        //   When this unblocks, the Cosmos candidate profile exists.
+            .WithTimeOut(TimeSpan.FromSeconds(20))
+        // ^ Waits for the ingestion acknowledgement from the Function App.
 
         .FindArtifactMulti(
             ["sample"],
@@ -211,18 +192,16 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
                 .Call())
         // ^ HTTP POST to the Analysis Processor.
         //   Payload: { RunId, SampleDocId, AnalysisReplyCorrelationId }.
-        //   The function reads the Cosmos profile (cross-service proof), writes the
-        //   Table result, and sends a completion confirmation.
+        //   The function reads the Cosmos profile (cross-service proof) and writes the
+        //   Table result synchronously and emits a completion message.
 
         .WaitForEvent(
             AzureTF.Event.ServiceBus.MessageReceived(
                 "ProcessingReply",
-                correlationId:   Var.Ref<string>("analysisCorrelation"),
+                correlationId: Var.Ref<string>("analysisReplyCorrelationId"),
                 completeMessage: true))
-            .WithTimeOut(TimeSpan.FromSeconds(60))
-        // ^ Waits for the analysis completion reply.
-        //   When this unblocks, the Table entity has been written.
-        //   The full chain is confirmed: SB → Cosmos → HTTP → Table → SB.
+            .WithTimeOut(TimeSpan.FromSeconds(20))
+        // ^ Waits for the analysis acknowledgement from the Function App.
 
         // ═══ Step 5: Collect — fetch the Table entity now that it exists ══════
 
@@ -239,13 +218,11 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         // All artifact keys, Cosmos queries, and correlation IDs are derived
         // from the run ID. Concurrent test runs remain fully isolated.
         string runId         = Guid.NewGuid().ToString("N")[..12];
-        string sampleDocId   = $"sample-{runId}";    // matches SampleIngestion's UpsertItemAsync id
-        string ingestionCorr = $"ing-{runId}";        // SampleIngestion echoes this on its reply
-        string analysisCorr  = $"ana-{runId}";        // AnalysisProcessor echoes this on its reply
+        string sampleDocId = $"sample-{runId}";    // matches SampleIngestion's UpsertItemAsync id
 
-        var configSub = LabSqlSetup.BuildConfig(_config);
+        var configSub = LabSqlSetup.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
 
             // ── Step 1: Setup artifacts ───────────────────────────────────────
 
@@ -273,35 +250,31 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
             //   PartitionKey = "samples" (shared across all A6 runs, unique by RowKey).
             //   RowKey = runId (one entity per run, no collisions, clean cleanup).
 
-            // ── Step 2: Sample ingestion trigger message ──────────────────────
-            .AddVariable("submissionMsg",
-                new ServiceBusMessage(runId)
+            // ── Step 2: Sample ingestion trigger request ──────────────────────
+            .AddVariable("ingestionReplyCorrelationId", $"ingestion-{runId}")
+            .AddVariable("analysisReplyCorrelationId",  $"analysis-{runId}")
+            .AddVariable("ingestionMessage",
+                new ServiceBusMessage(System.Text.Json.JsonSerializer.Serialize(new SampleIngestionRequest(
+                    RunId: runId,
+                    ReplyCorrelationId: $"ingestion-{runId}")))
                 {
-                    CorrelationId = ingestionCorr,   // SampleIngestion echoes this on its reply
-                    Subject       = "sample.submitted",
-                    MessageId     = $"sub-{runId}",
+                    CorrelationId = $"ingestion-{runId}",
+                    Subject = "sample-submission",
                 })
-            // ^ Trigger message. Body = runId (used by the function to key the Cosmos profile).
-            //   CorrelationId = ingestionCorr (the test waits for this on the reply topic).
-
-            // ── Step 3: Ingestion wait correlation ────────────────────────────
-            .AddVariable("ingestionCorrelation", ingestionCorr)
-            // ^ Cosmos query is derived at step time from tableRowKey via Transform (see Timeline above).
+            // ^ Service Bus trigger request. RunId = function input and Cosmos key.
 
             // ── Step 4: Analysis request ──────────────────────────────────────
             .AddVariable("analysisRequest",
                 System.Text.Json.JsonSerializer.Serialize(new SampleAnalysisRequest(
                     RunId:                      runId,
                     SampleDocId:                sampleDocId,
-                    AnalysisReplyCorrelationId: analysisCorr)))
-            .AddVariable("analysisCorrelation", analysisCorr)
-            // ^ Tells the Analysis Processor: which run, which Cosmos profile to read,
-            //   and what correlation ID to stamp on the completion reply.
+                    AnalysisReplyCorrelationId: $"analysis-{runId}")))
+            // ^ Tells the Analysis Processor which run and Cosmos profile to read.
 
             .RunAsync();
 
         run.EnsureRanToCompletion();
-        // ^ Six services. Two functions. Two async confirmations. Zero ambiguity.
+        // ^ Five services. Two functions. Synchronous orchestration.
         //   Any failure throws with the full execution log: step, reason, elapsed time.
 
         // ════════════════════════════════════════════════════════════════════
@@ -315,14 +288,14 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
             .Should().Be(runId);
 
         // ── Cosmos: candidate profile registered by Sample Ingestion ──────────
-        run.CosmosArtifact<CandidateProfile>("sample_0").Should().Exist();
-        run.CosmosArtifact<CandidateProfile>("sample_0")
+        run.CosmosArtifact<CandidateProfile>("sample").Should().Exist();
+        run.CosmosArtifact<CandidateProfile>("sample")
             .Select(d => d.Item.RunId)
             .Should().Be(runId);
-        run.CosmosArtifact<CandidateProfile>("sample_0")
+        run.CosmosArtifact<CandidateProfile>("sample")
             .Select(d => d.Item.Stage)
             .Should().Be("ingested");
-        run.CosmosArtifact<CandidateProfile>("sample_0")
+        run.CosmosArtifact<CandidateProfile>("sample")
             .Select(d => d.Item.Status)
             .Should().Be("registered");
 
@@ -343,14 +316,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         Assert.Equal(sampleDocId, tableData.Entity.SampleDocId);
         // ^ Status = "analysed" proves the Analysis Processor completed.
         //   SampleDocId proves the processor read and used the Cosmos profile.
-        //   That is the data flow: Blob → SB → Cosmos → HTTP → Table → SB.
+        //   That is the data flow: Blob → Service Bus → Cosmos → HTTP → Table.
         //   Every link confirmed. Real infrastructure. Real latency. Real confidence.
-
-        // ── Service Bus: final reply confirmation ─────────────────────────────
-        run.Variable<ServiceBusReceivedMessage>("out")
-            .Should().Exist()
-            .And().Match(
-                m => m!.Subject == "analysis.complete",
-                "The final reply from the Analysis Processor must carry Subject 'analysis.complete'.");
     }
 }

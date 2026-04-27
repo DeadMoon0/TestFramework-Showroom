@@ -37,13 +37,11 @@ public class ShowroomTableEntity : ITableEntity
     public int Priority { get; set; }
 }
 
+[Collection("AzureShowroom")]
 public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
 {
     // Insert a row. Confirm it's there. Watch it vanish at cleanup.
     // That last part was not supposed to sound ominous. It just does.
-
-    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
-        .Build();
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("tableRow")
@@ -55,9 +53,9 @@ public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = _config.SetupSubInstance().LoadAzureConfig().Build();
+        var configSub = AzureShowroom.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
             .AddTableEntityArtifact(
                 "tableRow",               // artifact name
                 "MainStorage",            // storage account identifier
@@ -83,14 +81,12 @@ public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
     }
 }
 
+[Collection("AzureShowroom")]
 public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
 {
     // Sometimes you want to FIND entities you didn't personally put there.
     // Or entities you DID put there, but arranged so the test doesn't need to know the exact keys.
     // We call this "discovery." Sounds more exciting than "OData filter string."
-
-    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
-        .Build();
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("row1")
@@ -112,9 +108,9 @@ public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = _config.SetupSubInstance().LoadAzureConfig().Build();
+        var configSub = AzureShowroom.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
             .AddTableEntityArtifact("row1", "MainStorage", "MainTable",
                 new ShowroomTableEntity { PartitionKey = "showroom-query", RowKey = "r1", Payload = "Alpha", Priority = 10 })
             .AddTableEntityArtifact("row2", "MainStorage", "MainTable",
@@ -125,9 +121,8 @@ public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        // The framework names query results by appending _0, _1, _2 to the base artifact name.
-        // Not our most poetic decision. Functional, though. Very functional.
-        run.TableArtifact<ShowroomTableEntity>("foundRows_0").Should().Exist();
+        // Query results use the base name for the first hit, then append _1, _2, ... for the rest.
+        run.TableArtifact<ShowroomTableEntity>("foundRows").Should().Exist();
         run.TableArtifact<ShowroomTableEntity>("foundRows_1").Should().Exist();
         run.TableArtifact<ShowroomTableEntity>("foundRows_2").Should().Exist();
     }
