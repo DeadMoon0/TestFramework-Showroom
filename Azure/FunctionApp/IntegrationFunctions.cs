@@ -102,10 +102,21 @@ public class AnalysisProcessor(
         using StreamReader reader = new(req.Body);
         string body = await reader.ReadToEndAsync();
 
-        SampleAnalysisRequest? request = JsonSerializer.Deserialize<SampleAnalysisRequest>(
-            body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        SampleAnalysisRequest? request;
+        try
+        {
+            request = JsonSerializer.Deserialize<SampleAnalysisRequest>(
+                body, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+        catch (JsonException)
+        {
+            return new BadRequestObjectResult("Invalid payload. Expected RunId, SampleDocId, AnalysisReplyCorrelationId.");
+        }
 
-        if (request is null)
+        if (request is null
+            || string.IsNullOrWhiteSpace(request.RunId)
+            || string.IsNullOrWhiteSpace(request.SampleDocId)
+            || string.IsNullOrWhiteSpace(request.AnalysisReplyCorrelationId))
             return new BadRequestObjectResult("Invalid payload. Expected RunId, SampleDocId, AnalysisReplyCorrelationId.");
 
         string databaseName = GetRequiredSetting("CosmosDatabaseName");
