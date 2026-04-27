@@ -14,12 +14,13 @@
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
 		<PackageReference Include="xunit" Version="2.5.3" />
 		<PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
-		<PackageReference Include="TestFramework.Core" Version="0.1.0" />
-		<PackageReference Include="TestFramework.Config" Version="0.1.0" />
-		<PackageReference Include="TestFramework.Azure" Version="0.1.0" />
 	</ItemGroup>
 
 	<ItemGroup>
+	  <ProjectReference Include="..\..\TestFramework-Core\TestFramework.Core\TestFramework.Core.csproj" />
+	  <ProjectReference Include="..\..\TestFramework-Core\TestFramework.Config\TestFramework.Config.csproj" />
+	  <ProjectReference Include="..\..\TestFramework-Azure\TestFramework.Azure\TestFramework.Azure.csproj" />
+	  <ProjectReference Include="..\..\TestFramework-Container\TestFramework.Container\TestFramework.Container.csproj" />
 	  <ProjectReference Include="..\Azure\FunctionApp\FunctionApp.csproj" />
 	</ItemGroup>
 
@@ -28,7 +29,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Update="local.testSettings.json">
+		<None Update="ShowroomAzure\ServiceBus\config.json">
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>

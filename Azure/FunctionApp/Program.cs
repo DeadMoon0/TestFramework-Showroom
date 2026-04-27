@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 var builder = FunctionsApplication.CreateBuilder(args);
+var configuration = builder.Configuration;
 
 builder.ConfigureFunctionsWebApplication();
 
@@ -14,37 +15,27 @@ builder.Services
     .AddApplicationInsightsTelemetryWorkerService()
     .ConfigureFunctionsApplicationInsights();
 
-// ── Integration function dependencies ────────────────────────────────────────
-// CosmosClient for Phase 1 (creates document) and Phase 2 (reads document).
 builder.Services.AddSingleton(sp =>
 {
-    string cs = builder.Configuration["CosmosDbConnectionString"]
-        ?? throw new InvalidOperationException("CosmosDbConnectionString app setting is required.");
-    return new CosmosClient(cs);
+    string connectionString = GetRequiredSetting("CosmosDbConnectionString");
+    return new CosmosClient(connectionString, new CosmosClientOptions
+    {
+        ConnectionMode = ConnectionMode.Gateway,
+        LimitToEndpoint = true,
+        HttpClientFactory = () => new HttpClient(new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+        }),
+    });
 });
 
-// TableServiceClient for Phase 2 (writes Table entity as its output artifact).
-builder.Services.AddSingleton(sp =>
-{
-    string cs = builder.Configuration["StorageAccountConnectionString"]
-        ?? throw new InvalidOperationException("StorageAccountConnectionString app setting is required.");
-    return new TableServiceClient(cs);
-});
+builder.Services.AddSingleton(_ => new TableServiceClient(GetRequiredSetting("StorageAccountConnectionString")));
 
-// ServiceBusClient and a dedicated sender for the reply topic.
-// The trigger consumes FROM sbt-int-in.  The sender writes TO sbt-int-out.
-// Keeping them separate avoids functions accidentally consuming their own replies.
-builder.Services.AddSingleton(sp =>
-{
-    string cs = builder.Configuration["ServiceBusReplyConnectionString"]
-        ?? throw new InvalidOperationException("ServiceBusReplyConnectionString app setting is required.");
-    return new ServiceBusClient(cs);
-});
-builder.Services.AddSingleton<ServiceBusSender>(sp =>
-{
-    string topicName = builder.Configuration["ServiceBusReplyTopicName"]
-        ?? throw new InvalidOperationException("ServiceBusReplyTopicName app setting is required.");
-    return sp.GetRequiredService<ServiceBusClient>().CreateSender(topicName);
-});
+builder.Services.AddSingleton(_ => new ServiceBusClient(GetRequiredSetting("ServiceBusReplyConnectionString")));
 
 builder.Build().Run();
+
+string GetRequiredSetting(string key)
+{
+    return configuration[key] ?? throw new InvalidOperationException($"The required Function App setting '{key}' was not configured.");
+}

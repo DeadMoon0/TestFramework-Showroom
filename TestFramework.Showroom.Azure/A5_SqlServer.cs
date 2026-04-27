@@ -2,6 +2,8 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
+using TestFramework.Azure.Configuration;
+using TestFramework.Azure.Configuration.SpecificConfigs;
 using TestFramework.Azure.DB.SqlServer;
 using TestFramework.Azure.Extensions;
 using TestFramework.Config;
@@ -21,7 +23,7 @@ namespace TestFramework.Showroom.Azure;
 //  Unlike our other modules, SQL requires a little more setup:
 //    1. An EF Core DbContext that tells the framework about your tables and keys.
 //    2. A call to .AddSqlArtifactContexts() so the framework knows which DbContext to use.
-//    3. Your connection string in local.testSettings.json under SqlDatabase:MainSql.
+//    3. The shared Azure showroom container config provides SqlDatabase:MainSql.
 //
 //  The framework will handle migrations on first use if you call ApplyMigrationsOnFirstUse().
 //  If your context has no EF Core migrations (like the one in this file),
@@ -78,29 +80,26 @@ public class ShowroomDbContext(DbContextOptions<ShowroomDbContext> options) : Db
 
 internal static class ShowroomSqlSetup
 {
-    internal static ConfigInstance BuildConfig(ConfigInstance root) =>
-        root.SetupSubInstance()
-            .LoadAzureConfig()
-            .AddService((services, config) =>
-            {
-                services.AddDbContext<ShowroomDbContext>(opts =>
-                    opts.UseSqlServer(config["SqlDatabase:MainSql:ConnectionString"]));
-                //                                      ^ config key follows the pattern: SqlDatabase:{identifier}:{property}
+    internal static ConfigInstance BuildConfig() =>
+        AzureShowroom.BuildConfig((services, _) =>
+        {
+            services.AddDbContext<ShowroomDbContext>((serviceProvider, opts) =>
+                opts.UseSqlServer(serviceProvider.GetRequiredService<ConfigStore<SqlDatabaseConfig>>().GetConfig("MainSql").ConnectionString));
 
-                services.AddSqlArtifactContexts(reg =>
-                {
-                    reg.AddDefault<ShowroomDbContext>();
-                    reg.ApplyMigrationsOnFirstUse();
-                    // ^ First test class to run will call EnsureCreated (no migrations defined here).
-                    //   Subsequent test classes share the result via process-wide state.
-                    //   You may feel the urge to call this "magic." We prefer "engineering."
-                });
-            })
-            .Build();
+            services.AddSqlArtifactContexts(reg =>
+            {
+                reg.AddDefault<ShowroomDbContext>();
+                reg.ApplyMigrationsOnFirstUse();
+                // ^ First test class to run will call EnsureCreated (no migrations defined here).
+                //   Subsequent test classes share the result via process-wide state.
+                //   You may feel the urge to call this "magic." We prefer "engineering."
+            });
+        });
 }
 
 // ─── Module A5.1: Single-column primary key ──────────────────────────────────
 
+[Collection("AzureShowroom")]
 public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
 {
     // Insert a product. Verify it. Let the framework delete it.
@@ -109,9 +108,6 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
     // Like a spark in a controlled environment.
     // Very controlled. We have protocols.
 
-    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
-        .Build();
-
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("product")
         .Build();
@@ -119,12 +115,12 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = ShowroomSqlSetup.BuildConfig(_config);
+        var configSub = ShowroomSqlSetup.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
             .AddSqlArtifact(
                 "product",     // artifact name
-                "MainSql",     // SqlDatabase identifier from local.testSettings.json
+                "MainSql",     // shared Azure showroom SQL identifier
                 new ShowroomProduct { Sku = "SHOW-001", Name = "Calibration Widget", Price = 9.99m, Category = "Tools" },
                 Var.Const("SHOW-001"))   // primary key value(s) — one per PK column, in key order
             .RunAsync();
@@ -147,6 +143,7 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
 
 // ─── Module A5.2: Composite primary key ──────────────────────────────────────
 
+[Collection("AzureShowroom")]
 public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
 {
     // If your entity has a composite PK, pass the values in the SAME ORDER
@@ -155,9 +152,6 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
     // Order matters. Order has always mattered.
     // We cannot stress this enough. We have stressed it. Many times.
 
-    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
-        .Build();
-
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("invoiceLine")
         .Build();
@@ -165,9 +159,9 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = ShowroomSqlSetup.BuildConfig(_config);
+        var configSub = ShowroomSqlSetup.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
             .AddSqlArtifact(
                 "invoiceLine",
                 "MainSql",
@@ -188,6 +182,7 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
 
 // ─── Module A5.3: Query finder (LINQ over EF Core) ───────────────────────────
 
+[Collection("AzureShowroom")]
 public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
 {
     // Don't know the exact PK? Build a LINQ query.
@@ -198,9 +193,6 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
     // If you can write a Where clause, you can use this.
     // We checked. Almost everyone can write a Where clause.
     // The rest can learn. That is what this showroom is for.
-
-    private static readonly ConfigInstance _config = ConfigInstance.FromJsonFile("local.testSettings.json")
-        .Build();
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("prodTools1")
@@ -219,9 +211,9 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = ShowroomSqlSetup.BuildConfig(_config);
+        var configSub = ShowroomSqlSetup.BuildConfig();
 
-        var run = await _timeline.SetupRun(configSub.BuildServiceProvider(), outputHelper)
+        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
             .AddSqlArtifact("prodTools1", "MainSql",
                 new ShowroomProduct { Sku = "INST-001", Name = "Precision Gauge",     Price = 149m, Category = "Instruments" },
                 Var.Const("INST-001"))
@@ -237,10 +229,10 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        run.SqlArtifact<ShowroomProduct>("toolsProducts_0").Should().Exist();
+        run.SqlArtifact<ShowroomProduct>("toolsProducts").Should().Exist();
         run.SqlArtifact<ShowroomProduct>("toolsProducts_1").Should().Exist();
 
-        run.SqlArtifact<ShowroomProduct>("toolsProducts_0")
+        run.SqlArtifact<ShowroomProduct>("toolsProducts")
             .Select(d => d.Row.Category)
             .Should().Be("Instruments");
         // ^ Correct category. Correct everything.
