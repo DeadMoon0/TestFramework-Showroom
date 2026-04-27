@@ -9,7 +9,7 @@ using TestFramework.Azure.Extensions;
 using TestFramework.Config;
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Timelines.Builder.TimelineRunBuilder;
-using TestFramework.Container.AzureDocker;
+using TestFramework.Container.Azure;
 using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Azure;
