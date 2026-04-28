@@ -34,20 +34,16 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
     // This is important. Other messages exist on the bus. They are not yours.
     // Do not assert on messages that are not yours. We've seen what that leads to.
 
+    private const string CorrelationId = "showroom-42";
+
     private static readonly Timeline _timeline = Timeline.Create()
-        .Trigger(
-            AzureTF.Trigger.ServiceBus.Send(
-                "MainSBTopic",
-                new ServiceBusMessage("Live transmission. Please stand by.") { CorrelationId = "showroom-42" }))
+        .Trigger(AzureTF.Trigger.ServiceBus.Send("MainSBTopic", new ServiceBusMessage("Live transmission. Please stand by.") { CorrelationId = CorrelationId }))
         //  ^ SEND a message with a known CorrelationId.
         //    The CorrelationId is how we'll recognise the reply.
         //    It's like writing your name on your lunch in the communal fridge.
         //    Works fine until someone eats it anyway. These are Azure messages. Nobody eats them.
-        .WaitForEvent(
-            AzureTF.Event.ServiceBus.MessageReceived(
-                "MainSBTopic",
-                correlationId:   "showroom-42",
-                completeMessage: true))           // complete = acknowledge + remove. Clean hands.
+        .WaitForEvent(AzureTF.Event.ServiceBus.MessageReceived("MainSBTopic", correlationId: CorrelationId, completeMessage: true))
+            // complete = acknowledge + remove. Clean hands.
             .WithTimeOut(TimeSpan.FromSeconds(10))
         //  ^ Wait up to 10 seconds. If nothing arrives, the step fails.
         //    10 seconds felt generous. It felt less generous after the first few timeouts.
@@ -67,9 +63,7 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
         // The received message is stored as a variable named "out" by the WaitForEvent step.
         run.Variable<ServiceBusReceivedMessage>("out")
             .Should().Exist().And().NotBeNull()
-            .And().Match(
-                m => m!.CorrelationId == "showroom-42",
-                "CorrelationId must be 'showroom-42'");
+            .And().Match(m => m!.CorrelationId == CorrelationId, $"CorrelationId must be '{CorrelationId}'");
         // ^ Confirm it was YOUR message that arrived, not someone else's lunch.
     }
 }
@@ -77,16 +71,11 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
 [Collection("AzureShowroom")]
 public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
 {
+    private const string CorrelationId = "showroom-queue-42";
+
     private static readonly Timeline _timeline = Timeline.Create()
-        .Trigger(
-            AzureTF.Trigger.ServiceBus.Send(
-                "MainSBQueue",
-                new ServiceBusMessage("Queue delivery. Clean and direct.") { CorrelationId = "showroom-queue-42" }))
-        .WaitForEvent(
-            AzureTF.Event.ServiceBus.MessageReceived(
-                "MainSBQueue",
-                correlationId: "showroom-queue-42",
-                completeMessage: true))
+        .Trigger(AzureTF.Trigger.ServiceBus.Send("MainSBQueue", new ServiceBusMessage("Queue delivery. Clean and direct.") { CorrelationId = CorrelationId }))
+        .WaitForEvent(AzureTF.Event.ServiceBus.MessageReceived("MainSBQueue", correlationId: CorrelationId, completeMessage: true))
             .WithTimeOut(TimeSpan.FromSeconds(10))
         .Build();
 
@@ -102,9 +91,7 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
 
         run.Variable<ServiceBusReceivedMessage>("out")
             .Should().Exist().And().NotBeNull()
-            .And().Match(
-                m => m!.CorrelationId == "showroom-queue-42",
-                "CorrelationId must be 'showroom-queue-42'");
+            .And().Match(m => m!.CorrelationId == CorrelationId, $"CorrelationId must be '{CorrelationId}'");
     }
 }
 
@@ -119,19 +106,15 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
     // Clean separation. Very professional.
     // We clean up our separations. We are professional.
 
+    private const string CorrelationId = "showroom-dynamic";
+    private const string Subject = "Showroom Test";
+
     private static readonly Timeline _timeline = Timeline.Create()
-        .Trigger(
-            AzureTF.Trigger.ServiceBus.Send(
-                "MainSBTopic",
-                Var.Ref<ServiceBusMessage>("outboundMessage")))
+        .Trigger(AzureTF.Trigger.ServiceBus.Send("MainSBTopic", Var.Ref<ServiceBusMessage>("outboundMessage")))
         //    ^ Notice the Var.Ref here. The message isn't known until RunAsync time.
         //      By the time you read this comment, the message will have been provided.
         //      The future is already written. Mostly.
-        .WaitForEvent(
-            AzureTF.Event.ServiceBus.MessageReceived(
-                "MainSBTopic",
-                correlationId:   "showroom-dynamic",
-                completeMessage: true))
+        .WaitForEvent(AzureTF.Event.ServiceBus.MessageReceived("MainSBTopic", correlationId: CorrelationId, completeMessage: true))
             .WithTimeOut(TimeSpan.FromSeconds(10))
         .Build();
 
@@ -141,20 +124,17 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
         var configSub = AzureShowroom.BuildConfig();
 
         var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
-            .AddVariable("outboundMessage",
-                new ServiceBusMessage("Payload assembled at runtime. It is what it is.")
-                {
-                    CorrelationId = "showroom-dynamic",
-                    Subject       = "Showroom Test",
-                })
+            .AddVariable("outboundMessage", new ServiceBusMessage("Payload assembled at runtime. It is what it is.")
+            {
+                CorrelationId = CorrelationId,
+                Subject = Subject,
+            })
             .RunAsync();
 
         run.EnsureRanToCompletion();
 
         run.Variable<ServiceBusReceivedMessage>("out")
             .Should().Exist()
-            .And().Match(
-                m => m!.Subject == "Showroom Test",
-                "Subject must be 'Showroom Test'");
+            .And().Match(m => m!.Subject == Subject, $"Subject must be '{Subject}'");
     }
 }

@@ -23,6 +23,7 @@
     Prefer examples that read top-to-bottom and show success path plus diagnosable failure path when useful.
     Keep retry usage, Azure setup expectations, and configuration guidance explicit near the example that needs them.
     Route deeper framework internals back to Core or package-specific docs instead of overloading onboarding examples.
+    Treat showroom samples as golden examples for style: compact calls, ordinary C# naming, and no unnecessary framework ceremony.
 </best_practices>
 
 <usage_guidance>
@@ -60,6 +61,7 @@
     - turning onboarding examples into a second copy of the architecture documentation
     - assuming the reader already knows retry modifiers, Azure config wiring, or IO artifact inspection rules
     - expanding Showroom with framework-author content unless the request is explicitly about extension guidance
+    - using examples that are technically valid but visually noisier than the same scenario needs to be
 </anti_patterns>
 
 <important_type_map>
@@ -78,7 +80,6 @@
     TestFramework-Showroom/README.md
     TestFramework-Showroom/TestFramework.Showroom.Basic
     TestFramework-Showroom/TestFramework.Showroom.Azure
-    1.0-TestFramework.Showroom
 </sources>
 
 <grounding_files>
@@ -86,8 +87,6 @@
     - TestFramework-Showroom/README.md
     - TestFramework-Showroom/TestFramework.Showroom.Basic
     - TestFramework-Showroom/TestFramework.Showroom.Azure
-    - 1.0-TestFramework.Showroom/RESOLUTION.md
-    - 1.0-TestFramework.Showroom/VALIDATION.md
 </grounding_files>
 
 <repo_resolution>

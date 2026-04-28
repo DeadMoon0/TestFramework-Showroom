@@ -33,8 +33,7 @@ using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Timelines;
 
 Timeline timeline = Timeline.Create()
-	.Trigger(step)
-	.WithRetry(3, CalcDelays.Fixed(TimeSpan.FromSeconds(1)))
+	.Trigger(step).WithRetry(3, CalcDelays.Fixed(TimeSpan.FromSeconds(1)))
 	.Build();
 ```
 

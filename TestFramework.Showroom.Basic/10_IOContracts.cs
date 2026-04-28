@@ -1,6 +1,6 @@
-using System.Diagnostics;
 using TestFramework.Core.Exceptions;
 using TestFramework.Core.Timelines;
+using TestFramework.Core.Timelines.Assertions;
 using TestFramework.Core.Variables;
 using TestFrameworkLocalIO;
 using Xunit.Abstractions;
@@ -29,7 +29,8 @@ public class IOContracts_StepDeclaredIO(ITestOutputHelper outputHelper)
             .AddVariable("cmdCommand", "echo hello")   // satisfies CmdTrigger's declared input
             .RunAsync();
         run.EnsureRanToCompletion();
-        Debug.Assert(run.VariableStore.GetVariable<int>("ExitCode") == 0);
+
+        run.Variable<int>("ExitCode").Should().Exist().And().Be(0);
     }
 }
 

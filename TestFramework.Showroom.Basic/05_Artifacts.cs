@@ -1,5 +1,4 @@
-﻿using System.Diagnostics;
-using TestFramework.Core.Timelines;
+﻿using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using TestFrameworkLocalIO;
 using Xunit.Abstractions;
@@ -65,7 +64,7 @@ public class Artifacts_Assert(ITestOutputHelper outputHelper)
             .RunAsync();
         run.EnsureRanToCompletion();
 
-        Debug.Assert(run.ArtifactStore.GetFileArtifact("newFile").Last.DataAsUtf8String == "Hello from the new Artifact \r\n");
+        Assert.Equal("Hello from the new Artifact \r\n", run.ArtifactStore.GetFileArtifact("newFile").Last.DataAsUtf8String);
         //               ^ Just like variables, artifacts are stored in the ArtifactStore.
     }
 }
@@ -89,8 +88,8 @@ public class Artifacts_Versions(ITestOutputHelper outputHelper)
             .RunAsync();
         run.EnsureRanToCompletion();
 
-        Debug.Assert(run.ArtifactStore.GetFileArtifact("newFile").First.DataAsUtf8String == "Some Log \r\n");
-        Debug.Assert(run.ArtifactStore.GetFileArtifact("newFile")["laterVersion"].DataAsUtf8String == "Some Log \r\nSome Log \r\n");
+        Assert.Equal("Some Log \r\n", run.ArtifactStore.GetFileArtifact("newFile").First.DataAsUtf8String);
+        Assert.Equal("Some Log \r\nSome Log \r\n", run.ArtifactStore.GetFileArtifact("newFile")["laterVersion"].DataAsUtf8String);
         //                                                       ^ Not only via "first" or "last" can artifact versions be gathered - try just using the name.
     }
 }
