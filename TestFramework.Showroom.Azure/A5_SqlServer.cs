@@ -117,7 +117,9 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
     {
         var configSub = ShowroomSqlSetup.BuildConfig();
 
-        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
+        var run = await _timeline
+            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddSqlArtifact(
                 "product",     // artifact name
                 "MainSql",     // shared Azure showroom SQL identifier
@@ -161,7 +163,9 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
     {
         var configSub = ShowroomSqlSetup.BuildConfig();
 
-        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
+        var run = await _timeline
+            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddSqlArtifact(
                 "invoiceLine",
                 "MainSql",
@@ -213,7 +217,9 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
     {
         var configSub = ShowroomSqlSetup.BuildConfig();
 
-        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
+        var run = await _timeline
+            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddSqlArtifact("prodTools1", "MainSql",
                 new ShowroomProduct { Sku = "INST-001", Name = "Precision Gauge",     Price = 149m, Category = "Instruments" },
                 Var.Const("INST-001"))

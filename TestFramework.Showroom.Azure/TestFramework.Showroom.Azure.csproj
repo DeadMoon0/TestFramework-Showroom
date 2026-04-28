@@ -14,7 +14,6 @@
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
 		<PackageReference Include="TestFramework.Azure" Version="0.1.6" />
 		<PackageReference Include="TestFramework.Config" Version="0.1.1" />
-		<PackageReference Include="TestFramework.Container.Azure" Version="0.1.1" />
 		<PackageReference Include="TestFramework.Core" Version="0.1.2" />
 		<PackageReference Include="xunit" Version="2.5.3" />
 		<PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
@@ -22,6 +21,7 @@
 
 	<ItemGroup>
 	  <ProjectReference Include="..\Azure\FunctionApp\FunctionApp.csproj" />
+	  <ProjectReference Include="..\..\TestFramework-Container\TestFramework.Container.Azure\TestFramework.Container.Azure.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

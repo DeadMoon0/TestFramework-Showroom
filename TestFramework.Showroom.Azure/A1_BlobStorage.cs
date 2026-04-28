@@ -41,7 +41,9 @@ public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
     {
         var configSub = AzureShowroom.BuildConfig();
 
-        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
+        var run = await _timeline
+            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddBlobArtifact(
                 "blob",                                    // artifact name — used later to assert against
                 "MainStorage",                             // shared Azure showroom storage identifier
@@ -72,7 +74,9 @@ public class BlobStorage_WithMetadata(ITestOutputHelper outputHelper)
     {
         var configSub = AzureShowroom.BuildConfig();
 
-        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
+        var run = await _timeline
+            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddBlobArtifact(
                 "blob",
                 "MainStorage",
