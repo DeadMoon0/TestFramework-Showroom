@@ -55,7 +55,9 @@ public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
     {
         var configSub = AzureShowroom.BuildConfig();
 
-        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
+        var run = await _timeline
+            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddTableEntityArtifact(
                 "tableRow",               // artifact name
                 "MainStorage",            // storage account identifier
@@ -110,7 +112,9 @@ public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
     {
         var configSub = AzureShowroom.BuildConfig();
 
-        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
+        var run = await _timeline
+            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddTableEntityArtifact("row1", "MainStorage", "MainTable",
                 new ShowroomTableEntity { PartitionKey = "showroom-query", RowKey = "r1", Payload = "Alpha", Priority = 10 })
             .AddTableEntityArtifact("row2", "MainStorage", "MainTable",

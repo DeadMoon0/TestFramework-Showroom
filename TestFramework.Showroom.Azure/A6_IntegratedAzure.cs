@@ -222,7 +222,9 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
 
         var configSub = LabSqlSetup.BuildConfig();
 
-        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
+        var run = await _timeline
+            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
 
             // ── Step 1: Setup artifacts ───────────────────────────────────────
 
