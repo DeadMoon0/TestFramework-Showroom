@@ -1,5 +1,5 @@
-﻿using System.Diagnostics;
-using TestFramework.Core.Timelines;
+﻿using TestFramework.Core.Timelines;
+using TestFramework.Core.Timelines.Assertions;
 using TestFramework.Core.Variables;
 using TestFrameworkLocalIO;
 using Xunit.Abstractions;
@@ -41,7 +41,7 @@ public class Variables_Assert(ITestOutputHelper outputHelper)
             .RunAsync();
         run.EnsureRanToCompletion();
 
-        Debug.Assert(run.VariableStore.GetVariable<int>("CmdExitCode") == 0);
+        run.Variable<int>("CmdExitCode").Should().Exist().And().Be(0);
         //               ^ Every variable is stored in the VariableStore. Get and assert!
     }
 }

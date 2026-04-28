@@ -1,6 +1,5 @@
 # TestFramework-Showroom - arc42 Architecture Documentation
 
-> Version: 1.0
 > Date: 2026-04-20
 
 ## 1. Introduction and Goals
