@@ -45,7 +45,8 @@ For infrastructure-backed retry behavior, see the container smoke tests in this 
 
 1. Start Docker Desktop.
 2. Run the Azure showroom tests. Blob, Table, Cosmos, SQL, and Service Bus samples use `DockerAzureEnvironment` from `TestFramework.Container`.
-3. The integrated Function App sample in `A6_IntegratedAzure.cs` is currently skipped until there is a clean container-backed Function App path.
+3. The integrated Function App sample in `A6_IntegratedAzure.cs` now runs through the same container-backed Function App path as the normal Container.Azure smoke suite.
+4. `A7_ComponentComposition.cs` demonstrates the new container composition model directly: shared dependencies, contract-selected providers, and exclusive dependency failures.
 
 ### A6 Integrated Azure Contract
 
@@ -57,12 +58,12 @@ For infrastructure-backed retry behavior, see the container smoke tests in this 
 4. Analysis phase: call the Function App HTTP endpoint and wait for the analysis acknowledgement.
 5. Collection phase: capture the Table artifact version and validate the cross-service result.
 
-The configuration contract is stricter than A1-A5 because the sample spans multiple services and a Function App. The Function App must expose identifiers for Cosmos, Storage, and both Service Bus channels, and the showroom config must supply matching `MainDb`, `MainStorage`, `SampleSubmission`, and `ProcessingReply` registrations.
+The configuration contract is stricter than A1-A5 because the sample spans multiple services and a Function App. The Function App definition is the single source of truth for its storage, cosmos, and Service Bus dependencies, while the showroom config still supplies the matching named placeholder registrations such as `MainDb`, `MainStorage`, `SampleSubmission`, and `ProcessingReply`.
 
 ### Azure Troubleshooting
 
 - If Blob, Table, Cosmos, SQL, or Service Bus examples fail immediately, check that Docker Desktop is running before the test host starts.
-- If `A6_IntegratedAzure` fails during setup, verify that the Function App configuration keys and showroom config store identifiers match exactly.
+- If `A6_IntegratedAzure` fails during setup, verify that the Function App definition bindings and showroom config store identifiers still line up exactly.
 - If Service Bus waits time out, inspect the correlation IDs in the example and confirm that the function emits replies on the expected queue/topic.
 - If SQL-backed samples fail, make sure migrations or schema initialization from the container-backed environment have completed before re-running.
 
@@ -79,6 +80,7 @@ It currently includes:
 
 - `TestFramework.Showroom.Basic` for core concepts such as timelines, variables, artifacts, events, control flow, and validations
 - `TestFramework.Showroom.Azure` for Azure-oriented scenarios built on the Azure extension package
+- `A7_ComponentComposition.cs` for the definition-graph composition rules behind the container-backed Azure environment
 
 ## What You Can Do With It
 
@@ -110,6 +112,7 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 - Begin with `TestFramework.Showroom.Basic/01_MinimalTimeline.cs` to see the smallest possible timeline
 - Continue with `04_Variables.cs`, `05_Artifacts.cs`, and `09_StepValidations.cs` to understand the core workflow model
 - Move to `10_IOContracts.cs` for local IO-oriented thinking, then to `TestFramework.Showroom.Azure/A1_BlobStorage.cs` and `A6_IntegratedAzure.cs` when you want cloud-backed scenarios
+- Follow with `TestFramework.Showroom.Azure/A7_ComponentComposition.cs` when you want the container composition semantics behind multi-Function-App stacks
 
 ## Documentation Map
 

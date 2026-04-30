@@ -173,7 +173,7 @@ internal static class AzureShowroom
         protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
-                .UseStorage<MainStorageDefinition>()
+                .UseStorage<MainStorageDefinition>(tableNameSettingName: "StorageTableName")
                 .UseCosmos<MainDbDefinition>()
                 .UseServiceBusTrigger<SampleSubmissionDefinition>()
                 .UseServiceBusReply<ProcessingReplyDefinition>();
