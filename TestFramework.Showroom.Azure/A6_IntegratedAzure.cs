@@ -14,6 +14,7 @@ using TestFramework.Azure.Configuration.SpecificConfigs;
 using TestFramework.Azure.DB.SqlServer;
 using TestFramework.Azure.Extensions;
 using TestFramework.Config;
+using TestFramework.Container.Azure;
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using Xunit.Abstractions;
@@ -224,7 +225,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
 
             // ── Step 1: Setup artifacts ───────────────────────────────────────
 

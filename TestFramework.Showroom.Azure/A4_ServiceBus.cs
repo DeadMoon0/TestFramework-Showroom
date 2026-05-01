@@ -2,6 +2,7 @@ using Azure.Messaging.ServiceBus;
 using TestFramework.Azure;
 using TestFramework.Azure.Extensions;
 using TestFramework.Config;
+using TestFramework.Container.Azure;
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using Xunit.Abstractions;
@@ -57,7 +58,7 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .RunAsync();
 
         run.EnsureRanToCompletion();
@@ -88,7 +89,7 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .RunAsync();
 
         run.EnsureRanToCompletion();
@@ -129,7 +130,7 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddVariable("outboundMessage", new ServiceBusMessage("Payload assembled at runtime. It is what it is.")
             {
                 CorrelationId = CorrelationId,

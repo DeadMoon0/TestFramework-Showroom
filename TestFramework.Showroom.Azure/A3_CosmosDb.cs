@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 using TestFramework.Azure;
 using TestFramework.Azure.Extensions;
 using TestFramework.Config;
+using TestFramework.Container.Azure;
 using TestFramework.Core.Timelines;
 using Xunit.Abstractions;
 
@@ -61,7 +62,7 @@ public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddCosmosItemArtifact(
                 "cosmosDoc",    // artifact name — ties everything together
                 "MainDb",       // identifier found under CosmosDb:MainDb in settings
@@ -110,7 +111,7 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddCosmosItemArtifact("candidate1", "MainDb",
                 new CosmosShowroomItem { Id = "q-001", PartitionKey = "showroom-query", Name = "High Achiever A", Score = 99 })
             .AddCosmosItemArtifact("candidate2", "MainDb",
