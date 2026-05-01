@@ -16,15 +16,21 @@ dotnet test TestFramework.Showroom.Basic/TestFramework.Showroom.Basic.csproj --c
 Start with these files in order:
 
 - `TestFramework.Showroom.Basic/01_MinimalTimeline.cs`
+- `TestFramework.Showroom.Basic/02_MSBTimeline.cs` (`MSB` = message-box timeline)
+- `TestFramework.Showroom.Basic/03_DebugOutput.cs`
 - `TestFramework.Showroom.Basic/04_Variables.cs`
 - `TestFramework.Showroom.Basic/05_Artifacts.cs`
+- `TestFramework.Showroom.Basic/06_Events.cs`
+- `TestFramework.Showroom.Basic/07_ControlFlow.cs`
+- `TestFramework.Showroom.Basic/08_FluentAssertions.cs`
 - `TestFramework.Showroom.Basic/09_StepValidations.cs`
 - `TestFramework.Showroom.Basic/10_IOContracts.cs`
+- `TestFramework.Showroom.Basic/11_Retry.cs`
 
 ## Retry Coverage
 
-There is no dedicated numbered showroom file for `.WithRetry(...)` yet.
-That is intentional for now: retry is a cross-cutting Core modifier rather than a LocalIO- or Azure-specific concept.
+`TestFramework.Showroom.Basic/11_Retry.cs` is the focused retry sample.
+It keeps the scenario intentionally small because retry is a cross-cutting Core modifier rather than a LocalIO- or Azure-specific concept.
 
 Use it like this when a step should tolerate transient failures:
 
@@ -37,16 +43,17 @@ Timeline timeline = Timeline.Create()
 	.Build();
 ```
 
-For infrastructure-backed retry behavior, see the container smoke tests in this repository. For modifier semantics, prefer the Core documentation first.
+For infrastructure-backed retry behavior, see the container smoke tests in this repository. For the full modifier contract, prefer the Core documentation first.
 
 ## Azure Example Setup
 
 `TestFramework.Showroom.Azure` runs against the container-backed Azure environment by default.
 
 1. Start Docker Desktop.
-2. Run the Azure showroom tests. Blob, Table, Cosmos, SQL, and Service Bus samples use `DockerAzureEnvironment` from `TestFramework.Container`.
-3. The integrated Function App sample in `A6_IntegratedAzure.cs` now runs through the same container-backed Function App path as the normal Container.Azure smoke suite.
-4. `A7_ComponentComposition.cs` demonstrates the new container composition model directly: shared dependencies, contract-selected providers, and exclusive dependency failures.
+2. Create `TestFramework.Showroom.Azure/local.testSettings.json` from `TestFramework.Showroom.Azure/example.local.testsettings.json` and fill in your own local or test-only values. Do not commit populated secrets.
+3. Run the Azure showroom tests. Blob, Table, Cosmos, SQL, and Service Bus samples use `DockerAzureEnvironment` from `TestFramework.Container`.
+4. The integrated Function App sample in `A6_IntegratedAzure.cs` now runs through the same container-backed Function App path as the normal Container.Azure smoke suite.
+5. `A7_ComponentComposition.cs` demonstrates the new container composition model directly: shared dependencies, contract-selected providers, and exclusive dependency failures.
 
 ### A6 Integrated Azure Contract
 
@@ -110,8 +117,9 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 ## Where To Start
 
 - Begin with `TestFramework.Showroom.Basic/01_MinimalTimeline.cs` to see the smallest possible timeline
-- Continue with `04_Variables.cs`, `05_Artifacts.cs`, and `09_StepValidations.cs` to understand the core workflow model
-- Move to `10_IOContracts.cs` for local IO-oriented thinking, then to `TestFramework.Showroom.Azure/A1_BlobStorage.cs` and `A6_IntegratedAzure.cs` when you want cloud-backed scenarios
+- Follow with `02_MSBTimeline.cs` and `03_DebugOutput.cs` for the message-box trigger and debug output basics before adding more framework concepts
+- Continue with `04_Variables.cs`, `05_Artifacts.cs`, `06_Events.cs`, `07_ControlFlow.cs`, `08_FluentAssertions.cs`, `09_StepValidations.cs`, `10_IOContracts.cs`, and `11_Retry.cs` to understand the core workflow model
+- Move to `TestFramework.Showroom.Azure/A1_BlobStorage.cs` and `A6_IntegratedAzure.cs` when you want cloud-backed scenarios
 - Follow with `TestFramework.Showroom.Azure/A7_ComponentComposition.cs` when you want the container composition semantics behind multi-Function-App stacks
 
 ## Documentation Map
