@@ -1,6 +1,7 @@
 using System.Text;
 using TestFramework.Azure.Extensions;
 using TestFramework.Config;
+using TestFramework.Container.Azure;
 using TestFramework.Core.Timelines;
 using Xunit.Abstractions;
 
@@ -43,7 +44,7 @@ public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddBlobArtifact(
                 "blob",                                    // artifact name — used later to assert against
                 "MainStorage",                             // shared Azure showroom storage identifier
@@ -76,7 +77,7 @@ public class BlobStorage_WithMetadata(ITestOutputHelper outputHelper)
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddBlobArtifact(
                 "blob",
                 "MainStorage",

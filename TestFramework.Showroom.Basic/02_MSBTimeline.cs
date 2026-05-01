@@ -2,9 +2,10 @@
 
 namespace TestFramework.Showroom.Basic;
 
-public class MSBTimeline
+public class MessageBoxTimeline
 {
-    // A simple sample to show how you can trigger stuff. In this case, it's a MSBox command. You can say "Hello" back. :]
+    // MSB stands for message-box here: this sample is the smallest possible timeline around the Simple package's dialog trigger.
+    // It exists to show the Timeline shape, not to introduce control flow or assertions yet.
 
     /* Flow of a Timeline
      * -> First, every step is ran. Defined by the Timeline builder — in other words, after "Timeline.Create()" and before ".Build()".
@@ -20,7 +21,7 @@ public class MSBTimeline
     [Fact]
     public async Task Run()
     {
-        var run = await this._timeline.SetupRun().RunAsync(); // Every run is isolated and fully independent.
+        TimelineRun run = await this._timeline.SetupRun().RunAsync(); // Every run is isolated and fully independent.
         run.EnsureRanToCompletion();
     }
 }
