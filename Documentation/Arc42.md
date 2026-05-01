@@ -20,7 +20,7 @@ Primary goals:
 - Projects are test projects, not production libraries.
 - `TestFramework.Showroom.Basic` depends on published TestFramework packages such as `TestFramework.Core`, `TestFramework.Simple`, and `TestFramework.LocalIO`.
 - `TestFramework.Showroom.Azure` depends on `TestFramework.Core`, `TestFramework.Config`, and `TestFramework.Azure` plus a local Azure Functions project used as test infrastructure.
-- The Azure examples require external infrastructure and local configuration (`local.testSettings.json`) to run successfully.
+- The Azure examples require external infrastructure and a developer-local `local.testSettings.json` copied from the checked-in example template to run successfully.
 
 ## 3. System Scope and Context
 
@@ -66,7 +66,7 @@ Typical runtime paths:
 	 A developer opens one of the `TestFramework.Showroom.Basic` files, runs the xUnit test, and observes how a timeline is built, executed, and asserted.
 
 2. Azure sample path
-	 A developer configures `local.testSettings.json`, runs the local or deployed infrastructure dependencies, and executes one of the Azure showroom tests. The test then uses the real TestFramework packages to set up artifacts, trigger operations, wait for external effects, and assert the results.
+	 A developer copies `example.local.testsettings.json` to `local.testSettings.json`, fills in local or test-only values, runs the local or deployed infrastructure dependencies, and executes one of the Azure showroom tests. The test then uses the real TestFramework packages to set up artifacts, trigger operations, wait for external effects, and assert the results.
 
 3. Integrated orchestration path
 	 The `A6_IntegratedAzure` sample combines multiple services and multiple phases of orchestration into one timeline to demonstrate how the framework supports complete end-to-end workflows.
