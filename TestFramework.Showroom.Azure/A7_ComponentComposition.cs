@@ -5,7 +5,6 @@ using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
 using TestFramework.Azure.Configuration;
 using TestFramework.Azure.Configuration.SpecificConfigs;
-using TestFramework.Azure.Contracts;
 using TestFramework.Azure.Extensions;
 using TestFramework.Azure.Identifier;
 using TestFramework.Container.Azure;
@@ -15,6 +14,7 @@ using TestFramework.Core.Environment;
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using Xunit.Abstractions;
+using TestFramework.Container.Azure.Contracts;
 
 namespace TestFramework.Showroom.Azure;
 
