@@ -55,7 +55,9 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
     {
         var configSub = AzureShowroom.BuildConfig();
 
-        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
+        var run = await _timeline
+            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .RunAsync();
 
         run.EnsureRanToCompletion();
@@ -84,7 +86,9 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
     {
         var configSub = AzureShowroom.BuildConfig();
 
-        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
+        var run = await _timeline
+            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .RunAsync();
 
         run.EnsureRanToCompletion();
@@ -123,7 +127,9 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
     {
         var configSub = AzureShowroom.BuildConfig();
 
-        var run = await AzureShowroom.SetupRun(_timeline, configSub.BuildServiceProvider(), outputHelper)
+        var run = await _timeline
+            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetEnv(TestFramework.Container.Azure.DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
             .AddVariable("outboundMessage", new ServiceBusMessage("Payload assembled at runtime. It is what it is.")
             {
                 CorrelationId = CorrelationId,
