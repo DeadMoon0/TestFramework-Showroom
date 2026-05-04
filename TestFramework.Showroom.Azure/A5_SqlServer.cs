@@ -82,7 +82,9 @@ public class ShowroomDbContext(DbContextOptions<ShowroomDbContext> options) : Db
 internal static class ShowroomSqlSetup
 {
     internal static ConfigInstance BuildConfig() =>
-        AzureShowroom.BuildConfig((services, _) =>
+        ConfigInstance.Create()
+        .LoadDockerAzureConfig()
+        .AddService((services, _) =>
         {
             services.AddDbContext<ShowroomDbContext>((serviceProvider, opts) =>
                 opts.UseSqlServer(serviceProvider.GetRequiredService<ConfigStore<SqlDatabaseConfig>>().GetConfig("MainSql").ConnectionString));
@@ -95,7 +97,8 @@ internal static class ShowroomSqlSetup
                 //   Subsequent test classes share the result via process-wide state.
                 //   You may feel the urge to call this "magic." We prefer "engineering."
             });
-        });
+            })
+            .Build();
 }
 
 // ─── Module A5.1: Single-column primary key ──────────────────────────────────
@@ -120,7 +123,7 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(AzureShowroom.CreateEnvironment())
             .AddSqlArtifact(
                 "product",     // artifact name
                 "MainSql",     // shared Azure showroom SQL identifier
@@ -166,7 +169,7 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(AzureShowroom.CreateEnvironment())
             .AddSqlArtifact(
                 "invoiceLine",
                 "MainSql",
@@ -220,7 +223,7 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(AzureShowroom.CreateEnvironment())
             .AddSqlArtifact("prodTools1", "MainSql",
                 new ShowroomProduct { Sku = "INST-001", Name = "Precision Gauge",     Price = 149m, Category = "Instruments" },
                 Var.Const("INST-001"))

@@ -1,13 +1,6 @@
-using System.Net.Http;
-using Microsoft.Azure.Cosmos;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using FunctionApp;
-using TestFramework.Azure.Configuration;
 using TestFramework.Azure.Configuration.SpecificConfigs;
-using TestFramework.Azure.Extensions;
 using TestFramework.Azure.Identifier;
-using TestFramework.Config;
 using TestFramework.Core.Timelines;
 using TestFramework.Container.Azure;
 
@@ -17,52 +10,37 @@ internal static class AzureShowroom
 {
     private abstract class ShowroomStorageDefinition : DockerStorageDefinition
     {
-        protected abstract StorageAccountConfig CreateConfig();
+        protected sealed override StorageAccountConfig? CreateDefaultConfig() => CreateConfig();
 
-        public void Register(IServiceCollection services)
-        {
-            services.AddSingleton(ConfigStore<StorageAccountConfig>.Create(Identifier, CreateConfig()));
-        }
+        protected abstract StorageAccountConfig CreateConfig();
     }
 
     private abstract class ShowroomCosmosDefinition<TDocument> : DockerCosmosDefinition<TDocument>
     {
-        protected abstract CosmosContainerDbConfig CreateConfig();
+        protected sealed override CosmosContainerDbConfig? CreateDefaultConfig() => CreateConfig();
 
-        public void Register(IServiceCollection services)
-        {
-            services.AddSingleton(ConfigStore<CosmosContainerDbConfig>.Create(Identifier, CreateConfig()));
-        }
+        protected abstract CosmosContainerDbConfig CreateConfig();
     }
 
     private abstract class ShowroomSqlDefinition : DockerSqlDefinition
     {
-        protected abstract SqlDatabaseConfig CreateConfig();
+        protected sealed override SqlDatabaseConfig? CreateDefaultConfig() => CreateConfig();
 
-        public void Register(IServiceCollection services)
-        {
-            services.AddSingleton(ConfigStore<SqlDatabaseConfig>.Create(Identifier, CreateConfig()));
-        }
+        protected abstract SqlDatabaseConfig CreateConfig();
     }
 
     private abstract class ShowroomServiceBusDefinition : DockerServiceBusDefinition
     {
-        protected abstract ServiceBusConfig CreateConfig();
+        protected sealed override ServiceBusConfig? CreateDefaultConfig() => CreateConfig();
 
-        public void Register(ConfigStore<ServiceBusConfig> serviceBusStore)
-        {
-            serviceBusStore.AddConfig(Identifier, CreateConfig());
-        }
+        protected abstract ServiceBusConfig CreateConfig();
     }
 
     internal abstract class ShowroomFunctionAppDefinition<TFunctionApp> : DockerFunctionAppDefinition<TFunctionApp>
     {
-        protected abstract FunctionAppConfig CreateConfig();
+        protected sealed override FunctionAppConfig? CreateDefaultConfig() => CreateConfig();
 
-        public void Register(IServiceCollection services)
-        {
-            services.AddSingleton(ConfigStore<FunctionAppConfig>.Create(Identifier, CreateConfig()));
-        }
+        protected abstract FunctionAppConfig CreateConfig();
     }
 
     private sealed class MainStorageDefinition : ShowroomStorageDefinition
@@ -132,7 +110,9 @@ internal static class AzureShowroom
     private sealed class ProcessingReplyDefinition : ShowroomServiceBusDefinition
     {
         public override ServiceBusIdentifier Identifier => "ProcessingReply";
-        public override string TopologyConfigPath => Path.Combine("ShowroomAzure", "ServiceBus", "config.json");
+
+        protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
+            => ConfigureShowroomServiceBusTopology(builder);
 
         protected override ServiceBusConfig CreateConfig() => new()
         {
@@ -147,7 +127,9 @@ internal static class AzureShowroom
     private sealed class SampleSubmissionDefinition : ShowroomServiceBusDefinition
     {
         public override ServiceBusIdentifier Identifier => "SampleSubmission";
-        public override string TopologyConfigPath => Path.Combine("ShowroomAzure", "ServiceBus", "config.json");
+
+        protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
+            => ConfigureShowroomServiceBusTopology(builder);
 
         protected override ServiceBusConfig CreateConfig() => new()
         {
@@ -180,39 +162,23 @@ internal static class AzureShowroom
         }
     }
 
-    internal static ConfigInstance BuildConfig(Action<IServiceCollection, IConfiguration>? configureAdditionalServices = null)
+    private static void ConfigureShowroomServiceBusTopology(DockerServiceBusTopologyBuilder builder)
     {
-        return ConfigInstance.Create()
-            .AddService((services, configuration) =>
-            {
-                RegisterAzureStores(services);
-                services.ConfigureCosmosClientOptions(_ => new CosmosClientOptions
-                {
-                    ConnectionMode = ConnectionMode.Gateway,
-                    LimitToEndpoint = true,
-                    HttpClientFactory = () => new HttpClient(new HttpClientHandler
-                    {
-                        ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
-                    }),
-                });
-
-                configureAdditionalServices?.Invoke(services, configuration);
-            })
-            .Build();
+        builder.AddNamespace("sbemulatorns", ns => ns
+            .AddQueue("sbq-main")
+            .AddTopic("sbt-main", topic => topic.AddSubscription("Default"))
+            .AddTopic("sbt-int-in", topic => topic.AddSubscription("Default"))
+            .AddTopic("sbt-int-out", topic => topic.AddSubscription("Default")));
     }
 
-    private static void RegisterAzureStores(IServiceCollection services)
+    internal static DockerAzureEnvironment CreateEnvironment()
     {
-        new MainStorageDefinition().Register(services);
-        new MainDbDefinition().Register(services);
-        new MainSqlDefinition().Register(services);
-        new DefaultFunctionAppDefinition().Register(services);
-
-        ConfigStore<ServiceBusConfig> serviceBusStore = new();
-        new MainSbQueueDefinition().Register(serviceBusStore);
-        new MainSbTopicDefinition().Register(serviceBusStore);
-        new SampleSubmissionDefinition().Register(serviceBusStore);
-        new ProcessingReplyDefinition().Register(serviceBusStore);
-        services.AddSingleton(serviceBusStore);
+        return new DockerAzureEnvironment()
+            .Include<MainStorageDefinition>()
+            .Include<MainDbDefinition>()
+            .Include<MainSqlDefinition>()
+            .Include<MainSbQueueDefinition>()
+            .Include<MainSbTopicDefinition>()
+            .Include<DefaultFunctionAppDefinition>();
     }
 }
