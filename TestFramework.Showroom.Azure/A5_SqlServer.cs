@@ -206,8 +206,8 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
         .SetupArtifact("prodTools1")
         .SetupArtifact("prodTools2")
         .SetupArtifact("prodOther")
-        .FindArtifactMulti(
-            ["toolsProducts"],  // base name — results come back as toolsProducts_0, toolsProducts_1, etc.
+        .FindArtifacts(
+            "toolsProducts",  // base name — results come back as toolsProducts_0, toolsProducts_1, etc.
             AzureTF.ArtifactFinder.DB.SqlQuery<ShowroomProduct>(
                 "MainSql",
                 q => q.Where(p => p.Category == "Instruments")))
@@ -239,10 +239,10 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        run.SqlArtifact<ShowroomProduct>("toolsProducts").Should().Exist();
+        run.SqlArtifact<ShowroomProduct>("toolsProducts_0").Should().Exist();
         run.SqlArtifact<ShowroomProduct>("toolsProducts_1").Should().Exist();
 
-        run.SqlArtifact<ShowroomProduct>("toolsProducts")
+        run.SqlArtifact<ShowroomProduct>("toolsProducts_0")
             .Select(d => d.Row.Category)
             .Should().Be("Instruments");
         // ^ Correct category. Correct everything.
