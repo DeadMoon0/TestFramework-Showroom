@@ -294,14 +294,14 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
             .Should().Be(runId);
 
         // ── Cosmos: candidate profile registered by Sample Ingestion ──────────
-        run.CosmosArtifact<CandidateProfile>("sample").Should().Exist();
-        run.CosmosArtifact<CandidateProfile>("sample")
+        run.CosmosArtifact<CandidateProfile>("sample_0").Should().Exist();
+        run.CosmosArtifact<CandidateProfile>("sample_0")
             .Select(d => d.Item.RunId)
             .Should().Be(runId);
-        run.CosmosArtifact<CandidateProfile>("sample")
+        run.CosmosArtifact<CandidateProfile>("sample_0")
             .Select(d => d.Item.Stage)
             .Should().Be("ingested");
-        run.CosmosArtifact<CandidateProfile>("sample")
+        run.CosmosArtifact<CandidateProfile>("sample_0")
             .Select(d => d.Item.Status)
             .Should().Be("registered");
 
