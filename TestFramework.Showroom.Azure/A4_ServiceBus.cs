@@ -19,7 +19,7 @@ namespace TestFramework.Showroom.Azure;
 //  It is a patient framework. We trained it ourselves over many, many builds.
 //
 //  IMPORTANT: The message identifiers in these examples are "MainSBQueue" and "MainSBTopic."
-//  Their queue/topic config comes from the shared Azure showroom container setup.
+//  Their queue/topic topology comes from the shared Azure showroom fluent Service Bus setup.
 //  If they don't match, the WaitForEvent step will time out.
 //  The timeout window is 10 seconds. The error message is clear.
 //  The situation is manageable. We have managed worse situations.
@@ -54,11 +54,11 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = AzureShowroom.BuildConfig();
+        var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(AzureShowroom.CreateEnvironment())
             .RunAsync();
 
         run.EnsureRanToCompletion();
@@ -85,11 +85,11 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = AzureShowroom.BuildConfig();
+        var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(AzureShowroom.CreateEnvironment())
             .RunAsync();
 
         run.EnsureRanToCompletion();
@@ -126,11 +126,11 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = AzureShowroom.BuildConfig();
+        var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(AzureShowroom.CreateEnvironment())
             .AddVariable("outboundMessage", new ServiceBusMessage("Payload assembled at runtime. It is what it is.")
             {
                 CorrelationId = CorrelationId,

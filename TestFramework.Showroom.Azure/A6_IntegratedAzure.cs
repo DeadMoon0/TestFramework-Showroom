@@ -105,7 +105,9 @@ public class LabDbContext(DbContextOptions<LabDbContext> options) : DbContext(op
 internal static class LabSqlSetup
 {
     internal static ConfigInstance BuildConfig() =>
-        AzureShowroom.BuildConfig((services, _) =>
+        ConfigInstance.Create()
+        .LoadDockerAzureConfig()
+        .AddService((services, _) =>
         {
             services.AddDbContext<LabDbContext>((serviceProvider, opts) =>
                 opts.UseSqlServer(serviceProvider.GetRequiredService<ConfigStore<SqlDatabaseConfig>>().GetConfig("MainSql").ConnectionString));
@@ -115,7 +117,8 @@ internal static class LabSqlSetup
                 reg.AddDefault<LabDbContext>();
                 reg.ApplyMigrationsOnFirstUse();
             });
-        });
+        })
+        .Build();
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -225,7 +228,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(AzureShowroom.CreateEnvironment())
 
             // ── Step 1: Setup artifacts ───────────────────────────────────────
 

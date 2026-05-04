@@ -54,11 +54,11 @@ public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = AzureShowroom.BuildConfig();
+        var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(AzureShowroom.CreateEnvironment())
             .AddTableEntityArtifact(
                 "tableRow",               // artifact name
                 "MainStorage",            // storage account identifier
@@ -111,11 +111,11 @@ public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = AzureShowroom.BuildConfig();
+        var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(AzureShowroom.CreateEnvironment())
             .AddTableEntityArtifact("row1", "MainStorage", "MainTable",
                 new ShowroomTableEntity { PartitionKey = "showroom-query", RowKey = "r1", Payload = "Alpha", Priority = 10 })
             .AddTableEntityArtifact("row2", "MainStorage", "MainTable",

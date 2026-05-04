@@ -65,7 +65,21 @@ For infrastructure-backed retry behavior, see the container smoke tests in this 
 4. Analysis phase: call the Function App HTTP endpoint and wait for the analysis acknowledgement.
 5. Collection phase: capture the Table artifact version and validate the cross-service result.
 
-The configuration contract is stricter than A1-A5 because the sample spans multiple services and a Function App. The Function App definition is the single source of truth for its storage, cosmos, and Service Bus dependencies, while the showroom config still supplies the matching named placeholder registrations such as `MainDb`, `MainStorage`, `SampleSubmission`, and `ProcessingReply`.
+The configuration contract is stricter than A1-A5 because the sample spans multiple services and a Function App. The Function App definition remains the single source of truth for its storage, cosmos, and Service Bus bindings, and the shared showroom environment now materializes the matching defaults directly from the resource definitions. Service Bus emulator entities are declared through the fluent topology builder rather than an external JSON file.
+
+### Service Bus Topology
+
+The Azure showroom no longer uses `ShowroomAzure/ServiceBus/config.json`.
+Service Bus entities are defined directly in code through `ConfigureServiceBusTopology(...)` on the Showroom resource definitions.
+
+That means:
+
+- `MainSBQueue` declares queue `sbq-main`
+- `MainSBTopic` declares topic `sbt-main` with subscription `Default`
+- `SampleSubmission` declares topic `sbt-int-in` with subscription `Default`
+- `ProcessingReply` declares topic `sbt-int-out` with subscription `Default`
+
+The examples now exercise the same fluent topology path that the container package README and smoke tests use.
 
 ### Azure Troubleshooting
 

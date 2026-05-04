@@ -58,11 +58,11 @@ public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = AzureShowroom.BuildConfig();
+        var configSub = ConfigInstance.Create().LoadAzureConfig().Build();
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(AzureShowroom.CreateEnvironment())
             .AddCosmosItemArtifact(
                 "cosmosDoc",    // artifact name — ties everything together
                 "MainDb",       // identifier found under CosmosDb:MainDb in settings
@@ -107,11 +107,11 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = AzureShowroom.BuildConfig();
+        var configSub = ConfigInstance.Create().LoadAzureConfig().Build();
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
-            .SetEnv(DockerAzureEnvironment.For<AzureShowroom.DefaultFunctionAppDefinition>())
+            .SetEnv(AzureShowroom.CreateEnvironment())
             .AddCosmosItemArtifact("candidate1", "MainDb",
                 new CosmosShowroomItem { Id = "q-001", PartitionKey = "showroom-query", Name = "High Achiever A", Score = 99 })
             .AddCosmosItemArtifact("candidate2", "MainDb",
