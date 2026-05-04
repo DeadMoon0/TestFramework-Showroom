@@ -58,7 +58,7 @@ public class SampleIngestionFunction(
         Database database = await cosmosClient.CreateDatabaseIfNotExistsAsync(databaseName, cancellationToken: cancellationToken);
         Container container = await database.CreateContainerIfNotExistsAsync(containerName, "/PartitionKey", cancellationToken: cancellationToken);
 
-        // Register the candidate profile so the test can discover it via FindArtifactMulti.
+        // Register the candidate profile so the test can discover it via FindArtifacts.
         var profile = new
         {
             id           = $"sample-{runId}",

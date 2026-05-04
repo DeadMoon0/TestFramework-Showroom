@@ -97,8 +97,8 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
         // Three items inserted. One query to find the high-scorers.
         // The rest are cleaned up too. We are thorough. Thoroughness is a core value.
         // It's in our brochure. The brochure is very thorough.
-        .FindArtifactMulti(
-            ["topScorers"],
+        .FindArtifacts(
+            "topScorers",
             AzureTF.ArtifactFinder.DB.CosmosQuery<CosmosShowroomItem>(
                 "MainDb",
                 new QueryDefinition("SELECT * FROM c WHERE c.score = 99 AND c.PartitionKey = 'showroom-query'")))
@@ -126,7 +126,7 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
         run.EnsureRanToCompletion();
 
         // Results use the base name for the first match, then _1, _2, ... for subsequent matches.
-        run.CosmosArtifact<CosmosShowroomItem>("topScorers").Should().Exist();
+        run.CosmosArtifact<CosmosShowroomItem>("topScorers_0").Should().Exist();
         run.CosmosArtifact<CosmosShowroomItem>("topScorers_1").Should().Exist();
         // Candidate 3 (score: 40) should not appear in results.
         // We trust the query. The query has never let us down.

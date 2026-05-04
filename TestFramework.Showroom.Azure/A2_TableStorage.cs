@@ -98,8 +98,8 @@ public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
         // All three rows written. Now we find the ones that match our filter.
         // The framework will wire up the cleanup of the FOUND rows too.
         // Science in action. Automated science. The best kind.
-        .FindArtifactMulti(
-            ["foundRows"],
+        .FindArtifacts(
+            "foundRows",
             AzureTF.ArtifactFinder.StorageAccount.TableQuery<ShowroomTableEntity>(
                 "MainStorage",
                 "MainTable",
@@ -127,7 +127,7 @@ public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
         run.EnsureRanToCompletion();
 
         // Query results use the base name for the first hit, then append _1, _2, ... for the rest.
-        run.TableArtifact<ShowroomTableEntity>("foundRows").Should().Exist();
+        run.TableArtifact<ShowroomTableEntity>("foundRows_0").Should().Exist();
         run.TableArtifact<ShowroomTableEntity>("foundRows_1").Should().Exist();
         run.TableArtifact<ShowroomTableEntity>("foundRows_2").Should().Exist();
     }

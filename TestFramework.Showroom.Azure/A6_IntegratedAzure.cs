@@ -174,8 +174,8 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
             .WithTimeOut(TimeSpan.FromSeconds(20))
         // ^ Waits for the ingestion acknowledgement from the Function App.
 
-        .FindArtifactMulti(
-            ["sample"],
+        .FindArtifacts(
+            "sample",
             AzureTF.ArtifactFinder.DB.CosmosQuery<CandidateProfile>(
                 "MainDb",
                 Var.Ref<string>("tableRowKey").Transform(key =>
