@@ -58,7 +58,7 @@ public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = ConfigInstance.Create().LoadAzureConfig().Build();
+        var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
@@ -107,7 +107,7 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var configSub = ConfigInstance.Create().LoadAzureConfig().Build();
+        var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
         var run = await _timeline
             .SetupRun(configSub.BuildServiceProvider(), outputHelper)
