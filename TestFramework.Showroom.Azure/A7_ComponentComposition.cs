@@ -224,39 +224,24 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override StorageAccountIdentifier Identifier => "SharedStorage";
 
-        protected override StorageAccountConfig? CreateDefaultConfig() => new()
-        {
-            ConnectionString = "UseDevelopmentStorage=true",
-            BlobContainerName = "showroom-blob",
-            QueueContainerName = "showroom-queue",
-            TableContainerName = "MainTable",
-        };
+            protected override string? BlobContainerName => "showroom-blob";
+            protected override string? QueueContainerName => "showroom-queue";
+            protected override string? TableContainerName => "MainTable";
     }
 
     private sealed class SharedCosmosDefinition : DockerCosmosDefinition<CandidateProfile>
     {
         public override CosmosContainerIdentifier Identifier => "SharedCosmos";
 
-        protected override CosmosContainerDbConfig? CreateDefaultConfig() => new()
-        {
-            ConnectionString = "AccountEndpoint=https://localhost:8081/;AccountKey=C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==;",
-            DatabaseName = "BaseDB",
-            ContainerName = "BaseContainer",
-        };
+            protected override string? DatabaseName => "BaseDB";
+            protected override string? ContainerName => "BaseContainer";
     }
 
     private sealed class SharedReplyBusDefinition : DockerServiceBusDefinition
     {
         public override ServiceBusIdentifier Identifier => "SharedReply";
 
-        protected override ServiceBusConfig? CreateDefaultConfig() => new()
-        {
-            ConnectionString = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
-            QueueName = null,
-            TopicName = "sbt-int-out",
-            SubscriptionName = "Default",
-            RequiredSession = false,
-        };
+        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-int-out", "Default");
 
         protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
             => ConfigureShowroomServiceBusTopology(builder);
@@ -266,14 +251,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override ServiceBusIdentifier Identifier => "SharedSubmission";
 
-        protected override ServiceBusConfig? CreateDefaultConfig() => new()
-        {
-            ConnectionString = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
-            QueueName = null,
-            TopicName = "sbt-int-in",
-            SubscriptionName = "Default",
-            RequiredSession = false,
-        };
+        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-int-in", "Default");
 
         protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
             => ConfigureShowroomServiceBusTopology(builder);
@@ -283,14 +261,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override FunctionAppIdentifier Identifier => "Ingest";
 
-        protected override FunctionAppConfig? CreateDefaultConfig() => new()
-        {
-            BaseUrl = "http://localhost/",
-            Code = "unused",
-            AdminCode = "unused",
-        };
-
-        protected override void Configure(DockerFunctionAppBuilder builder)
+            protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
                 .UseStorage<SharedStorageDefinition>(tableNameSettingName: "StorageTableName")
@@ -305,14 +276,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override FunctionAppIdentifier Identifier => "Analyse";
 
-        protected override FunctionAppConfig? CreateDefaultConfig() => new()
-        {
-            BaseUrl = "http://localhost/",
-            Code = "unused",
-            AdminCode = "unused",
-        };
-
-        protected override void Configure(DockerFunctionAppBuilder builder)
+            protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
                 .UseStorage<SharedStorageDefinition>(tableNameSettingName: "StorageTableName")
@@ -327,14 +291,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override ServiceBusIdentifier Identifier => "ReplyBus";
 
-        protected override ServiceBusConfig? CreateDefaultConfig() => new()
-        {
-            ConnectionString = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
-            QueueName = null,
-            TopicName = "sbt-int-out",
-            SubscriptionName = "Default",
-            RequiredSession = false,
-        };
+        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-int-out", "Default");
 
         protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
             => ConfigureShowroomServiceBusTopology(builder);
@@ -353,14 +310,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override ServiceBusIdentifier Identifier => "AuditBus";
 
-        protected override ServiceBusConfig? CreateDefaultConfig() => new()
-        {
-            ConnectionString = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
-            QueueName = "audit-trail",
-            TopicName = null,
-            SubscriptionName = null,
-            RequiredSession = false,
-        };
+        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.Queue("audit-trail");
 
         protected override void ConfigureContracts(DockerAzureContractBuilder contracts)
         {
@@ -376,14 +326,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override FunctionAppIdentifier Identifier => "ContractConsumer";
 
-        protected override FunctionAppConfig? CreateDefaultConfig() => new()
-        {
-            BaseUrl = "http://localhost/",
-            Code = "unused",
-            AdminCode = "unused",
-        };
-
-        protected override void Configure(DockerFunctionAppBuilder builder)
+            protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
                 .UseStorage<SharedStorageDefinition>(tableNameSettingName: "StorageTableName")
@@ -406,28 +349,14 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override ServiceBusIdentifier Identifier => "ExclusiveBus";
 
-        protected override ServiceBusConfig? CreateDefaultConfig() => new()
-        {
-            ConnectionString = "Endpoint=sb://localhost/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=local",
-            QueueName = "exclusive-queue",
-            TopicName = null,
-            SubscriptionName = null,
-            RequiredSession = false,
-        };
+        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.Queue("exclusive-queue");
     }
 
     private sealed class ExclusiveFunctionAppDefinitionA : DockerFunctionAppDefinition<AnalysisProcessor>
     {
         public override FunctionAppIdentifier Identifier => "ExclusiveA";
 
-        protected override FunctionAppConfig? CreateDefaultConfig() => new()
-        {
-            BaseUrl = "http://localhost/",
-            Code = "unused",
-            AdminCode = "unused",
-        };
-
-        protected override void ConfigureDependencies(DockerAzureDependencyBuilder dependencies)
+            protected override void ConfigureDependencies(DockerAzureDependencyBuilder dependencies)
         {
             dependencies.Include<ExclusiveBusDefinition>(DependencyOwnership.Exclusive);
         }
@@ -437,14 +366,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override FunctionAppIdentifier Identifier => "ExclusiveB";
 
-        protected override FunctionAppConfig? CreateDefaultConfig() => new()
-        {
-            BaseUrl = "http://localhost/",
-            Code = "unused",
-            AdminCode = "unused",
-        };
-
-        protected override void ConfigureDependencies(DockerAzureDependencyBuilder dependencies)
+            protected override void ConfigureDependencies(DockerAzureDependencyBuilder dependencies)
         {
             dependencies.Include<ExclusiveBusDefinition>(DependencyOwnership.Exclusive);
         }
