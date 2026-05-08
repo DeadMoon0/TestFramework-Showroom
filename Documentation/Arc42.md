@@ -52,7 +52,7 @@ This keeps learning incremental: first understand timeline mechanics, then move 
 Main building blocks:
 
 - `TestFramework.Showroom.Basic`: ten focused samples covering minimal timelines, message boxes, debug output, variables, artifacts, events, control flow, fluent assertions, step validations, and IO contracts
-- `TestFramework.Showroom.Azure`: six Azure scenario modules covering Blob Storage, Table Storage, Cosmos DB, Service Bus, SQL Server, and an integrated orchestration sample
+- `TestFramework.Showroom.Azure`: nine Azure scenario modules covering Blob Storage, Table Storage, Cosmos DB, Service Bus, SQL Server, integrated orchestration, composition rules, dedicated Function App flows, and dedicated Logic App flows
 - `Azure/FunctionApp`: supporting Azure Functions application used by the Azure showroom scenarios
 - solution root README: guides readers through the learning path and recommended entry points
 

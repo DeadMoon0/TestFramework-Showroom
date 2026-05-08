@@ -56,6 +56,8 @@ For infrastructure-backed retry behavior, see the container smoke tests in this 
 3. Run the Azure showroom tests. Blob, Table, Cosmos, SQL, and Service Bus samples use `DockerAzureEnvironment` from `TestFramework.Container`.
 4. The integrated Function App sample in `A6_IntegratedAzure.cs` now runs through the same container-backed Function App path as the normal Container.Azure smoke suite.
 5. `A7_ComponentComposition.cs` demonstrates the new container composition model directly: shared dependencies, contract-selected providers, and exclusive dependency failures.
+6. `A8_FunctionApps.cs` is the dedicated Function App chapter: liveness, route discovery, explicit request shaping, and default-route selection.
+7. `A9_LogicApps.cs` is the dedicated Logic App chapter: stateful runs, stateless capture, and timer-triggered workflows.
 
 ### A6 Integrated Azure Contract
 
@@ -104,6 +106,8 @@ It currently includes:
 - `TestFramework.Showroom.Basic` for core concepts such as timelines, variables, artifacts, events, control flow, and validations
 - `TestFramework.Showroom.Azure` for Azure-oriented scenarios built on the Azure extension package
 - `A7_ComponentComposition.cs` for the definition-graph composition rules behind the container-backed Azure environment
+- `A8_FunctionApps.cs` for dedicated remote Function App usage patterns
+- `A9_LogicApps.cs` for dedicated Logic App stateful/stateless/timer patterns
 
 ## What You Can Do With It
 
@@ -135,8 +139,10 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 - Begin with `TestFramework.Showroom.Basic/01_MinimalTimeline.cs` to see the smallest possible timeline
 - Follow with `02_MSBTimeline.cs` and `03_DebugOutput.cs` for the message-box trigger and debug output basics before adding more framework concepts
 - Continue with `04_Variables.cs`, `05_Artifacts.cs`, `06_Events.cs`, `07_ControlFlow.cs`, `08_FluentAssertions.cs`, `09_StepValidations.cs`, `10_IOContracts.cs`, and `11_Retry.cs` to understand the core workflow model
-- Move to `TestFramework.Showroom.Azure/A1_BlobStorage.cs` and `A6_IntegratedAzure.cs` when you want cloud-backed scenarios
+- Move to `TestFramework.Showroom.Azure/A1_BlobStorage.cs` through `A6_IntegratedAzure.cs` when you want cloud-backed scenarios
 - Follow with `TestFramework.Showroom.Azure/A7_ComponentComposition.cs` when you want the container composition semantics behind multi-Function-App stacks
+- Use `TestFramework.Showroom.Azure/A8_FunctionApps.cs` when you want the focused Function App HTTP chapter
+- Use `TestFramework.Showroom.Azure/A9_LogicApps.cs` when you want the focused Logic App chapter
 
 ## Documentation Map
 
