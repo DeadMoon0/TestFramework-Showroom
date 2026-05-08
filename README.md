@@ -1,3 +1,5 @@
+![Icon](https://raw.githubusercontent.com/DeadMoon0/TestFramework-Common/96ef4240c1e55ba95a20b99285219a61407c6355/Assets/Icon.svg)
+
 # TestFramework-Showroom
 
 TestFramework is a timeline-based test framework for building integration-style test workflows.
