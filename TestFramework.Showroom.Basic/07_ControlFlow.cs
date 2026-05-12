@@ -6,12 +6,14 @@ namespace TestFramework.Showroom.Basic;
 
 public class ControlFlow_Conditional(ITestOutputHelper outputHelper)
 {
-    // You want to skip part of the timeline? Why — what did it do to you? Fine, here you go:
+    // Control flow lets the timeline make decisions without cloning half the
+    // builder into separate tests just because one branch should not run and the other has delusions of relevance.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Conditional(Var.RefImmutable<bool>("doPathA"), thenBranch =>
         {
-            //           ^ For control flows, use immutable references because I need to know what you want before I start running the timeline.
+            //           ^ Control flow reads immutable values because the path
+            //             must be decided before execution starts moving and absolutely before anyone improvises a tragedy.
             thenBranch.Trigger(Simple.Simple.Trigger.MessageBox("Hello from Path A"));
         })
         .Conditional(Var.RefImmutable<bool>("doPathB"), thenBranch =>
@@ -24,7 +26,7 @@ public class ControlFlow_Conditional(ITestOutputHelper outputHelper)
     public async Task RunA()
     {
         var run = await this._timeline.SetupRun(outputHelper)
-            .AddVariable("doPathA", true) // Every variable passed in at setup is an immutable reference and thus can be used.
+            .AddVariable("doPathA", true) // Setup-time values are immutable inputs by definition. Paperwork has spoken.
             .AddVariable("doPathB", false)
             .RunAsync();
         run.EnsureRanToCompletion();
@@ -43,7 +45,8 @@ public class ControlFlow_Conditional(ITestOutputHelper outputHelper)
 
 public class ControlFlow_ForEach(ITestOutputHelper outputHelper)
 {
-    // Let copy-paste have an end. The solution — you ask? ForEach.
+    // ForEach is what you use when repetition is real but copy-paste is beneath
+    // your dignity. One loop definition, many concrete iterations, zero manual duplication rituals.
 
     private readonly Timeline _timeline = Timeline.Create()
         .ForEach(Var.RefImmutable<string[]>("messages"), "item", loop =>

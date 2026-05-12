@@ -15,8 +15,10 @@ public class Retry_Basic(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        // Retry belongs to the timeline step, not to a specific transport.
-        // This sample keeps the failing operation in-process so you can see the modifier in isolation.
+        // Retry is a property of the step contract, not a special favor granted
+        // by one transport. That is why this sample keeps the failure in-process:
+        // no network fog, no emulator noise, just the modifier standing there on
+        // its own merits like a very smug safety mechanism.
         Timeline timeline = Timeline.Create()
             .Trigger(new EventuallySuccessfulStep(_probe))
                 .Name("transient")
@@ -53,6 +55,8 @@ public class Retry_Basic(ITestOutputHelper outputHelper)
 
         public override Task<string?> Execute(IServiceProvider serviceProvider, VariableStore variableStore, ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
         {
+            // First attempt fails on purpose. Otherwise this is not a retry demo,
+            // it is just a very confident no-op with a stopwatch attached and opinions about resilience.
             if (probe.NextAttempt() == 1)
             {
                 throw new InvalidOperationException("Transient failure for retry demo.");

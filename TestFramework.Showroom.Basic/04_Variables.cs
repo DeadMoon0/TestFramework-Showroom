@@ -8,7 +8,8 @@ namespace TestFramework.Showroom.Basic;
 
 public class Variables(ITestOutputHelper outputHelper)
 {
-    // To add variants to each run, you can use variables. This is how! BB static and hello variable-unpredictability.
+    // Variables are how one static timeline stops behaving like a cardboard cutout.
+    // Same structure, different inputs, no duplicate timeline definitions every time a string gets ambitious.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(Simple.Simple.Trigger.MessageBox(Var.Ref<string>("cmdCommand")))
@@ -26,7 +27,8 @@ public class Variables(ITestOutputHelper outputHelper)
 
 public class Variables_Assert(ITestOutputHelper outputHelper)
 {
-    // Assertions are nice - and useful for variables too. Assert your dreams!
+    // Variables are not decoration. They are runtime data, and runtime data gets
+    // inspected like everything else worth trusting. Confidence is not a data type.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
@@ -42,13 +44,15 @@ public class Variables_Assert(ITestOutputHelper outputHelper)
         run.EnsureRanToCompletion();
 
         run.Variable<int>("CmdExitCode").Should().Exist().And().Be(0);
-        //               ^ Every variable is stored in the VariableStore. Get and assert!
+        //               ^ If a step produced it, the run can surface it for
+        //                 assertions without making you rummage through internals with a miner's lamp.
     }
 }
 
 public class Variables_Transforms(ITestOutputHelper outputHelper)
 {
-    // If the variable's version is too boring: first, let it be — it's doing its best. Then make it better, stronger, MOREEEEEEEEEE.
+    // Variables can be transformed at the point of use. The source stays simple.
+    // The consumer still gets exactly the shape it needs. Suspiciously efficient, but we allow it.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(Simple.Simple.Trigger.MessageBox(Var.Ref<string>("cmdCommand").Transform(x => x + ". And it is even Transformed!")))
@@ -66,8 +70,8 @@ public class Variables_Transforms(ITestOutputHelper outputHelper)
 
 public class Variables_RunExclusively(ITestOutputHelper outputHelper)
 {
-    // Mark a step with .RunExclusively() so the future parallel scheduler knows
-    // it must never run concurrently with any other step.
+    // Some steps deserve solitude. Mark them exclusive and the scheduler learns
+    // that sharing time with other work is no longer an option. Think quarantine, but for concurrency.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(Simple.Simple.Trigger.MessageBox(Var.Ref<string>("cmdCommand")))

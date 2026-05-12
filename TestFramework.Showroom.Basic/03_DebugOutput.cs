@@ -5,7 +5,8 @@ namespace TestFramework.Showroom.Basic;
 
 public class DebugOutput(ITestOutputHelper outputHelper)
 {
-    // For your debugging pleasure, I will log every step I take (pun intended). For this, just give me the ITestOutputHelper and let's go...
+    // Give the run an output helper and it stops suffering in silence. That is
+    // the entire bargain here. More visibility, less interpretive guessing, fewer speeches about "probably the environment."
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(Simple.Simple.Trigger.MessageBox("Hello from Test"))
@@ -15,8 +16,9 @@ public class DebugOutput(ITestOutputHelper outputHelper)
     public async Task Run()
     {
         var run = await this._timeline.SetupRun(outputHelper).RunAsync();
-        run.EnsureRanToCompletion(); //    ^ There :]
+        run.EnsureRanToCompletion();
 
-        // Results will show in XUnit Output Page
+        // The useful part lands in the xUnit output stream: step order, timing,
+        // and enough breadcrumbs to diagnose what happened without clairvoyance or ritual chanting.
     }
 }

@@ -15,20 +15,20 @@ using Xunit.Abstractions;
 namespace TestFramework.Showroom.Azure;
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  REMOTE EXECUTION DIVISION — MODULE A8
-//  "Function Apps: Remote Calls, Route Selection, And A Healthy Respect For HTTP"
+//  REMOTE EXECUTION DIVISION - MODULE A8
+//  "Can We Hit The Function App, Or Are We Just Being Optimistic?"
 //
-//  Up to this point, Function Apps appeared as supporting cast.
-//  Useful. Necessary. A little mysterious.
-//  This module fixes that.
+//  Up to now the Function App has mostly acted like a useful accomplice in
+//  larger scenarios. That arrangement is over. This chapter drags it into the
+//  center of the room and asks the questions people actually care about, loudly and with intent.
 //
-//  A8 demonstrates the three questions every consumer eventually asks:
-//    1. Can the framework reach my Function App at all?
-//    2. Can it infer the route from the function method metadata?
-//    3. Can it still behave when I want to shape the HTTP request myself?
+//  Not philosophical questions. Operational questions.
+//    1. Can the framework reach the app at all?
+//    2. Can route discovery work from method metadata instead of hand-typed hope?
+//    3. Can you still shape the HTTP request when you want full control?
 //
-//  The answer to all three is yes. Miracles do happen.
-//  We just prefer ones backed by assertions.
+//  If those three answers are not solid, the rest of the integration story is
+//  just decorative wiring with a motivational budget.
 // ══════════════════════════════════════════════════════════════════════════════
 
 internal sealed class ShowroomFunctionAppDefinition : DockerFunctionAppDefinition<HttpTests>
@@ -48,8 +48,9 @@ internal sealed class ShowroomFunctionAppDefinition : DockerFunctionAppDefinitio
 [Collection("AzureShowroom")]
 public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
 {
-    // First lesson: let the framework read the route metadata from the function.
-    // Less guesswork. Fewer strings. Lower odds of inventing your own endpoint by accident.
+    // First move: let the framework discover the route from the function method
+    // metadata. The fewer magic strings you hand-maintain, the fewer chances you
+    // have to confidently call the wrong thing and defend it in chat.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(AzureTF.Trigger.IsLive.FunctionApp("ShowroomFunction", AlivenessLevel.Reachable)).WithTimeOut(TimeSpan.FromMinutes(1))
@@ -87,8 +88,8 @@ public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
 [Collection("AzureShowroom")]
 public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
 {
-    // Second lesson: when you need to control body and headers, do it in the timeline.
-    // Keep the distributed choreography visible. Hidden choreography becomes folklore.
+    // Second move: when headers and body matter, shape them in the timeline.
+    // Distributed behavior should stay visible where the test can interrogate it instead of hiding behind helper methods with innocent names.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
@@ -127,8 +128,9 @@ public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
 [Collection("AzureShowroom")]
 public class FunctionApps_DefaultFunctionRoute(ITestOutputHelper outputHelper)
 {
-    // Third lesson: if the route is the default api/{functionName} pattern, selecting by function name is enough.
-    // Clean. Direct. Almost suspiciously cooperative.
+    // Third move: if the app keeps the default api/{functionName} route, selecting
+    // by function name is enough. No scavenger hunt. No custom map. Just use the
+    // convention and cash the simplicity before somebody "improves" it.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(

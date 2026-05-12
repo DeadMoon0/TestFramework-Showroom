@@ -6,7 +6,9 @@ namespace TestFramework.Showroom.Basic;
 
 public class StepValidations(ITestOutputHelper outputHelper)
 {
-    // Attention: for real tinkerers only. ... You still there? ... Great — I see =]. You have access to every step and its results and more. Just tinker around.
+    // Every completed run exposes its step results. That means you can inspect
+    // exactly what happened instead of treating execution as a black box with a
+    // final success flag glued to the top by somebody with confidence and no receipts.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(Simple.Simple.Trigger.MessageBox("Hello from Test")).Name("hello")
@@ -16,7 +18,7 @@ public class StepValidations(ITestOutputHelper outputHelper)
     public async Task Run()
     {
         var run = await this._timeline.SetupRun(outputHelper).RunAsync();
-        run.EnsureRanToCompletion(); // This will ensure every stage and every step is completed.
+        run.EnsureRanToCompletion(); // First verify the run completed, then interrogate the individual steps like a professional nuisance.
 
         run.Step("hello").Should().HaveCompleted();
     }

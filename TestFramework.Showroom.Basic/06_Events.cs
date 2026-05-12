@@ -17,12 +17,14 @@ file static class EventSampleTempDirectories
 
 public class Events(ITestOutputHelper outputHelper)
 {
-    // Wait—wait—wait. Ah, there you are. Great. You don't have to wait while someone fetches tea; let me do it for you.
+    // Events are how the run waits for the world to catch up without turning the
+    // test into a pile of hand-written polling loops, regret, and measurable caffeine abuse.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
         .WaitForEvent(LocalIO.Events.FileExists(Var.Ref<string>("artifactPath")))
-        //                           ^ Just pass in the correct event handler - this will wait until the event is resolved.
+        //                           ^ Name the condition the world must satisfy,
+        //                             then let the framework do the waiting while you pretend patience was always the plan.
         .RegisterArtifact("newFile", LocalIO.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
         .Trigger(Simple.Simple.Trigger.MessageBox(Var.Ref<string>("cmdShow")))
         .Build();
@@ -37,7 +39,8 @@ public class Events(ITestOutputHelper outputHelper)
         {
             var run = await this._timeline.SetupRun(outputHelper)
                 .AddVariable("cmdCreate", "timeout /t 5 /nobreak >nul & echo Hello from the new Artifact >> outNew.txt")
-                //                                    ^ Force a 5-second delay before the artifact is created.
+                //                                    ^ Delay on purpose so the
+                //                                      wait has real work to do and does not start feeling ornamental.
                 .AddVariable("cmdShow", "Hello from the new Artifact")
                 .AddVariable("cwd", tempDir)
                 .AddVariable("artifactPath", artifactPath)

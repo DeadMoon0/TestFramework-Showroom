@@ -15,21 +15,21 @@ using TestFramework.Container.Azure.Contracts;
 namespace TestFramework.Showroom.Azure;
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  CONTAINER ORCHESTRATION DIVISION — MODULE A7
-//  "Multiple Function Apps, Shared Resources, And Other Scheduling Choices"
+//  CONTAINER ORCHESTRATION DIVISION - MODULE A7
+//  "Several Apps. One Dependency Graph. No Delusions."
 //
-//  Module A6 proved the container-backed Function App path can run end-to-end.
-//  Excellent. We made the machinery move. Very inspirational.
-//  Module A7 answers the next question: what happens when you stop pretending
-//  there is only one Function App and one noble, uncomplicated dependency tree?
+//  A6 proved the container-backed path can finish an end-to-end story. Fine.
+//  The lights turned on. Everybody applauded. Now we can discuss what happens
+//  when the environment stops being polite and starts being realistic and vaguely territorial.
 //
-//  This module demonstrates three things:
-//    1. Shared dependencies: two Function Apps can reuse one realized resource.
-//    2. Contract-based reuse: the right provider is selected on purpose.
-//    3. Exclusive dependencies: if two apps demand private ownership of the same
-//       realized dependency, resolution fails early and loudly.
+//  Real systems do not arrive one Function App at a time. They arrive in packs,
+//  each with demands, assumptions, and the occasional territorial dispute.
+//  This chapter walks through the three outcomes that matter:
+//    1. Shared dependencies can be reused when the graph allows it.
+//    2. Contracts can force the right provider to be selected on purpose.
+//    3. Exclusive claims must fail before the suite starts telling lies.
 //
-//  Early and loudly is a feature. Quiet failure is how buildings become folklore.
+//  Fast failure is mercy. Late failure is paperwork and committee language.
 // ══════════════════════════════════════════════════════════════════════════════
 
 [Collection("AzureShowroom")]
@@ -216,25 +216,25 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
 
         Assert.Contains("exclusive", exception.Message, StringComparison.OrdinalIgnoreCase);
         Assert.Contains("servicebus:ExclusiveBus", exception.Message, StringComparison.Ordinal);
-        // The failure still happens inside the normal Timeline execution path.
-        // Users see the same startup rejection they would hit in a real run.
+        // The important part is where the rejection shows up: inside the normal
+        // timeline path, exactly where a real suite would hit the wall and pretend to be surprised.
     }
 
     private sealed class SharedStorageDefinition : DockerStorageDefinition
     {
         public override StorageAccountIdentifier Identifier => "SharedStorage";
 
-            protected override string? BlobContainerName => "showroom-blob";
-            protected override string? QueueContainerName => "showroom-queue";
-            protected override string? TableContainerName => "MainTable";
+        protected override string? BlobContainerName => "showroom-blob";
+        protected override string? QueueContainerName => "showroom-queue";
+        protected override string? TableContainerName => "MainTable";
     }
 
     private sealed class SharedCosmosDefinition : DockerCosmosDefinition<CandidateProfile>
     {
         public override CosmosContainerIdentifier Identifier => "SharedCosmos";
 
-            protected override string? DatabaseName => "BaseDB";
-            protected override string? ContainerName => "BaseContainer";
+        protected override string? DatabaseName => "BaseDB";
+        protected override string? ContainerName => "BaseContainer";
     }
 
     private sealed class SharedReplyBusDefinition : DockerServiceBusDefinition
@@ -261,7 +261,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override FunctionAppIdentifier Identifier => "Ingest";
 
-            protected override void Configure(DockerFunctionAppBuilder builder)
+        protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
                 .UseStorage<SharedStorageDefinition>(tableNameSettingName: "StorageTableName")
@@ -276,7 +276,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override FunctionAppIdentifier Identifier => "Analyse";
 
-            protected override void Configure(DockerFunctionAppBuilder builder)
+        protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
                 .UseStorage<SharedStorageDefinition>(tableNameSettingName: "StorageTableName")

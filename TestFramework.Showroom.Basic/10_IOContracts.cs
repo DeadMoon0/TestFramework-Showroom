@@ -9,24 +9,22 @@ namespace TestFramework.Showroom.Basic;
 
 public class IOContracts_StepDeclaredIO(ITestOutputHelper outputHelper)
 {
-    // Steps declare their own IO internally via DeclareIO().
-    // The IOContractValidator checks, before execution, that every required
-    // input is either produced by a prior step or supplied externally via AddVariable().
-    // Users do not declare IO in the builder — they only supply variable values.
+    // IO contracts exist so the run can reject nonsense before external work
+    // starts. Steps declare what they need and what they produce. The validator
+    // checks the plan before the world gets disturbed and before somebody blames the network out of habit.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
-        // CmdTrigger.DeclareIO → Inputs: "cmdCommand" (string)
-        //                      → Outputs: "out" (int, via DoesReturn)
+        // Cmd declares it needs cmdCommand and produces out. Very honest of it.
         .SetVariable("ExitCode", Var.Ref<int>("out"))
-        // SetVariableStep.DeclareIO → Inputs: "out" → Outputs: "ExitCode"
+        // SetVariable then turns that output into a named run variable, because "out" is technically correct and socially terrible.
         .Build();
 
     [Fact]
     public async Task Run()
     {
         var run = await this._timeline.SetupRun(outputHelper)
-            .AddVariable("cmdCommand", "echo hello")   // satisfies CmdTrigger's declared input
+            .AddVariable("cmdCommand", "echo hello")   // Supply the declared input and the plan becomes valid. Amazing what standards can do.
             .RunAsync();
         run.EnsureRanToCompletion();
 
@@ -36,8 +34,8 @@ public class IOContracts_StepDeclaredIO(ITestOutputHelper outputHelper)
 
 public class IOContracts_RunExclusively(ITestOutputHelper outputHelper)
 {
-    // .RunExclusively() is the only user-facing step option remaining.
-    // All IO is handled by each step's own DeclareIO.
+    // IO declaration and execution policy are different jobs. Steps declare IO.
+    // The builder still gets to say whether a step must run exclusively. Good policy and good paperwork are not the same department.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
@@ -56,9 +54,8 @@ public class IOContracts_RunExclusively(ITestOutputHelper outputHelper)
 
 public class IOContracts_MissingInputDiagnosis(ITestOutputHelper outputHelper)
 {
-    // This example shows the failure path on purpose.
-    // If you forget to provide a required input, the run fails during planning,
-    // before any external work starts. That is the point: fail early, fail specifically.
+    // Missing inputs should fail during planning, before any command, file, or
+    // remote system gets touched. Early rejection is the whole advantage and much cheaper than dramatic runtime confusion.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))

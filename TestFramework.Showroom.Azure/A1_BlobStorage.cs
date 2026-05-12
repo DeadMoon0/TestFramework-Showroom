@@ -8,33 +8,30 @@ using Xunit.Abstractions;
 namespace TestFramework.Showroom.Azure;
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  CLOUD INFRASTRUCTURE DIVISION — PARTICIPANT ORIENTATION MODULE A1
-//  "Blob Storage: Putting Your Bytes Somewhere Other Than Your Desk"
+//  CLOUD INFRASTRUCTURE DIVISION - PARTICIPANT ORIENTATION MODULE A1
+//  "Put Bytes In Storage. Then Demand Proof."
 //
-//  Congratulations on reaching Module A1. Statistically, most participants
-//  make it this far. We're very proud of those statistics. We generated them
-//  ourselves.
+//  Blob Storage is where the showroom starts because it is the simplest useful
+//  contract: put some bytes somewhere remote, then verify they actually arrived
+//  instead of merely inspiring confidence on the local machine. Confidence, as
+//  we have learned, is not a transport protocol.
 //
-//  In this module, you will learn to UPLOAD binary data to a remote storage
-//  location, VERIFY it arrived, and — this is the important part — CLEAN IT UP
-//  automatically when the test ends.
-//
-//  The cleanup is not optional. We tried optional cleanup once.
-//  The cost report was... colorful.
+//  The second lesson matters just as much as the first: test data gets cleaned
+//  up automatically. Manual cleanup is how temporary experiments become unpaid
+//  infrastructure archaeology with a follow-up budget meeting.
 // ══════════════════════════════════════════════════════════════════════════════
 
 [Collection("AzureShowroom")]
 public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
 {
-    // STEP ONE: Upload something. Anything.
-    // We're not judging the contents. We're definitely not reading the contents.
-    // (We have a system that reads the contents. It's for quality assurance.)
+    // First example: upload one blob and let the framework own its lifecycle.
+    // No ceremony. No manual teardown. Just the contract in its cleanest form.
+    // Very neat. Almost suspiciously neat.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("blob")
-        // ^ The framework will upload this blob before your test runs and DELETE it when it finishes.
-        //   You do not need to remember. We remember for you.
-        //   Some might call that unsettling. We call it "managed lifecycle."
+        // ^ The artifact is created during setup and removed during cleanup.
+        //   That is the pattern. Get used to it. It saves lives and storage accounts.
         .Build();
 
     [Fact]
@@ -49,22 +46,21 @@ public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
                 "blob",                                    // artifact name — used later to assert against
                 "MainStorage",                             // shared Azure showroom storage identifier
                 "showroom/greetings.txt",                  // path inside the container
-                Encoding.UTF8.GetBytes("Hello, Blob!"))    // the actual bytes. simple. elegant. bytes.
+                Encoding.UTF8.GetBytes("Hello, Blob!"))    // The payload. Small, blunt, sufficient.
             .RunAsync();
 
         run.EnsureRanToCompletion();
-        // ^ If anything went wrong, this throws. Loudly. With a helpful message.
-        //   We've found that "helpful" is subjective. But we tried.
+        // ^ If upload or cleanup contract setup failed, this is where the run
+        //   stops pretending things are fine and begins speaking in exceptions.
     }
 }
 
 [Collection("AzureShowroom")]
 public class BlobStorage_WithMetadata(ITestOutputHelper outputHelper)
 {
-    // STEP TWO: Metadata. The data about your data.
-    // Think of it as a sticky note on your bytes.
-    // Except the sticky note survives a server reboot.
-    // Your actual sticky notes do not. We did a study.
+    // Second example: same blob mechanics, now with metadata. The bytes matter,
+    // but the labels around the bytes often drive the real behavior. Think of
+    // them as sticky notes that survive power cycles and human incompetence.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("blob")
@@ -93,20 +89,19 @@ public class BlobStorage_WithMetadata(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        // Assert the blob arrived intact and wearing its metadata.
+        // Assert the blob arrived intact and carrying the metadata we assigned.
         run.BlobArtifact("blob").Should().Exist();
 
         run.BlobArtifact("blob")
             .Select(d => d.MetaData["department"])
             .Should().Be("showroom");
-        //              ^ Fluent assertions. Read left to right. Fail with a clear message.
-        //                Revolutionary technology. Invented some time ago. We're catching up.
+        //              ^ Read the stored metadata directly from the captured artifact.
+        //                Revolutionary, only because some teams still do screenshots.
 
         run.BlobArtifact("blob")
             .Select(d => Encoding.UTF8.GetString(d.Data))
             .Should().Be("Quarterly synergy alignment achieved.");
-        // ^ Confirm the bytes you put in are the bytes that came out.
-        //   This step feels obvious. It is also the step most people skip.
-        //   Those people file a lot of bug reports.
+        // ^ Verify the payload too. Metadata without payload integrity is just a
+        //   well-labeled mistake in a nice jacket.
     }
 }

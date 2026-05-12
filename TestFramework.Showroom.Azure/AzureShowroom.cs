@@ -98,12 +98,13 @@ internal static class AzureShowroom
 
     internal static DockerAzureEnvironment CreateEnvironment()
     {
-        return new DockerAzureEnvironment()
+        return DockerAzureEnvironment.For<DefaultFunctionAppDefinition>()
             .Include<MainStorageDefinition>()
             .Include<MainDbDefinition>()
             .Include<MainSqlDefinition>()
             .Include<MainSbQueueDefinition>()
             .Include<MainSbTopicDefinition>()
-            .Include<DefaultFunctionAppDefinition>();
+            .Include<ProcessingReplyDefinition>()
+            .Include<SampleSubmissionDefinition>();
     }
 }

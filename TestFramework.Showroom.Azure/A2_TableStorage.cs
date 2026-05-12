@@ -10,21 +10,19 @@ using Xunit.Abstractions;
 namespace TestFramework.Showroom.Azure;
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  CLOUD INFRASTRUCTURE DIVISION — PARTICIPANT ORIENTATION MODULE A2
-//  "Table Storage: A Grid. For Your Data. In The Cloud. You're Welcome."
+//  CLOUD INFRASTRUCTURE DIVISION - PARTICIPANT ORIENTATION MODULE A2
+//  "PartitionKey. RowKey. Consequences."
 //
-//  You asked for structure. We gave you a table.
-//  Not a relational table — we want to be clear about that.
-//  This is a KEY-VALUE table. It has a PartitionKey and a RowKey.
-//  Together, they uniquely identify your row. Like a fingerprint.
-//  But for data. In Azure. In a table.
+//  Table Storage is what happens when you want structured rows without dragging
+//  in the whole relational ceremony. The price of that simplicity is clarity:
+//  your PartitionKey and RowKey must actually mean something and not just look busy.
 //
-//  Please proceed to the first example. The exit is where you came in.
-//  The exit does not open during testing.
+//  If they do, this module is straightforward. If they do not, the system will
+//  still work, but your future self will eventually hold a meeting about you and bring charts.
 // ══════════════════════════════════════════════════════════════════════════════
 
-// Your entity must implement ITableEntity. This means four fields.
-// We did not invent this requirement. We merely enforce it. Enthusiastically.
+// Table entities implement ITableEntity because Azure insists on a predictable
+// contract. Azure is correct about this one, which is irritating but survivable.
 public class ShowroomTableEntity : ITableEntity
 {
     public string PartitionKey { get; set; } = "";
@@ -32,8 +30,8 @@ public class ShowroomTableEntity : ITableEntity
     public DateTimeOffset? Timestamp { get; set; }
     public ETag ETag { get; set; }
 
-    // Add your own columns below. Anything that serializes. Within reason.
-    // We define "within reason" loosely. Erring on the side of fewer nested objects.
+    // Then add your own columns. Keep them practical. This is storage, not a
+    // creative writing exercise for nested object graphs and emotional complexity.
     public string Payload { get; set; } = "";
     public int Priority { get; set; }
 }
@@ -41,14 +39,13 @@ public class ShowroomTableEntity : ITableEntity
 [Collection("AzureShowroom")]
 public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
 {
-    // Insert a row. Confirm it's there. Watch it vanish at cleanup.
-    // That last part was not supposed to sound ominous. It just does.
+    // First example: upsert one row, verify it, and let cleanup erase the test
+    // evidence after the lesson is over. A tidy operation. Almost suspiciously tidy.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("tableRow")
-        // ^ Upsert on setup, delete on cleanup. Zero manual teardown.
-        //   Participants who handled their own teardown previously reported "it went fine."
-        //   We have no record of those participants submitting follow-up reports.
+        // ^ Setup writes the row. Cleanup removes it. Manual teardown is not a
+        //   personality trait, it is a maintenance problem wearing confidence.
         .Build();
 
     [Fact]
@@ -74,38 +71,35 @@ public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        // The entity was written. Trust but verify.
+        // The entity exists now. Good. We still verify it like adults with trust issues.
         run.TableArtifact<ShowroomTableEntity>("tableRow").Should().Exist();
 
         run.TableArtifact<ShowroomTableEntity>("tableRow")
             .Select(d => d.Entity.Payload)
             .Should().Be("First contact.");
-        // ^ That worked. Note the time. Tell someone.
+        // ^ Row captured, payload verified. Move on before success gets sentimental and starts asking for funding.
     }
 }
 
 [Collection("AzureShowroom")]
 public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
 {
-    // Sometimes you want to FIND entities you didn't personally put there.
-    // Or entities you DID put there, but arranged so the test doesn't need to know the exact keys.
-    // We call this "discovery." Sounds more exciting than "OData filter string."
+    // Second example: find rows by query rather than exact key. Useful when the
+    // test cares about a subset of entities, not one preselected address and its autobiography.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("row1")
         .SetupArtifact("row2")
         .SetupArtifact("row3")
-        // All three rows written. Now we find the ones that match our filter.
-        // The framework will wire up the cleanup of the FOUND rows too.
-        // Science in action. Automated science. The best kind.
+        // Seed three rows, then query for the interesting partition. The query
+        // result becomes tracked artifacts too, not loose data drifting by like escaped paperwork.
         .FindArtifacts(
             "foundRows",
             AzureTF.ArtifactFinder.StorageAccount.TableQuery<ShowroomTableEntity>(
                 "MainStorage",
                 "MainTable",
                 "PartitionKey eq 'showroom-query'"))
-        //  ^ This OData filter runs against Azure Table Storage.
-        //    Everything matching comes back as artifacts you can assert on individually.
+        //  ^ Matching rows come back as individual artifacts you can assert on. Civilized behavior from a query engine.
         .Build();
 
     [Fact]
@@ -126,7 +120,7 @@ public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        // Query results use the base name for the first hit, then append _1, _2, ... for the rest.
+        // Query hits are named deterministically so assertions stay readable and nobody has to name them by vibes.
         run.TableArtifact<ShowroomTableEntity>("foundRows_0").Should().Exist();
         run.TableArtifact<ShowroomTableEntity>("foundRows_1").Should().Exist();
         run.TableArtifact<ShowroomTableEntity>("foundRows_2").Should().Exist();

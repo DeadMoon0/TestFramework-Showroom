@@ -15,31 +15,30 @@ using Xunit.Abstractions;
 namespace TestFramework.Showroom.Azure;
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  CLOUD INFRASTRUCTURE DIVISION — PARTICIPANT ORIENTATION MODULE A5
-//  "SQL Server: Relational Database Technology. The Classics. The Absolute Classics."
+//  CLOUD INFRASTRUCTURE DIVISION - PARTICIPANT ORIENTATION MODULE A5
+//  "Schema, Keys, And The Kind Of Storage That Remembers What You Meant"
 //
-//  You want a schema. You want rows. You want transactions, foreign keys, and a
-//  PRIMARY KEY that means something. Admirable. Ambitious. Welcome to SQL.
+//  SQL enters the showroom with more ceremony than the previous modules because
+//  relational storage asks for explicit schema knowledge. That is not a flaw.
+//  That is the deal. You get joins, keys, and consequences.
 //
-//  Unlike our other modules, SQL requires a little more setup:
-//    1. An EF Core DbContext that tells the framework about your tables and keys.
-//    2. A call to .AddSqlArtifactContexts() so the framework knows which DbContext to use.
-//    3. The shared Azure showroom container config provides SqlDatabase:MainSql.
+//  The framework meets SQL halfway:
+//    1. You provide the DbContext.
+//    2. The config registers it for artifact handling.
+//    3. First use handles migrations or EnsureCreated automatically.
 //
-//  The framework will handle migrations on first use if you call ApplyMigrationsOnFirstUse().
-//  If your context has no EF Core migrations (like the one in this file),
-//  it calls EnsureCreated() instead. The tables will appear. This is fine.
-//  Everything is fine.
+//  In return, the test gets tracked rows, query-based discovery, and cleanup
+//  without hand-written setup scripts wandering through the suite like feral shell history.
 // ══════════════════════════════════════════════════════════════════════════════
 
 // ─── Step 0: Define your entity and DbContext ─────────────────────────────────
-// The DbContext is the blueprint. EF Core reads it to understand your schema.
-// Treat it like the instruction manual nobody reads but everyone eventually needs.
+// The DbContext is the schema contract. Ignore it and eventually the runtime
+// will explain, in detail, why that was a mistake and possibly include line numbers.
 
 public class ShowroomProduct
 {
     [Key]
-    public string Sku { get; set; } = "";      // Primary key. One column. Simple. Powerful.
+    public string Sku { get; set; } = "";      // Single-column primary key. Straightforward, useful, almost comforting.
     public string Name { get; set; } = "";
     public decimal Price { get; set; }
     public string Category { get; set; } = "";
@@ -47,9 +46,7 @@ public class ShowroomProduct
 
 public class ShowroomInvoiceLine
 {
-    // Composite PK: InvoiceId + LineNumber together make a unique row.
-    // Two columns, working as one. A partnership. A synergy.
-    // Possibly a team-building exercise.
+    // Composite primary key: both values together identify the row. Order matters later, as it always does in bureaucracies.
     public string InvoiceId { get; set; } = "";
     public int    LineNumber { get; set; }
     public string Sku        { get; set; } = "";
@@ -63,21 +60,19 @@ public class ShowroomDbContext(DbContextOptions<ShowroomDbContext> options) : Db
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Use prefixed table names to avoid collisions with other DbContexts on the same database.
+        // Prefix table names so multiple sample contexts can share one database without friendly fire and passive-aggressive migration notes.
         modelBuilder.Entity<ShowroomProduct>().ToTable("ShowroomProducts");
 
-        // Composite key must be declared explicitly. EF Core won't guess it.
-        // We tried guessing once. It guessed wrong. We don't guess anymore.
+        // Composite keys are declared explicitly because EF Core is not a mind reader and frankly has enough to do.
         modelBuilder.Entity<ShowroomInvoiceLine>()
             .ToTable("ShowroomInvoiceLines")
             .HasKey(l => new { l.InvoiceId, l.LineNumber });
     }
 }
 
-// ─── A shared helper to register the DbContext in DI ─────────────────────────
-// Every test class calls this instead of repeating the setup.
-// We are against repeating. Repetition is the enemy of clarity.
-// Also it violates our internal Style Guide §4c.
+// ─── Shared setup helper ──────────────────────────────────────────────────────
+// One helper keeps the DI registration and EF setup in one place so the tests
+// can talk about behavior instead of plumbing and connection-string archeology.
 
 internal static class ShowroomSqlSetup
 {
@@ -93,9 +88,8 @@ internal static class ShowroomSqlSetup
             {
                 reg.AddDefault<ShowroomDbContext>();
                 reg.ApplyMigrationsOnFirstUse();
-                // ^ First test class to run will call EnsureCreated (no migrations defined here).
-                //   Subsequent test classes share the result via process-wide state.
-                //   You may feel the urge to call this "magic." We prefer "engineering."
+                // ^ With no migrations in this sample, first use falls back to EnsureCreated.
+                //   After that, the process reuses the initialized schema like a respectable freeloader.
             });
             })
             .Build();
@@ -106,11 +100,8 @@ internal static class ShowroomSqlSetup
 [Collection("AzureShowroom")]
 public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
 {
-    // Insert a product. Verify it. Let the framework delete it.
-    // This is the lifecycle of test data in this framework:
-    // a brief flicker of existence, confirmed, then gracefully removed.
-    // Like a spark in a controlled environment.
-    // Very controlled. We have protocols.
+    // First example: insert one product row, verify it, and let cleanup close
+    // the file on that tiny piece of evidence before it starts a family.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("product")
@@ -128,7 +119,7 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
                 "product",     // artifact name
                 "MainSql",     // shared Azure showroom SQL identifier
                 new ShowroomProduct { Sku = "SHOW-001", Name = "Calibration Widget", Price = 9.99m, Category = "Tools" },
-                Var.Const("SHOW-001"))   // primary key value(s) — one per PK column, in key order
+                Var.Const("SHOW-001"))   // Primary key values are provided in key order. SQL likes discipline.
             .RunAsync();
 
         run.EnsureRanToCompletion();
@@ -142,8 +133,7 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
         run.SqlArtifact<ShowroomProduct>("product")
             .Select(d => d.Row.Price)
             .Should().Be(9.99m);
-        // ^ The row is in the database. The price is correct.
-        //   Both facts confirmed in fewer lines than a post-incident report.
+        // ^ Row inserted, values verified, no mystery left in the outcome. A rare and beautiful state.
     }
 }
 
@@ -152,11 +142,8 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
 [Collection("AzureShowroom")]
 public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
 {
-    // If your entity has a composite PK, pass the values in the SAME ORDER
-    // as EF Core's HasKey() expression.
-    // In this case: InvoiceId first, LineNumber second.
-    // Order matters. Order has always mattered.
-    // We cannot stress this enough. We have stressed it. Many times.
+    // Second example: composite keys. Same artifact mechanics, stricter key order.
+    // The values must be supplied in the same order the model declared them or the database will become educational.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("invoiceLine")
@@ -174,8 +161,8 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
                 "invoiceLine",
                 "MainSql",
                 new ShowroomInvoiceLine { InvoiceId = "INV-2026-001", LineNumber = 1, Sku = "SHOW-001", Quantity = 5 },
-                Var.Const("INV-2026-001"),  // first PK column: InvoiceId
-                Var.Const("1"))             // second PK column: LineNumber (as string — framework converts via EF Core metadata)
+                Var.Const("INV-2026-001"),  // First PK column.
+                Var.Const("1"))             // Second PK column, converted through EF metadata with the patience of a saint.
             .RunAsync();
 
         run.EnsureRanToCompletion();
@@ -193,27 +180,20 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
 [Collection("AzureShowroom")]
 public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
 {
-    // Don't know the exact PK? Build a LINQ query.
-    // The framework evaluates it, picks up the matching rows,
-    // registers them as artifacts (with cleanup!), and hands them back.
-    //
-    // The query is a lambda over IQueryable<T>. Real LINQ. Real EF Core.
-    // If you can write a Where clause, you can use this.
-    // We checked. Almost everyone can write a Where clause.
-    // The rest can learn. That is what this showroom is for.
+    // Third example: query for rows when the exact key is not the point. The
+    // framework evaluates the LINQ query, captures the matches as artifacts, and
+    // still cleans up the full seeded set afterward because somebody around here remembers standards.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("prodTools1")
         .SetupArtifact("prodTools2")
         .SetupArtifact("prodOther")
         .FindArtifacts(
-            "toolsProducts",  // base name — results come back as toolsProducts_0, toolsProducts_1, etc.
+            "toolsProducts",  // Matching rows come back as toolsProducts_0, toolsProducts_1, and so on. Predictable names. Wild concept.
             AzureTF.ArtifactFinder.DB.SqlQuery<ShowroomProduct>(
                 "MainSql",
                 q => q.Where(p => p.Category == "Instruments")))
-        // ^ Only the "Instruments" rows come back. The others do not haunt you.
-        //   They are cleaned up. All of them. Even the ones that didn't match.
-        //   Clean slate policy. Firm but fair.
+        // ^ Only the instrument rows come back as found artifacts. The snack remains judged and excluded.
         .Build();
 
     [Fact]
@@ -232,8 +212,7 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
                 Var.Const("INST-002"))
             .AddSqlArtifact("prodOther", "MainSql",
                 new ShowroomProduct { Sku = "SNCK-001", Name = "Vending Machine Snack", Price = 1.25m, Category = "Refreshments" },
-                //                                                                                      ^ Not an instrument. Will not appear in results.
-                //                                                                                        Will be cleaned up anyway. As it should be.
+                //                                                                                      ^ Seeded for contrast. Query ignores it. Cleanup does not. Justice comes for all rows.
                 Var.Const("SNCK-001"))
             .RunAsync();
 
@@ -245,9 +224,6 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
         run.SqlArtifact<ShowroomProduct>("toolsProducts_0")
             .Select(d => d.Row.Category)
             .Should().Be("Instruments");
-        // ^ Correct category. Correct everything.
-        //   Two rows. Two assertions. A controlled and repeatable result.
-        //   This is what peak test infrastructure looks like.
-        //   We're proud of this one. Don't tell the other modules.
+        // ^ Matching category confirmed. Query semantics did their job and nobody had to count indexes manually.
     }
 }

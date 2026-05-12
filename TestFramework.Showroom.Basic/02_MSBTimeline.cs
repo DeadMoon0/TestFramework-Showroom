@@ -4,16 +4,18 @@ namespace TestFramework.Showroom.Basic;
 
 public class MessageBoxTimeline
 {
-    // MSB stands for message-box here: this sample is the smallest possible timeline around the Simple package's dialog trigger.
-    // It exists to show the Timeline shape, not to introduce control flow or assertions yet.
+    // This chapter adds one actual trigger and nothing else. Deliberately.
+    // The goal is to show the timeline shape with exactly one moving part, not
+    // to drown a first lesson in twenty advanced options and a preventable identity crisis.
 
     /* Flow of a Timeline
-     * -> First, every step is ran. Defined by the Timeline builder — in other words, after "Timeline.Create()" and before ".Build()".
-     * -> Then everything is cleaned up.
-     * -> Done :)
+     * -> First, the builder defines the structure between Timeline.Create() and Build().
+     * -> Then a run executes that structure.
+     * -> Then cleanup happens and the run becomes a result you can interrogate.
      */
 
-    // You first define a structure in the form of a timeline; every run will follow it but with its own twist.
+    // The timeline is the blueprint. Each run is one fresh attempt to carry out
+    // that blueprint without dragging leftovers from the previous attempt like contraband through customs.
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(Simple.Simple.Trigger.MessageBox("Hello from Test"))
         .Build();
@@ -21,7 +23,7 @@ public class MessageBoxTimeline
     [Fact]
     public async Task Run()
     {
-        TimelineRun run = await this._timeline.SetupRun().RunAsync(); // Every run is isolated and fully independent.
+        TimelineRun run = await this._timeline.SetupRun().RunAsync(); // Fresh run. Fresh state. No mysterious residue on the walls.
         run.EnsureRanToCompletion();
     }
 }

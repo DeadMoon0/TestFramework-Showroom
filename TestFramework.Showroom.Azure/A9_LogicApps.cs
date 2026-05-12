@@ -14,20 +14,20 @@ using Xunit.Abstractions;
 namespace TestFramework.Showroom.Azure;
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  WORKFLOW SUPERVISION DIVISION — MODULE A9
-//  "Logic Apps: Stateful Runs, Stateless Results, And The Difference Between Them"
+//  WORKFLOW SUPERVISION DIVISION - MODULE A9
+//  "Three Workflow Shapes. Three Different Jobs. Do Not Confuse Them."
 //
-//  This is where Logic Apps stop being "that other Azure thing" and start behaving
-//  like a test surface with rules.
+//  Logic Apps have a talent for looking similar right up until you assert them
+//  the wrong way. Then they become extremely interested in teaching you the
+//  difference between stateful, stateless, and timer-driven behavior in a tone nobody enjoys.
 //
-//  Those rules matter:
-//    1. Stateful workflows can be observed as durable runs.
-//    2. Stateless workflows finish inline and should be asserted inline.
-//    3. Timer workflows are not HTTP callbacks wearing a fake mustache.
-//       They have their own trigger shape and deserve to be treated accordingly.
+//  So we will learn the cheap way instead:
+//    1. Stateful workflows produce durable runs you can track and wait on.
+//    2. Stateless workflows finish inline and should be inspected inline.
+//    3. Timer workflows are management-triggered runs, not fake manual calls.
 //
-//  Respect the model and the framework stays readable.
-//  Ignore the model and the error messages become educational.
+//  Treat each shape like the thing it actually is, and the test model stays
+//  clean enough to trust and smug enough to survive code review.
 // ══════════════════════════════════════════════════════════════════════════════
 
 internal sealed class ShowroomLogicAppDefinition : DockerLogicAppDefinition
@@ -51,9 +51,9 @@ internal sealed class ShowroomLogicAppDefinition : DockerLogicAppDefinition
 [Collection("AzureShowroom")]
 public class LogicApps_StatefulRunTracking(ITestOutputHelper outputHelper)
 {
-    // Stateful workflow: call it, keep the run context, then wait for completion.
-    // That sounds like more work because it is more work.
-    // Durable orchestration charges interest in bookkeeping.
+    // Stateful workflow: trigger it, keep the run handle, then wait for the
+    // durable run to finish. Yes, it is more bookkeeping. That is the price of
+    // asking the platform to remember what happened after your HTTP request left the building.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
@@ -97,8 +97,8 @@ public class LogicApps_StatefulRunTracking(ITestOutputHelper outputHelper)
 [Collection("AzureShowroom")]
 public class LogicApps_StatelessCapture(ITestOutputHelper outputHelper)
 {
-    // Stateless workflow: no durable run history contract, no ceremonial polling.
-    // Trigger it, capture the inline result, inspect what came back, move on with your life.
+    // Stateless workflow: no durable run history, no reason to pretend there is
+    // one. Fire it, capture the inline result, inspect it, and keep moving before ceremony starts breeding.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
@@ -140,8 +140,9 @@ public class LogicApps_StatelessCapture(ITestOutputHelper outputHelper)
 [Collection("AzureShowroom")]
 public class LogicApps_TimerWorkflow(ITestOutputHelper outputHelper)
 {
-    // Timer workflow: no HTTP body, no callback payload, just a management-triggered run.
-    // The useful output is the finished run, not the request body you never had.
+    // Timer workflow: no request body, no human-supplied payload, just a managed
+    // trigger and the finished run details on the other side. Different shape,
+    // different assertions, same demand for clarity and zero tolerance for improvisation.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(

@@ -7,6 +7,8 @@ Instead of scattering setup, actions, waits, and assertions across ad-hoc test c
 
 This solution is the example and learning space for that ecosystem.
 
+If you want a documentation-first walkthrough before opening the test projects, start with [Documentation/StartHere.md](./Documentation/StartHere.md).
+
 ## Quickstart
 
 Run the basic example suite:
@@ -28,6 +30,7 @@ Start with these files in order:
 - `TestFramework.Showroom.Basic/09_StepValidations.cs`
 - `TestFramework.Showroom.Basic/10_IOContracts.cs`
 - `TestFramework.Showroom.Basic/11_Retry.cs`
+- `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs`
 
 ## Retry Coverage
 
@@ -58,6 +61,7 @@ For infrastructure-backed retry behavior, see the container smoke tests in this 
 5. `A7_ComponentComposition.cs` demonstrates the new container composition model directly: shared dependencies, contract-selected providers, and exclusive dependency failures.
 6. `A8_FunctionApps.cs` is the dedicated Function App chapter: liveness, route discovery, explicit request shaping, and default-route selection.
 7. `A9_LogicApps.cs` is the dedicated Logic App chapter: stateful runs, stateless capture, and timer-triggered workflows.
+9. `A10_PersistentHostedFixture.cs` is the dedicated persistent-hosting chapter: one hosted container stack, many fresh run environments, and run-local config layering on top of a reused persistent slice.
 
 ### A6 Integrated Azure Contract
 
@@ -104,10 +108,12 @@ TestFramework-Showroom contains runnable examples that demonstrate how the other
 It currently includes:
 
 - `TestFramework.Showroom.Basic` for core concepts such as timelines, variables, artifacts, events, control flow, and validations
+- `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs` for the low-level Core persistent environment primitive without Docker or config wrappers
 - `TestFramework.Showroom.Azure` for Azure-oriented scenarios built on the Azure extension package
 - `A7_ComponentComposition.cs` for the definition-graph composition rules behind the container-backed Azure environment
 - `A8_FunctionApps.cs` for dedicated remote Function App usage patterns
 - `A9_LogicApps.cs` for dedicated Logic App stateful/stateless/timer patterns
+- `A10_PersistentHostedFixture.cs` for xUnit-hosted persistent environment reuse
 
 ## What You Can Do With It
 
@@ -139,14 +145,17 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 - Begin with `TestFramework.Showroom.Basic/01_MinimalTimeline.cs` to see the smallest possible timeline
 - Follow with `02_MSBTimeline.cs` and `03_DebugOutput.cs` for the message-box trigger and debug output basics before adding more framework concepts
 - Continue with `04_Variables.cs`, `05_Artifacts.cs`, `06_Events.cs`, `07_ControlFlow.cs`, `08_FluentAssertions.cs`, `09_StepValidations.cs`, `10_IOContracts.cs`, and `11_Retry.cs` to understand the core workflow model
+- Use `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs` when you want the Core-only persistent environment reuse primitive before moving to hosted/container wrappers
 - Move to `TestFramework.Showroom.Azure/A1_BlobStorage.cs` through `A6_IntegratedAzure.cs` when you want cloud-backed scenarios
 - Follow with `TestFramework.Showroom.Azure/A7_ComponentComposition.cs` when you want the container composition semantics behind multi-Function-App stacks
 - Use `TestFramework.Showroom.Azure/A8_FunctionApps.cs` when you want the focused Function App HTTP chapter
 - Use `TestFramework.Showroom.Azure/A9_LogicApps.cs` when you want the focused Logic App chapter
+- Use `TestFramework.Showroom.Azure/A10_PersistentHostedFixture.cs` when you want the hosted persistent-fixture pattern for larger Docker-backed suites
 
 ## Documentation Map
 
 - Architecture overview: [Documentation/Arc42.md](./Documentation/Arc42.md)
+- Guided onboarding: [Documentation/StartHere.md](./Documentation/StartHere.md)
 - Basic examples: [TestFramework.Showroom.Basic](./TestFramework.Showroom.Basic)
 - Azure examples: [TestFramework.Showroom.Azure](./TestFramework.Showroom.Azure)
 - Local Azure Functions support app: [Azure/FunctionApp](./Azure/FunctionApp)

@@ -10,45 +10,32 @@ using Xunit.Abstractions;
 namespace TestFramework.Showroom.Azure;
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  CLOUD INFRASTRUCTURE DIVISION — PARTICIPANT ORIENTATION MODULE A4
-//  "Service Bus: Asynchronous Messaging For The Chronologically Flexible"
+//  CLOUD INFRASTRUCTURE DIVISION - PARTICIPANT ORIENTATION MODULE A4
+//  "Send A Message. Wait For Reality To Catch Up."
 //
-//  Service Bus is a message broker. You send a message.
-//  Something else picks it up. Maybe immediately. Maybe after a brief think.
-//  The Timeline framework can wait for that message on your behalf.
-//  It is a patient framework. We trained it ourselves over many, many builds.
+//  Service Bus is where the showroom starts caring about time. Not just whether
+//  a message can be sent, but whether the right message shows up later and can
+//  be identified without guesswork or wishful thinking.
 //
-//  IMPORTANT: The message identifiers in these examples are "MainSBQueue" and "MainSBTopic."
-//  Their queue/topic topology comes from the shared Azure showroom fluent Service Bus setup.
-//  If they don't match, the WaitForEvent step will time out.
-//  The timeout window is 10 seconds. The error message is clear.
-//  The situation is manageable. We have managed worse situations.
-//  We don't want to talk about those situations.
+//  That is why correlation IDs matter here. Asynchronous systems are already
+//  generous with ambiguity. The test does not need to add more and then act surprised.
 // ══════════════════════════════════════════════════════════════════════════════
 
 [Collection("AzureShowroom")]
 public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
 {
-    // The classic "did it actually go?" test.
-    // SEND a message. WAIT for the event that fires when it is received.
-    // Correlate using a CorrelationId so you know it's YOUR message coming back.
-    // This is important. Other messages exist on the bus. They are not yours.
-    // Do not assert on messages that are not yours. We've seen what that leads to.
+    // First example: send one message and wait for the exact correlated receipt.
+    // This is the basic asynchronous trust exercise. Very simple. Emotionally difficult.
 
     private const string CorrelationId = "showroom-42";
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(AzureTF.Trigger.ServiceBus.Send("MainSBTopic", new ServiceBusMessage("Live transmission. Please stand by.") { CorrelationId = CorrelationId }))
-        //  ^ SEND a message with a known CorrelationId.
-        //    The CorrelationId is how we'll recognise the reply.
-        //    It's like writing your name on your lunch in the communal fridge.
-        //    Works fine until someone eats it anyway. These are Azure messages. Nobody eats them.
+        //  ^ Send with a known correlation ID so the wait can demand the exact message later instead of adopting a stranger.
         .WaitForEvent(AzureTF.Event.ServiceBus.MessageReceived("MainSBTopic", correlationId: CorrelationId, completeMessage: true))
-            // complete = acknowledge + remove. Clean hands.
+            // complete = acknowledge and remove the message once observed. Clean hands. Fewer ghosts.
             .WithTimeOut(TimeSpan.FromSeconds(10))
-        //  ^ Wait up to 10 seconds. If nothing arrives, the step fails.
-        //    10 seconds felt generous. It felt less generous after the first few timeouts.
-        //    We kept it. Character builds.
+        //  ^ If nothing matching arrives in time, the run fails with a specific timeout and no sympathy.
         .Build();
 
     [Fact]
@@ -63,11 +50,11 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        // The received message is stored as a variable named "out" by the WaitForEvent step.
+        // The received message is exposed as the step output variable. Convenient and slightly smug.
         run.Variable<ServiceBusReceivedMessage>("out")
             .Should().Exist().And().NotBeNull()
             .And().Match(m => m!.CorrelationId == CorrelationId, $"CorrelationId must be '{CorrelationId}'");
-        // ^ Confirm it was YOUR message that arrived, not someone else's lunch.
+        // ^ Correlation closes the loop. Without it, the bus is just plausible noise wearing a badge.
     }
 }
 
@@ -103,22 +90,15 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
 [Collection("AzureShowroom")]
 public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
 {
-    // If your message content is dynamic — built at test setup time, values you only know
-    // at runtime — use Var.Ref to pass it in by reference.
-    //
-    // The Timeline is built statically (once, at class load).
-    // The actual message is injected per-run.
-    // Clean separation. Very professional.
-    // We clean up our separations. We are professional.
+    // Third example: build the outbound message per run instead of hardcoding it
+    // into the static timeline. Same structure, dynamic payload, fewer creative excuses.
 
     private const string CorrelationId = "showroom-dynamic";
     private const string Subject = "Showroom Test";
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(AzureTF.Trigger.ServiceBus.Send("MainSBTopic", Var.Ref<ServiceBusMessage>("outboundMessage")))
-        //    ^ Notice the Var.Ref here. The message isn't known until RunAsync time.
-        //      By the time you read this comment, the message will have been provided.
-        //      The future is already written. Mostly.
+        //    ^ The timeline references a runtime value here because the message is supplied per run, not discovered in a dream.
         .WaitForEvent(AzureTF.Event.ServiceBus.MessageReceived("MainSBTopic", correlationId: CorrelationId, completeMessage: true))
             .WithTimeOut(TimeSpan.FromSeconds(10))
         .Build();
