@@ -1,6 +1,6 @@
 ﻿using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
-using TestFrameworkLocalIO;
+using TestFramework.LocalIO;
 using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;
@@ -21,11 +21,11 @@ public class Events(ITestOutputHelper outputHelper)
     // test into a pile of hand-written polling loops, regret, and measurable caffeine abuse.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
-        .WaitForEvent(LocalIO.Events.FileExists(Var.Ref<string>("artifactPath")))
+        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
+        .WaitForEvent(TestFramework.LocalIO.LocalIO.Events.FileExists(Var.Ref<string>("artifactPath")))
         //                           ^ Name the condition the world must satisfy,
         //                             then let the framework do the waiting while you pretend patience was always the plan.
-        .RegisterArtifact("newFile", LocalIO.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
+        .RegisterArtifact("newFile", TestFramework.LocalIO.LocalIO.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
         .Trigger(Simple.Simple.Trigger.MessageBox(Var.Ref<string>("cmdShow")))
         .Build();
 

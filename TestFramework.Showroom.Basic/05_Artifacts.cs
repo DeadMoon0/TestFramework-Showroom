@@ -1,6 +1,6 @@
 ﻿using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
-using TestFrameworkLocalIO;
+using TestFramework.LocalIO;
 using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;
@@ -52,8 +52,8 @@ public class Artifacts_Register(ITestOutputHelper outputHelper)
     // it. Fine. Register the reference and the framework can still track it instead of staring at the aftermath like a detective in overbudget shoes.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
-        .RegisterArtifact("newFile", LocalIO.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
+        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
+        .RegisterArtifact("newFile", TestFramework.LocalIO.LocalIO.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
         //                           ^ A reference is the address. Without it,
         //                             you do not have tracking, you have gossip and blame allocation.
         .Trigger(Simple.Simple.Trigger.MessageBox(Var.Ref<string>("cmdShow")))
@@ -88,8 +88,8 @@ public class Artifacts_Assert(ITestOutputHelper outputHelper)
     // evidence. That promotion matters. Untracked side effects are how meetings get longer.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
-        .RegisterArtifact("newFile", LocalIO.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
+        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
+        .RegisterArtifact("newFile", TestFramework.LocalIO.LocalIO.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
         .Build();
 
     [Fact]
@@ -124,9 +124,9 @@ public class Artifacts_Versions(ITestOutputHelper outputHelper)
     // moment something became wrong. Capture versions when the state matters, unless you enjoy historical fiction disguised as debugging.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd")))
-        .RegisterArtifact("newFile", LocalIO.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
-        .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd")))
+        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd")))
+        .RegisterArtifact("newFile", TestFramework.LocalIO.LocalIO.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
+        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd")))
         .CaptureArtifactVersion("newFile", "laterVersion")
         .Build();
 

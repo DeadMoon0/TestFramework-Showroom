@@ -1,7 +1,7 @@
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Timelines.Assertions;
 using TestFramework.Core.Variables;
-using TestFrameworkLocalIO;
+using TestFramework.LocalIO;
 using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;

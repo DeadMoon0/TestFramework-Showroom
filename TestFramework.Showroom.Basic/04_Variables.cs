@@ -1,7 +1,7 @@
 ﻿using TestFramework.Core.Timelines;
 using TestFramework.Core.Timelines.Assertions;
 using TestFramework.Core.Variables;
-using TestFrameworkLocalIO;
+using TestFramework.LocalIO;
 using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;
@@ -31,7 +31,7 @@ public class Variables_Assert(ITestOutputHelper outputHelper)
     // inspected like everything else worth trusting. Confidence is not a data type.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
+        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
         .SetVariable("CmdExitCode", Var.Ref<int>("out"))
         .Build();
 

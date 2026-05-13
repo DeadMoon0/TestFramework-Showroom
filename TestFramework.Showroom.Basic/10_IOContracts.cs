@@ -2,7 +2,7 @@ using TestFramework.Core.Exceptions;
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Timelines.Assertions;
 using TestFramework.Core.Variables;
-using TestFrameworkLocalIO;
+using TestFramework.LocalIO;
 using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;
@@ -14,7 +14,7 @@ public class IOContracts_StepDeclaredIO(ITestOutputHelper outputHelper)
     // checks the plan before the world gets disturbed and before somebody blames the network out of habit.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
+        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
         // Cmd declares it needs cmdCommand and produces out. Very honest of it.
         .SetVariable("ExitCode", Var.Ref<int>("out"))
         // SetVariable then turns that output into a named run variable, because "out" is technically correct and socially terrible.
@@ -38,7 +38,7 @@ public class IOContracts_RunExclusively(ITestOutputHelper outputHelper)
     // The builder still gets to say whether a step must run exclusively. Good policy and good paperwork are not the same department.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
+        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
         .RunExclusively()
         .Build();
 
@@ -58,7 +58,7 @@ public class IOContracts_MissingInputDiagnosis(ITestOutputHelper outputHelper)
     // remote system gets touched. Early rejection is the whole advantage and much cheaper than dramatic runtime confusion.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
+        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
         .Build();
 
     [Fact]
