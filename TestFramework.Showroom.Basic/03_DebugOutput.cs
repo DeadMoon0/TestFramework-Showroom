@@ -1,4 +1,5 @@
 ﻿using TestFramework.Core.Timelines;
+using TestFramework.Simple;
 using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;
@@ -9,7 +10,7 @@ public class DebugOutput(ITestOutputHelper outputHelper)
     // the entire bargain here. More visibility, less interpretive guessing, fewer speeches about "probably the environment."
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(Simple.Simple.Trigger.MessageBox("Hello from Test"))
+        .Trigger(SimpleExt.Trigger.MessageBox("Hello from Test"))
         .Build();
 
     [Fact]

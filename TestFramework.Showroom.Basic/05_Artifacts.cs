@@ -1,18 +1,17 @@
 ﻿using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using TestFramework.LocalIO;
+using TestFramework.Simple;
 using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;
 
-file static class ArtifactSampleTempDirectories
+file static class ArtifactSamplePaths
 {
-    public static string Create()
-    {
-        string path = Path.Combine(Path.GetTempPath(), $"showroom-basic-{Guid.NewGuid():N}");
-        Directory.CreateDirectory(path);
-        return path;
-    }
+    public static string BuildOutput => AppContext.BaseDirectory;
+
+    public static string UniqueFile(string prefix)
+        => Path.Combine(BuildOutput, $"{prefix}-{Guid.NewGuid():N}.txt");
 }
 
 public class Artifacts_Setup(ITestOutputHelper outputHelper)
@@ -22,27 +21,19 @@ public class Artifacts_Setup(ITestOutputHelper outputHelper)
 
     private readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("msgFile") // Register the artifact slot up front so the run knows this file matters and not just spiritually.
-        .Trigger(Simple.Simple.Trigger.MessageBox(Var.Ref<string>("cmdCommand")))
+        .Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("cmdCommand")))
         .Build();
 
     [Fact]
     public async Task Run()
     {
-        string tempDir = ArtifactSampleTempDirectories.Create();
-        string artifactPath = Path.Combine(tempDir, "msg.txt");
+        string artifactPath = ArtifactSamplePaths.UniqueFile("showroom-basic-msg");
 
-        try
-        {
-            var run = await this._timeline.SetupRun(outputHelper)
-                .AddVariable("cmdCommand", "Hello from an Artifact")
-                .AddFileArtifact("msgFile", artifactPath, "Hello from an Artifact") // Real artifact data enters the run here. Actual file. No interpretive dance.
-                .RunAsync();
-            run.EnsureRanToCompletion();
-        }
-        finally
-        {
-            Directory.Delete(tempDir, true);
-        }
+        var run = await this._timeline.SetupRun(outputHelper)
+            .AddVariable("cmdCommand", "Hello from an Artifact")
+            .AddFileArtifact("msgFile", artifactPath, "Hello from an Artifact") // Real artifact data enters the run here. Actual file. No interpretive dance.
+            .RunAsync();
+        run.EnsureRanToCompletion();
     }
 }
 
@@ -52,33 +43,26 @@ public class Artifacts_Register(ITestOutputHelper outputHelper)
     // it. Fine. Register the reference and the framework can still track it instead of staring at the aftermath like a detective in overbudget shoes.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
-        .RegisterArtifact("newFile", TestFramework.LocalIO.LocalIO.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
+        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
+        .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
         //                           ^ A reference is the address. Without it,
         //                             you do not have tracking, you have gossip and blame allocation.
-        .Trigger(Simple.Simple.Trigger.MessageBox(Var.Ref<string>("cmdShow")))
+        .Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("cmdShow")))
         .Build();
 
     [Fact]
     public async Task Run()
     {
-        string tempDir = ArtifactSampleTempDirectories.Create();
-        string artifactPath = Path.Combine(tempDir, "outNew.txt");
+        string artifactPath = ArtifactSamplePaths.UniqueFile("showroom-basic-register");
+        string artifactFileName = Path.GetFileName(artifactPath);
 
-        try
-        {
-            var run = await this._timeline.SetupRun(outputHelper)
-                .AddVariable("cmdCreate", "echo Hello from the new Artifact >> outNew.txt")
-                .AddVariable("cmdShow", "Hello from the new Artifact")
-                .AddVariable("cwd", tempDir)
-                .AddVariable("artifactPath", artifactPath)
-                .RunAsync();
-            run.EnsureRanToCompletion();
-        }
-        finally
-        {
-            Directory.Delete(tempDir, true);
-        }
+        var run = await this._timeline.SetupRun(outputHelper)
+            .AddVariable("cmdCreate", $"echo Hello from the new Artifact >> {artifactFileName}")
+            .AddVariable("cmdShow", "Hello from the new Artifact")
+            .AddVariable("cwd", ArtifactSamplePaths.BuildOutput)
+            .AddVariable("artifactPath", artifactPath)
+            .RunAsync();
+        run.EnsureRanToCompletion();
     }
 }
 
@@ -88,33 +72,26 @@ public class Artifacts_Assert(ITestOutputHelper outputHelper)
     // evidence. That promotion matters. Untracked side effects are how meetings get longer.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
-        .RegisterArtifact("newFile", TestFramework.LocalIO.LocalIO.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
+        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
+        .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
         .Build();
 
     [Fact]
     public async Task Run()
     {
-        string tempDir = ArtifactSampleTempDirectories.Create();
-        string artifactPath = Path.Combine(tempDir, "outAssert.txt");
+        string artifactPath = ArtifactSamplePaths.UniqueFile("showroom-basic-assert");
+        string artifactFileName = Path.GetFileName(artifactPath);
 
-        try
-        {
-            var run = await this._timeline.SetupRun(outputHelper)
-                .AddVariable("cmdCreate", "echo Hello from the new Artifact >> outAssert.txt")
-                .AddVariable("cwd", tempDir)
-                .AddVariable("artifactPath", artifactPath)
-                .RunAsync();
-            run.EnsureRanToCompletion();
+        var run = await this._timeline.SetupRun(outputHelper)
+            .AddVariable("cmdCreate", $"echo Hello from the new Artifact >> {artifactFileName}")
+            .AddVariable("cwd", ArtifactSamplePaths.BuildOutput)
+            .AddVariable("artifactPath", artifactPath)
+            .RunAsync();
+        run.EnsureRanToCompletion();
 
-            Assert.Equal("Hello from the new Artifact \r\n", run.ArtifactStore.GetFileArtifact("newFile").Last.DataAsUtf8String);
-            //               ^ The run stores artifact versions in one place you
-            //                 can inspect instead of re-deriving them from chaos and stale confidence.
-        }
-        finally
-        {
-            Directory.Delete(tempDir, true);
-        }
+        run.FileArtifact("newFile").Utf8Text().Should().Be("Hello from the new Artifact \r\n");
+        //                    ^ The run stores artifact versions in one place you
+        //                      can inspect instead of re-deriving them from chaos and stale confidence.
     }
 }
 
@@ -124,34 +101,27 @@ public class Artifacts_Versions(ITestOutputHelper outputHelper)
     // moment something became wrong. Capture versions when the state matters, unless you enjoy historical fiction disguised as debugging.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd")))
-        .RegisterArtifact("newFile", TestFramework.LocalIO.LocalIO.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
-        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd")))
+        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd")))
+        .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
+        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd")))
         .CaptureArtifactVersion("newFile", "laterVersion")
         .Build();
 
     [Fact]
     public async Task Run()
     {
-        string tempDir = ArtifactSampleTempDirectories.Create();
-        string artifactPath = Path.Combine(tempDir, "outVersion.txt");
+        string artifactPath = ArtifactSamplePaths.UniqueFile("showroom-basic-version");
+        string artifactFileName = Path.GetFileName(artifactPath);
 
-        try
-        {
-            var run = await this._timeline.SetupRun(outputHelper)
-                .AddVariable("cmdAppend", "echo Some Log >> outVersion.txt")
-                .AddVariable("cwd", tempDir)
-                .AddVariable("artifactPath", artifactPath)
-                .RunAsync();
-            run.EnsureRanToCompletion();
+        var run = await this._timeline.SetupRun(outputHelper)
+            .AddVariable("cmdAppend", $"echo Some Log >> {artifactFileName}")
+            .AddVariable("cwd", ArtifactSamplePaths.BuildOutput)
+            .AddVariable("artifactPath", artifactPath)
+            .RunAsync();
+        run.EnsureRanToCompletion();
 
-            Assert.Equal("Some Log \r\n", run.ArtifactStore.GetFileArtifact("newFile").First.DataAsUtf8String);
-            Assert.Equal("Some Log \r\nSome Log \r\n", run.ArtifactStore.GetFileArtifact("newFile")["laterVersion"].DataAsUtf8String);
-            //                                                       ^ Named versions pin the exact state you care about, which beats "the earlier one, but not the first earlier one."
-        }
-        finally
-        {
-            Directory.Delete(tempDir, true);
-        }
+        Assert.Equal("Some Log \r\n", run.ArtifactStore.GetFileArtifact("newFile").First.DataAsUtf8String);
+        Assert.Equal("Some Log \r\nSome Log \r\n", run.ArtifactStore.GetFileArtifact("newFile")["laterVersion"].DataAsUtf8String);
+        //                                                       ^ Named versions pin the exact state you care about, which beats "the earlier one, but not the first earlier one."
     }
 }

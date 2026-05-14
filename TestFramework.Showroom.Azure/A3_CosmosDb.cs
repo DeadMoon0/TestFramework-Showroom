@@ -38,7 +38,6 @@ public record CosmosShowroomItem
     public int Score { get; init; }
 }
 
-[Collection("AzureShowroom")]
 public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
 {
     // First example: upsert one document, verify it exists, and let cleanup take
@@ -76,7 +75,6 @@ public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
     }
 }
 
-[Collection("AzureShowroom")]
 public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
 {
     // Second example: query for documents by property rather than exact id. That
@@ -90,7 +88,7 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
         // come back as tracked artifacts. Non-matches still get cleaned up because fairness is not the same as leniency.
         .FindArtifacts(
             "topScorers",
-            AzureTF.ArtifactFinder.DB.CosmosQuery<CosmosShowroomItem>(
+            AzureExt.ArtifactFinder.DB.CosmosQuery<CosmosShowroomItem>(
                 "MainDb",
                 new QueryDefinition("SELECT * FROM c WHERE c.score = 99 AND c.PartitionKey = 'showroom-query'")))
         .Build();

@@ -48,7 +48,6 @@ internal sealed class ShowroomLogicAppDefinition : DockerLogicAppDefinition
     };
 }
 
-[Collection("AzureShowroom")]
 public class LogicApps_StatefulRunTracking(ITestOutputHelper outputHelper)
 {
     // Stateful workflow: trigger it, keep the run handle, then wait for the
@@ -57,7 +56,7 @@ public class LogicApps_StatefulRunTracking(ITestOutputHelper outputHelper)
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
-            AzureTF.Trigger.LogicApp
+            AzureExt.Trigger.LogicApp
                 .Http("ShowroomLogic")
                 .Workflow("ShowroomStatefulWorkflow")
                 .Manual()
@@ -65,8 +64,8 @@ public class LogicApps_StatefulRunTracking(ITestOutputHelper outputHelper)
                 .CallForRunContext())
         .WithTimeOut(TimeSpan.FromMinutes(2))
         .Name("logic-call")
-        .CaptureResultAs<LogicAppRunContext>("logicRun")
-        .WaitForEvent(AzureTF.Event.LogicApp.RunCompleted("ShowroomLogic", Var.Ref<LogicAppRunContext>("logicRun")))
+        .GetRunContext("logicRun")
+        .WaitForEvent(AzureExt.Event.LogicApp.RunCompleted("ShowroomLogic", Var.Ref<LogicAppRunContext>("logicRun")))
         .WithTimeOut(TimeSpan.FromMinutes(2))
         .Name("logic-completed")
         .Build();
@@ -94,7 +93,6 @@ public class LogicApps_StatefulRunTracking(ITestOutputHelper outputHelper)
     }
 }
 
-[Collection("AzureShowroom")]
 public class LogicApps_StatelessCapture(ITestOutputHelper outputHelper)
 {
     // Stateless workflow: no durable run history, no reason to pretend there is
@@ -102,7 +100,7 @@ public class LogicApps_StatelessCapture(ITestOutputHelper outputHelper)
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
-            AzureTF.Trigger.LogicApp
+            AzureExt.Trigger.LogicApp
                 .Http("ShowroomLogic")
                 .Workflow("ShowroomStatelessWorkflow")
                 .Manual()
@@ -137,7 +135,6 @@ public class LogicApps_StatelessCapture(ITestOutputHelper outputHelper)
     }
 }
 
-[Collection("AzureShowroom")]
 public class LogicApps_TimerWorkflow(ITestOutputHelper outputHelper)
 {
     // Timer workflow: no request body, no human-supplied payload, just a managed
@@ -146,15 +143,15 @@ public class LogicApps_TimerWorkflow(ITestOutputHelper outputHelper)
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
-            AzureTF.Trigger.LogicApp
+            AzureExt.Trigger.LogicApp
                 .Http("ShowroomLogic")
                 .Workflow("ShowroomTimerWorkflow")
                 .Timer()
                 .CallForRunContext())
         .WithTimeOut(TimeSpan.FromMinutes(2))
         .Name("logic-timer-call")
-        .CaptureResultAs<LogicAppRunContext>("logicTimerRun")
-        .WaitForEvent(AzureTF.Event.LogicApp.RunCompleted("ShowroomLogic", Var.Ref<LogicAppRunContext>("logicTimerRun")))
+        .GetRunContext("logicTimerRun")
+        .WaitForEvent(AzureExt.Event.LogicApp.RunCompleted("ShowroomLogic", Var.Ref<LogicAppRunContext>("logicTimerRun")))
         .WithTimeOut(TimeSpan.FromMinutes(2))
         .Name("logic-timer-completed")
         .Build();

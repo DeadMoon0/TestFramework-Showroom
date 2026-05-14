@@ -32,7 +32,6 @@ namespace TestFramework.Showroom.Azure;
 //  Fast failure is mercy. Late failure is paperwork and committee language.
 // ══════════════════════════════════════════════════════════════════════════════
 
-[Collection("AzureShowroom")]
 public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelper outputHelper)
 {
     private static readonly Timeline SharedDependenciesTimeline = Timeline.Create()
@@ -40,27 +39,27 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         .SetupArtifact("analyseDoc")
         .RegisterArtifact(
             "ingestResult",
-            AzureTF.Artifact.StorageAccount.TableRef<AnalysisResult>(
+            AzureExt.Artifact.StorageAccount.TableRef<AnalysisResult>(
                 "SharedStorage",
                 Var.Const("MainTable"),
                 Var.Const("samples"),
                 Var.Const("ingest-run")))
         .RegisterArtifact(
             "analyseResult",
-            AzureTF.Artifact.StorageAccount.TableRef<AnalysisResult>(
+            AzureExt.Artifact.StorageAccount.TableRef<AnalysisResult>(
                 "SharedStorage",
                 Var.Const("MainTable"),
                 Var.Const("samples"),
                 Var.Const("analyse-run")))
         .Trigger(
-            AzureTF.Trigger.FunctionApp
+            AzureExt.Trigger.FunctionApp
                 .Http("Ingest")
                 .SelectEndpointWithMethod<AnalysisProcessor>(nameof(AnalysisProcessor.Run))
                 .WithBody(Var.Ref<string>("ingestRequest"))
                 .Call())
             .WithTimeOut(TimeSpan.FromMinutes(2))
         .Trigger(
-            AzureTF.Trigger.FunctionApp
+            AzureExt.Trigger.FunctionApp
                 .Http("Analyse")
                 .SelectEndpointWithMethod<AnalysisProcessor>(nameof(AnalysisProcessor.Run))
                 .WithBody(Var.Ref<string>("analyseRequest"))
@@ -74,13 +73,13 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         .SetupArtifact("contractDoc")
         .RegisterArtifact(
             "contractResult",
-            AzureTF.Artifact.StorageAccount.TableRef<AnalysisResult>(
+            AzureExt.Artifact.StorageAccount.TableRef<AnalysisResult>(
                 "SharedStorage",
                 Var.Const("MainTable"),
                 Var.Const("samples"),
                 Var.Const("contract-run")))
         .Trigger(
-            AzureTF.Trigger.FunctionApp
+            AzureExt.Trigger.FunctionApp
                 .Http("ContractConsumer")
                 .SelectEndpointWithMethod<AnalysisProcessor>(nameof(AnalysisProcessor.Run))
                 .WithBody(Var.Ref<string>("contractRequest"))
@@ -90,9 +89,9 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         .Build();
 
     private static readonly Timeline ExclusiveDependenciesTimeline = Timeline.Create()
-        .Trigger(AzureTF.Trigger.IsLive.FunctionApp("ExclusiveA"))
+        .Trigger(AzureExt.Trigger.IsLive.FunctionApp("ExclusiveA"))
             .WithTimeOut(TimeSpan.FromMinutes(2))
-        .Trigger(AzureTF.Trigger.IsLive.FunctionApp("ExclusiveB"))
+        .Trigger(AzureExt.Trigger.IsLive.FunctionApp("ExclusiveB"))
             .WithTimeOut(TimeSpan.FromMinutes(2))
         .Build();
 
@@ -326,7 +325,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override FunctionAppIdentifier Identifier => "ContractConsumer";
 
-            protected override void Configure(DockerFunctionAppBuilder builder)
+        protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
                 .UseStorage<SharedStorageDefinition>(tableNameSettingName: "StorageTableName")
@@ -356,7 +355,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override FunctionAppIdentifier Identifier => "ExclusiveA";
 
-            protected override void ConfigureDependencies(DockerAzureDependencyBuilder dependencies)
+        protected override void ConfigureDependencies(DockerAzureDependencyBuilder dependencies)
         {
             dependencies.Include<ExclusiveBusDefinition>(DependencyOwnership.Exclusive);
         }
@@ -366,7 +365,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override FunctionAppIdentifier Identifier => "ExclusiveB";
 
-            protected override void ConfigureDependencies(DockerAzureDependencyBuilder dependencies)
+        protected override void ConfigureDependencies(DockerAzureDependencyBuilder dependencies)
         {
             dependencies.Include<ExclusiveBusDefinition>(DependencyOwnership.Exclusive);
         }

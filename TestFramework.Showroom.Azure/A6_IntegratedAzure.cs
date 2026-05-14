@@ -128,7 +128,6 @@ internal static class LabSqlSetup
 //  The Test Class
 // ══════════════════════════════════════════════════════════════════════════════
 
-[Collection("AzureShowroom")]
 public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
 {
     // One static timeline, many per-run identities. The structure stays fixed.
@@ -147,7 +146,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         //   flow, not SQL mutation side quests.
 
         .RegisterArtifact("analysisResult",
-            AzureTF.Artifact.StorageAccount.TableRef<AnalysisResult>(
+            AzureExt.Artifact.StorageAccount.TableRef<AnalysisResult>(
                 "MainStorage",
                 Var.Ref<string>("tableName"),
                 Var.Ref<string>("tablePartitionKey"),
@@ -158,14 +157,14 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         // ═══ Step 2: Trigger - Service Bus into ingestion ═════════════════════
 
         .Trigger(
-            AzureTF.Trigger.ServiceBus.Send(
+            AzureExt.Trigger.ServiceBus.Send(
                 "SampleSubmission",
                 Var.Ref<ServiceBusMessage>("ingestionMessage")))
         // ^ Fire the ingestion message. This is the point where the test stops
         //   preparing and starts making demands of the system.
 
         .WaitForEvent(
-            AzureTF.Event.ServiceBus.MessageReceived(
+            AzureExt.Event.ServiceBus.MessageReceived(
                 "ProcessingReply",
                 correlationId: Var.Ref<string>("ingestionReplyCorrelationId"),
                 completeMessage: true))
@@ -175,7 +174,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
 
         .FindArtifacts(
             "sample",
-            AzureTF.ArtifactFinder.DB.CosmosQuery<CandidateProfile>(
+            AzureExt.ArtifactFinder.DB.CosmosQuery<CandidateProfile>(
                 "MainDb",
                 Var.Ref<string>("tableRowKey").Transform(key =>
                     new QueryDefinition(
@@ -187,7 +186,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         // ═══ Step 3: Trigger - HTTP into analysis ═════════════════════════════
 
         .Trigger(
-            AzureTF.Trigger.FunctionApp
+            AzureExt.Trigger.FunctionApp
                 .Http("Default")
                 .SelectEndpointWithMethod<AnalysisProcessor>(nameof(AnalysisProcessor.Run))
                 .WithBody(Var.Ref<string>("analysisRequest"))
@@ -196,7 +195,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         //   Cosmos profile produced earlier and convert that into a Table result.
 
         .WaitForEvent(
-            AzureTF.Event.ServiceBus.MessageReceived(
+            AzureExt.Event.ServiceBus.MessageReceived(
                 "ProcessingReply",
                 correlationId: Var.Ref<string>("analysisReplyCorrelationId"),
                 completeMessage: true))
@@ -285,28 +284,28 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         // Blob says the batch was seeded correctly.
         run.BlobArtifact("sampleManifest").Should().Exist();
         run.BlobArtifact("sampleManifest")
-            .Select(d => d.MetaData["sample_id"])
+            .Metadata("sample_id")
             .Should().Be(runId);
 
         // Cosmos says ingestion actually registered the profile.
         run.CosmosArtifact<CandidateProfile>("sample_0").Should().Exist();
         run.CosmosArtifact<CandidateProfile>("sample_0")
-            .Select(d => d.Item.RunId)
+            .Item(item => item.RunId)
             .Should().Be(runId);
         run.CosmosArtifact<CandidateProfile>("sample_0")
-            .Select(d => d.Item.Stage)
+            .Item(item => item.Stage)
             .Should().Be("ingested");
         run.CosmosArtifact<CandidateProfile>("sample_0")
-            .Select(d => d.Item.Status)
+            .Item(item => item.Status)
             .Should().Be("registered");
 
         // SQL still holds the work order we started with.
         run.SqlArtifact<LabWorkOrder>("workOrder").Should().Exist();
         run.SqlArtifact<LabWorkOrder>("workOrder")
-            .Select(d => d.Row.Stage)
+            .Row(row => row.Stage)
             .Should().Be("lab");
         run.SqlArtifact<LabWorkOrder>("workOrder")
-            .Select(d => d.Row.Status)
+            .Row(row => row.Status)
             .Should().Be("pending");
 
         // Table says the analysis processor finished the job using the profile

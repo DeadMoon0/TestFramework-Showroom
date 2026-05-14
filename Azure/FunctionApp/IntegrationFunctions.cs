@@ -86,7 +86,7 @@ public class SampleIngestionFunction(
 }
 
 // ─── Analysis Processor: HTTP trigger ────────────────────────────────────────
-// Called by the test via AzureTF.Trigger.FunctionApp.Http.
+// Called by the test via AzureExt.Trigger.FunctionApp.Http.
 // Reads the Cosmos candidate profile and writes the analysis result to Table Storage.
 
 public class AnalysisProcessor(

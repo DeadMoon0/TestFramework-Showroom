@@ -2,6 +2,7 @@
 using TestFramework.Core.Timelines.Assertions;
 using TestFramework.Core.Variables;
 using TestFramework.LocalIO;
+using TestFramework.Simple;
 using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;
@@ -12,7 +13,7 @@ public class Variables(ITestOutputHelper outputHelper)
     // Same structure, different inputs, no duplicate timeline definitions every time a string gets ambitious.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(Simple.Simple.Trigger.MessageBox(Var.Ref<string>("cmdCommand")))
+        .Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("cmdCommand")))
         .Build();
 
     [Fact]
@@ -31,8 +32,8 @@ public class Variables_Assert(ITestOutputHelper outputHelper)
     // inspected like everything else worth trusting. Confidence is not a data type.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(TestFramework.LocalIO.LocalIO.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
-        .SetVariable("CmdExitCode", Var.Ref<int>("out"))
+        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
+        .GetExitCode("CmdExitCode")
         .Build();
 
     [Fact]
@@ -55,7 +56,7 @@ public class Variables_Transforms(ITestOutputHelper outputHelper)
     // The consumer still gets exactly the shape it needs. Suspiciously efficient, but we allow it.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(Simple.Simple.Trigger.MessageBox(Var.Ref<string>("cmdCommand").Transform(x => x + ". And it is even Transformed!")))
+        .Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("cmdCommand").Transform(x => x + ". And it is even Transformed!")))
         .Build();
 
     [Fact]
@@ -74,7 +75,7 @@ public class Variables_RunExclusively(ITestOutputHelper outputHelper)
     // that sharing time with other work is no longer an option. Think quarantine, but for concurrency.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(Simple.Simple.Trigger.MessageBox(Var.Ref<string>("cmdCommand")))
+        .Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("cmdCommand")))
         .RunExclusively()
         .Build();
 

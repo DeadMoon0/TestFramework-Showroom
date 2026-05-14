@@ -2,7 +2,7 @@ using System.Net;
 using System.Net.Http;
 using FunctionApp;
 using TestFramework.Azure;
-using TestFramework.Azure.Configuration.SpecificConfigs;
+using TestFramework.Azure.FunctionApp.Results;
 using TestFramework.Azure.Identifier;
 using TestFramework.Azure.Runtime;
 using TestFramework.Azure.Extensions;
@@ -33,19 +33,9 @@ namespace TestFramework.Showroom.Azure;
 
 internal sealed class ShowroomFunctionAppDefinition : DockerFunctionAppDefinition<HttpTests>
 {
-    private const string LocalFunctionKey = "local-test-key";
-
     public override FunctionAppIdentifier Identifier => "ShowroomFunction";
-
-    protected override FunctionAppConfig? CreateDefaultConfig() => new()
-    {
-        BaseUrl = "http://localhost/",
-        Code = LocalFunctionKey,
-        AdminCode = LocalFunctionKey,
-    };
 }
 
-[Collection("AzureShowroom")]
 public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
 {
     // First move: let the framework discover the route from the function method
@@ -53,10 +43,10 @@ public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
     // have to confidently call the wrong thing and defend it in chat.
 
     private static readonly Timeline _timeline = Timeline.Create()
-        .Trigger(AzureTF.Trigger.IsLive.FunctionApp("ShowroomFunction", AlivenessLevel.Reachable)).WithTimeOut(TimeSpan.FromMinutes(1))
+        .Trigger(AzureExt.Trigger.IsLive.FunctionApp("ShowroomFunction", AlivenessLevel.Reachable)).WithTimeOut(TimeSpan.FromMinutes(1))
         .Name("function-live")
         .Trigger(
-            AzureTF.Trigger.FunctionApp
+            AzureExt.Trigger.FunctionApp
                 .Http("ShowroomFunction")
                 .SelectEndpointWithMethod<HttpTests>(nameof(HttpTests.Run))
                 .Call())
@@ -76,8 +66,8 @@ public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        HttpResponseMessage response = Assert.IsType<HttpResponseMessage>(run.Step("function-call").LastResult.Result);
-        string body = await response.Content.ReadAsStringAsync();
+        HttpResponseResultContext response = Assert.IsType<HttpResponseResultContext>(run.Step("function-call").LastResult.Result);
+        string body = Assert.IsType<string>(response.Body);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("The HTTP trigger function executed successfully.", body, StringComparison.Ordinal);
@@ -85,7 +75,6 @@ public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
     }
 }
 
-[Collection("AzureShowroom")]
 public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
 {
     // Second move: when headers and body matter, shape them in the timeline.
@@ -93,7 +82,7 @@ public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
-            AzureTF.Trigger.FunctionApp
+            AzureExt.Trigger.FunctionApp
                 .Http("ShowroomFunction")
                 .SelectEndpointWithMethod<HttpTests>(nameof(HttpTests.Echo))
                 .WithHeader(Var.Const("x-test"), Var.Const("showroom"))
@@ -115,8 +104,8 @@ public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        HttpResponseMessage response = Assert.IsType<HttpResponseMessage>(run.Step("function-echo").LastResult.Result);
-        string body = await response.Content.ReadAsStringAsync();
+        HttpResponseResultContext response = Assert.IsType<HttpResponseResultContext>(run.Step("function-echo").LastResult.Result);
+        string body = Assert.IsType<string>(response.Body);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("Method=POST", body, StringComparison.Ordinal);
@@ -125,7 +114,6 @@ public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
     }
 }
 
-[Collection("AzureShowroom")]
 public class FunctionApps_DefaultFunctionRoute(ITestOutputHelper outputHelper)
 {
     // Third move: if the app keeps the default api/{functionName} route, selecting
@@ -134,7 +122,7 @@ public class FunctionApps_DefaultFunctionRoute(ITestOutputHelper outputHelper)
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
-            AzureTF.Trigger.FunctionApp
+            AzureExt.Trigger.FunctionApp
                 .Http("ShowroomFunction")
                 .SelectFunction("HttpEchoTest", HttpMethod.Post)
                 .WithBody(Var.Const("payload=default-route"))
@@ -155,8 +143,8 @@ public class FunctionApps_DefaultFunctionRoute(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        HttpResponseMessage response = Assert.IsType<HttpResponseMessage>(run.Step("function-default-route").LastResult.Result);
-        string body = await response.Content.ReadAsStringAsync();
+        HttpResponseResultContext response = Assert.IsType<HttpResponseResultContext>(run.Step("function-default-route").LastResult.Result);
+        string body = Assert.IsType<string>(response.Body);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("Method=POST", body, StringComparison.Ordinal);

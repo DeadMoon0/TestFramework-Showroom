@@ -8,6 +8,7 @@ using TestFramework.Container.Azure;
 using TestFramework.Config;
 using TestFramework.Core.Environment;
 using TestFramework.Core.Logging;
+using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
@@ -57,8 +58,8 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
         firstRun.EnsureRanToCompletion();
         secondRun.EnsureRanToCompletion();
 
-        Assert.Equal("PersistentTable", Assert.IsType<string>(firstRun.Step("inspect-storage-config").LastResult.Result));
-        Assert.Equal("PersistentTable", Assert.IsType<string>(secondRun.Step("inspect-storage-config").LastResult.Result));
+        Assert.Equal("PersistentTable", Assert.IsType<InspectStorageConfigResult>(firstRun.Step("inspect-storage-config").LastResult.Result).TableContainerName);
+        Assert.Equal("PersistentTable", Assert.IsType<InspectStorageConfigResult>(secondRun.Step("inspect-storage-config").LastResult.Result).TableContainerName);
         Assert.Same(
             firstRun.EnvironmentContext.GetState<object>(DockerAzureEnvironment.NetworkComponentId),
             secondRun.EnvironmentContext.GetState<object>(DockerAzureEnvironment.NetworkComponentId));
@@ -94,8 +95,8 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
         baselineRun.EnsureRanToCompletion();
         overrideRun.EnsureRanToCompletion();
 
-        Assert.Equal("PersistentTable", Assert.IsType<string>(baselineRun.Step("inspect-storage-config").LastResult.Result));
-        Assert.Equal("RunLocalTable", Assert.IsType<string>(overrideRun.Step("inspect-storage-config").LastResult.Result));
+        Assert.Equal("PersistentTable", Assert.IsType<InspectStorageConfigResult>(baselineRun.Step("inspect-storage-config").LastResult.Result).TableContainerName);
+        Assert.Equal("RunLocalTable", Assert.IsType<InspectStorageConfigResult>(overrideRun.Step("inspect-storage-config").LastResult.Result).TableContainerName);
         Assert.Same(
             baselineRun.EnvironmentContext.GetState<object>(DockerAzureEnvironment.NetworkComponentId),
             overrideRun.EnvironmentContext.GetState<object>(DockerAzureEnvironment.NetworkComponentId));
@@ -104,7 +105,7 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
             overrideRun.EnvironmentContext.GetState<object>(DockerAzureEnvironment.AzuriteComponentId));
     }
 
-    private sealed class InspectStorageConfigStep : TestFramework.Core.Steps.Step<object?>, IHasEnvironmentRequirements
+    private sealed class InspectStorageConfigStep : TestFramework.Core.Steps.Step<InspectStorageConfigResult>, IHasEnvironmentRequirements
     {
         // This step does one job: ask the current run which table name it sees.
         // That keeps the example honest. If config layering is wrong, this step
@@ -118,21 +119,23 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
         public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore)
             => [new(AzureEnvironmentResourceKinds.Storage, "PersistentStorage")];
 
-        public override Task<object?> Execute(IServiceProvider serviceProvider, VariableStore variableStore, TestFramework.Core.Artifacts.ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
+        public override Task<InspectStorageConfigResult?> Execute(IServiceProvider serviceProvider, VariableStore variableStore, TestFramework.Core.Artifacts.ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
         {
             StorageAccountConfig config = ((ConfigStore<StorageAccountConfig>)serviceProvider.GetService(typeof(ConfigStore<StorageAccountConfig>))!).GetConfig("PersistentStorage");
-            return Task.FromResult((object?)config.TableContainerName);
+            return Task.FromResult<InspectStorageConfigResult?>(new(config.TableContainerName ?? throw new InvalidOperationException("PersistentStorage table name was not configured.")));
         }
 
-        public override TestFramework.Core.Steps.Step<object?> Clone() => new InspectStorageConfigStep().WithClonedOptions(this);
+        public override TestFramework.Core.Steps.Step<InspectStorageConfigResult> Clone() => new InspectStorageConfigStep().WithClonedOptions(this);
 
         public override void DeclareIO(StepIOContract contract)
         {
         }
 
-        public override TestFramework.Core.Steps.StepInstance<TestFramework.Core.Steps.Step<object?>, object?> GetInstance()
+        public override TestFramework.Core.Steps.StepInstance<TestFramework.Core.Steps.Step<InspectStorageConfigResult>, InspectStorageConfigResult> GetInstance()
             => new(this);
     }
+
+    private sealed record InspectStorageConfigResult(string TableContainerName) : StepResultContext;
 
 }
 

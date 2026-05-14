@@ -21,7 +21,6 @@ namespace TestFramework.Showroom.Azure;
 //  generous with ambiguity. The test does not need to add more and then act surprised.
 // ══════════════════════════════════════════════════════════════════════════════
 
-[Collection("AzureShowroom")]
 public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
 {
     // First example: send one message and wait for the exact correlated receipt.
@@ -30,9 +29,10 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
     private const string CorrelationId = "showroom-42";
 
     private static readonly Timeline _timeline = Timeline.Create()
-        .Trigger(AzureTF.Trigger.ServiceBus.Send("MainSBTopic", new ServiceBusMessage("Live transmission. Please stand by.") { CorrelationId = CorrelationId }))
+        .Trigger(AzureExt.Trigger.ServiceBus.Send("MainSBTopic", new ServiceBusMessage("Live transmission. Please stand by.") { CorrelationId = CorrelationId }))
         //  ^ Send with a known correlation ID so the wait can demand the exact message later instead of adopting a stranger.
-        .WaitForEvent(AzureTF.Event.ServiceBus.MessageReceived("MainSBTopic", correlationId: CorrelationId, completeMessage: true))
+        .WaitForEvent(AzureExt.Event.ServiceBus.MessageReceived("MainSBTopic", correlationId: CorrelationId, completeMessage: true))
+            .GetMessage("out")
             // complete = acknowledge and remove the message once observed. Clean hands. Fewer ghosts.
             .WithTimeOut(TimeSpan.FromSeconds(10))
         //  ^ If nothing matching arrives in time, the run fails with a specific timeout and no sympathy.
@@ -58,14 +58,14 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
     }
 }
 
-[Collection("AzureShowroom")]
 public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
 {
     private const string CorrelationId = "showroom-queue-42";
 
     private static readonly Timeline _timeline = Timeline.Create()
-        .Trigger(AzureTF.Trigger.ServiceBus.Send("MainSBQueue", new ServiceBusMessage("Queue delivery. Clean and direct.") { CorrelationId = CorrelationId }))
-        .WaitForEvent(AzureTF.Event.ServiceBus.MessageReceived("MainSBQueue", correlationId: CorrelationId, completeMessage: true))
+        .Trigger(AzureExt.Trigger.ServiceBus.Send("MainSBQueue", new ServiceBusMessage("Queue delivery. Clean and direct.") { CorrelationId = CorrelationId }))
+        .WaitForEvent(AzureExt.Event.ServiceBus.MessageReceived("MainSBQueue", correlationId: CorrelationId, completeMessage: true))
+            .GetMessage("out")
             .WithTimeOut(TimeSpan.FromSeconds(10))
         .Build();
 
@@ -87,7 +87,6 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
     }
 }
 
-[Collection("AzureShowroom")]
 public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
 {
     // Third example: build the outbound message per run instead of hardcoding it
@@ -97,9 +96,10 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
     private const string Subject = "Showroom Test";
 
     private static readonly Timeline _timeline = Timeline.Create()
-        .Trigger(AzureTF.Trigger.ServiceBus.Send("MainSBTopic", Var.Ref<ServiceBusMessage>("outboundMessage")))
+        .Trigger(AzureExt.Trigger.ServiceBus.Send("MainSBTopic", Var.Ref<ServiceBusMessage>("outboundMessage")))
         //    ^ The timeline references a runtime value here because the message is supplied per run, not discovered in a dream.
-        .WaitForEvent(AzureTF.Event.ServiceBus.MessageReceived("MainSBTopic", correlationId: CorrelationId, completeMessage: true))
+        .WaitForEvent(AzureExt.Event.ServiceBus.MessageReceived("MainSBTopic", correlationId: CorrelationId, completeMessage: true))
+            .GetMessage("out")
             .WithTimeOut(TimeSpan.FromSeconds(10))
         .Build();
 

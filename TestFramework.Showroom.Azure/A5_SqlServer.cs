@@ -97,7 +97,6 @@ internal static class ShowroomSqlSetup
 
 // ─── Module A5.1: Single-column primary key ──────────────────────────────────
 
-[Collection("AzureShowroom")]
 public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
 {
     // First example: insert one product row, verify it, and let cleanup close
@@ -127,11 +126,11 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
         run.SqlArtifact<ShowroomProduct>("product").Should().Exist();
 
         run.SqlArtifact<ShowroomProduct>("product")
-            .Select(d => d.Row.Name)
+            .Row(row => row.Name)
             .Should().Be("Calibration Widget");
 
         run.SqlArtifact<ShowroomProduct>("product")
-            .Select(d => d.Row.Price)
+            .Row(row => row.Price)
             .Should().Be(9.99m);
         // ^ Row inserted, values verified, no mystery left in the outcome. A rare and beautiful state.
     }
@@ -139,7 +138,6 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
 
 // ─── Module A5.2: Composite primary key ──────────────────────────────────────
 
-[Collection("AzureShowroom")]
 public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
 {
     // Second example: composite keys. Same artifact mechanics, stricter key order.
@@ -170,14 +168,13 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
         run.SqlArtifact<ShowroomInvoiceLine>("invoiceLine").Should().Exist();
 
         run.SqlArtifact<ShowroomInvoiceLine>("invoiceLine")
-            .Select(d => d.Row.Quantity)
+            .Row(row => row.Quantity)
             .Should().Be(5);
     }
 }
 
 // ─── Module A5.3: Query finder (LINQ over EF Core) ───────────────────────────
 
-[Collection("AzureShowroom")]
 public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
 {
     // Third example: query for rows when the exact key is not the point. The
@@ -190,7 +187,7 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
         .SetupArtifact("prodOther")
         .FindArtifacts(
             "toolsProducts",  // Matching rows come back as toolsProducts_0, toolsProducts_1, and so on. Predictable names. Wild concept.
-            AzureTF.ArtifactFinder.DB.SqlQuery<ShowroomProduct>(
+            AzureExt.ArtifactFinder.DB.SqlQuery<ShowroomProduct>(
                 "MainSql",
                 q => q.Where(p => p.Category == "Instruments")))
         // ^ Only the instrument rows come back as found artifacts. The snack remains judged and excluded.
@@ -222,7 +219,7 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
         run.SqlArtifact<ShowroomProduct>("toolsProducts_1").Should().Exist();
 
         run.SqlArtifact<ShowroomProduct>("toolsProducts_0")
-            .Select(d => d.Row.Category)
+            .Row(row => row.Category)
             .Should().Be("Instruments");
         // ^ Matching category confirmed. Query semantics did their job and nobody had to count indexes manually.
     }

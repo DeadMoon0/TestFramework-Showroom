@@ -171,7 +171,7 @@ public class PersistentEnvironmentContextSample
         }
     }
 
-    private sealed class RequireWorkerStep : Step<object?>, IHasEnvironmentRequirements
+    private sealed class RequireWorkerStep : Step<EmptyStepResultContext>, IHasEnvironmentRequirements
     {
         // The timeline only needs one trigger here: something that demands the
         // worker component so the environment contract has to prove itself under questioning.
@@ -184,16 +184,16 @@ public class PersistentEnvironmentContextSample
         public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore)
             => [new("showroom.worker", "worker")];
 
-        public override Task<object?> Execute(IServiceProvider serviceProvider, VariableStore variableStore, ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
-            => Task.FromResult((object?)null);
+        public override Task<EmptyStepResultContext?> Execute(IServiceProvider serviceProvider, VariableStore variableStore, ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
+            => Task.FromResult<EmptyStepResultContext?>(null);
 
-        public override Step<object?> Clone() => new RequireWorkerStep().WithClonedOptions(this);
+        public override Step<EmptyStepResultContext> Clone() => new RequireWorkerStep().WithClonedOptions(this);
 
         public override void DeclareIO(StepIOContract contract)
         {
         }
 
-        public override StepInstance<Step<object?>, object?> GetInstance() => new(this);
+        public override StepInstance<Step<EmptyStepResultContext>, EmptyStepResultContext> GetInstance() => new(this);
     }
 
     public sealed record SharedRuntimeState(string Token);

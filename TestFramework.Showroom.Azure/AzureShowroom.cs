@@ -1,5 +1,4 @@
 using FunctionApp;
-using TestFramework.Azure.Configuration.SpecificConfigs;
 using TestFramework.Azure.Identifier;
 using TestFramework.Core.Timelines;
 using TestFramework.Container.Azure;
@@ -69,13 +68,6 @@ internal static class AzureShowroom
     internal sealed class DefaultFunctionAppDefinition : DockerFunctionAppDefinition<AnalysisProcessor>
     {
         public override FunctionAppIdentifier Identifier => "Default";
-
-        protected override FunctionAppConfig? CreateDefaultConfig() => new()
-        {
-            BaseUrl = "http://localhost/",
-            Code = "unused",
-            AdminCode = "unused",
-        };
 
         protected override void Configure(DockerFunctionAppBuilder builder)
         {

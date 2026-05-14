@@ -29,7 +29,7 @@ public class Retry_Basic(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
         Assert.Equal(2, _probe.Attempts);
-        Assert.Equal("success", run.Step("transient").LastResult.Result);
+        Assert.Equal("success", Assert.IsType<TextResultContext>(run.Step("transient").LastResult.Result).Value);
     }
 
     private sealed class RetryProbe
@@ -43,7 +43,7 @@ public class Retry_Basic(ITestOutputHelper outputHelper)
         }
     }
 
-    private sealed class EventuallySuccessfulStep(RetryProbe probe) : Step<string>
+    private sealed class EventuallySuccessfulStep(RetryProbe probe) : Step<TextResultContext>
     {
         public override string Name => "Eventually Successful";
 
@@ -51,9 +51,9 @@ public class Retry_Basic(ITestOutputHelper outputHelper)
 
         public override bool DoesReturn => true;
 
-        public override Step<string> Clone() => new EventuallySuccessfulStep(probe).WithClonedOptions(this);
+        public override Step<TextResultContext> Clone() => new EventuallySuccessfulStep(probe).WithClonedOptions(this);
 
-        public override Task<string?> Execute(IServiceProvider serviceProvider, VariableStore variableStore, ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
+        public override Task<TextResultContext?> Execute(IServiceProvider serviceProvider, VariableStore variableStore, ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
         {
             // First attempt fails on purpose. Otherwise this is not a retry demo,
             // it is just a very confident no-op with a stopwatch attached and opinions about resilience.
@@ -62,14 +62,16 @@ public class Retry_Basic(ITestOutputHelper outputHelper)
                 throw new InvalidOperationException("Transient failure for retry demo.");
             }
 
-            return Task.FromResult<string?>("success");
+            return Task.FromResult<TextResultContext?>(new("success"));
         }
 
-        public override StepInstance<Step<string>, string> GetInstance() =>
+        public override StepInstance<Step<TextResultContext>, TextResultContext> GetInstance() =>
             new(this);
 
         public override void DeclareIO(StepIOContract contract)
         {
         }
     }
+
+    private sealed record TextResultContext(string Value) : StepResultContext;
 }

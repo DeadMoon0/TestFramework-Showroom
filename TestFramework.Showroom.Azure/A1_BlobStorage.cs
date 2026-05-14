@@ -21,7 +21,6 @@ namespace TestFramework.Showroom.Azure;
 //  infrastructure archaeology with a follow-up budget meeting.
 // ══════════════════════════════════════════════════════════════════════════════
 
-[Collection("AzureShowroom")]
 public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
 {
     // First example: upload one blob and let the framework own its lifecycle.
@@ -55,7 +54,6 @@ public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
     }
 }
 
-[Collection("AzureShowroom")]
 public class BlobStorage_WithMetadata(ITestOutputHelper outputHelper)
 {
     // Second example: same blob mechanics, now with metadata. The bytes matter,
@@ -93,13 +91,13 @@ public class BlobStorage_WithMetadata(ITestOutputHelper outputHelper)
         run.BlobArtifact("blob").Should().Exist();
 
         run.BlobArtifact("blob")
-            .Select(d => d.MetaData["department"])
+            .Metadata("department")
             .Should().Be("showroom");
         //              ^ Read the stored metadata directly from the captured artifact.
         //                Revolutionary, only because some teams still do screenshots.
 
         run.BlobArtifact("blob")
-            .Select(d => Encoding.UTF8.GetString(d.Data))
+            .Utf8Text()
             .Should().Be("Quarterly synergy alignment achieved.");
         // ^ Verify the payload too. Metadata without payload integrity is just a
         //   well-labeled mistake in a nice jacket.

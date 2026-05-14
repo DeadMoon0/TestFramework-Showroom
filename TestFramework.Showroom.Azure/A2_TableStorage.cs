@@ -36,7 +36,6 @@ public class ShowroomTableEntity : ITableEntity
     public int Priority { get; set; }
 }
 
-[Collection("AzureShowroom")]
 public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
 {
     // First example: upsert one row, verify it, and let cleanup erase the test
@@ -75,13 +74,12 @@ public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
         run.TableArtifact<ShowroomTableEntity>("tableRow").Should().Exist();
 
         run.TableArtifact<ShowroomTableEntity>("tableRow")
-            .Select(d => d.Entity.Payload)
+            .Entity(entity => entity.Payload)
             .Should().Be("First contact.");
         // ^ Row captured, payload verified. Move on before success gets sentimental and starts asking for funding.
     }
 }
 
-[Collection("AzureShowroom")]
 public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
 {
     // Second example: find rows by query rather than exact key. Useful when the
@@ -95,7 +93,7 @@ public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
         // result becomes tracked artifacts too, not loose data drifting by like escaped paperwork.
         .FindArtifacts(
             "foundRows",
-            AzureTF.ArtifactFinder.StorageAccount.TableQuery<ShowroomTableEntity>(
+            AzureExt.ArtifactFinder.StorageAccount.TableQuery<ShowroomTableEntity>(
                 "MainStorage",
                 "MainTable",
                 "PartitionKey eq 'showroom-query'"))
