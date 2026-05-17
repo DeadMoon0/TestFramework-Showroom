@@ -43,8 +43,8 @@ public class Artifacts_Register(ITestOutputHelper outputHelper)
     // it. Fine. Register the reference and the framework can still track it instead of staring at the aftermath like a detective in overbudget shoes.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
-        .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
+        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd"))).DoNotParallelize()
+        .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath"))).DoNotParallelize()
         //                           ^ A reference is the address. Without it,
         //                             you do not have tracking, you have gossip and blame allocation.
         .Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("cmdShow")))
@@ -72,8 +72,8 @@ public class Artifacts_Assert(ITestOutputHelper outputHelper)
     // evidence. That promotion matters. Untracked side effects are how meetings get longer.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
-        .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
+        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd"))).DoNotParallelize()
+        .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath"))).DoNotParallelize()
         .Build();
 
     [Fact]
@@ -101,10 +101,10 @@ public class Artifacts_Versions(ITestOutputHelper outputHelper)
     // moment something became wrong. Capture versions when the state matters, unless you enjoy historical fiction disguised as debugging.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd")))
-        .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
-        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd")))
-        .CaptureArtifactVersion("newFile", "laterVersion")
+        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd"))).DoNotParallelize()
+        .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath"))).DoNotParallelize()
+        .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd"))).DoNotParallelize()
+        .CaptureArtifactVersion("newFile", "laterVersion").DoNotParallelize()
         .Build();
 
     [Fact]

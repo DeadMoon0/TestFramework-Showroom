@@ -32,14 +32,14 @@ public class IOContracts_StepDeclaredIO(ITestOutputHelper outputHelper)
     }
 }
 
-public class IOContracts_RunExclusively(ITestOutputHelper outputHelper)
+public class IOContracts_DoNotParallelize(ITestOutputHelper outputHelper)
 {
     // IO declaration and execution policy are different jobs. Steps declare IO.
     // The builder still gets to say whether a step must run exclusively. Good policy and good paperwork are not the same department.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
-        .RunExclusively()
+        .DoNotParallelize()
         .Build();
 
     [Fact]

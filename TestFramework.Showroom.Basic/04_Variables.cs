@@ -69,14 +69,14 @@ public class Variables_Transforms(ITestOutputHelper outputHelper)
     }
 }
 
-public class Variables_RunExclusively(ITestOutputHelper outputHelper)
+public class Variables_DoNotParallelize(ITestOutputHelper outputHelper)
 {
     // Some steps deserve solitude. Mark them exclusive and the scheduler learns
     // that sharing time with other work is no longer an option. Think quarantine, but for concurrency.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("cmdCommand")))
-        .RunExclusively()
+        .DoNotParallelize()
         .Build();
 
     [Fact]
