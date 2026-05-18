@@ -31,6 +31,7 @@ Start with these files in order:
 - `TestFramework.Showroom.Basic/10_IOContracts.cs`
 - `TestFramework.Showroom.Basic/11_Retry.cs`
 - `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs`
+- `TestFramework.Showroom.Basic/13_Parallel.cs`
 
 ## Retry Coverage
 
@@ -108,6 +109,7 @@ TestFramework-Showroom contains runnable examples that demonstrate how the other
 It currently includes:
 
 - `TestFramework.Showroom.Basic` for core concepts such as timelines, variables, artifacts, events, control flow, and validations
+- `TestFramework.Showroom.Basic/13_Parallel.cs` for the phase-first scheduler: mergeable prepare work, explicit barriers, and serialized artifact setup
 - `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs` for the low-level Core persistent environment primitive without Docker or config wrappers
 - `TestFramework.Showroom.Azure` for Azure-oriented scenarios built on the Azure extension package
 - `A7_ComponentComposition.cs` for the definition-graph composition rules behind the container-backed Azure environment
@@ -128,7 +130,7 @@ With this solution you can:
 
 Some concepts appear in Showroom only lightly because their main contract belongs to `TestFramework.Core`:
 
-- modifier semantics such as `.WithRetry(...)`, `.WithTimeOut(...)`, and exclusive execution
+- modifier semantics such as `.WithRetry(...)`, `.WithTimeOut(...)`, and explicit `.DoNotParallelize()` barriers
 - assertion composition and step-result inspection patterns
 - extension-author concerns such as custom step, event, and artifact base types
 
@@ -145,6 +147,7 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 - Begin with `TestFramework.Showroom.Basic/01_MinimalTimeline.cs` to see the smallest possible timeline
 - Follow with `02_MSBTimeline.cs` and `03_DebugOutput.cs` for the message-box trigger and debug output basics before adding more framework concepts
 - Continue with `04_Variables.cs`, `05_Artifacts.cs`, `06_Events.cs`, `07_ControlFlow.cs`, `08_FluentAssertions.cs`, `09_StepValidations.cs`, `10_IOContracts.cs`, and `11_Retry.cs` to understand the core workflow model
+- Follow with `13_Parallel.cs` when you want to see how the scheduler groups Prepare work, honors `.DoNotParallelize()`, and still serializes setup for artifact types that require it
 - Use `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs` when you want the Core-only persistent environment reuse primitive before moving to hosted/container wrappers
 - Move to `TestFramework.Showroom.Azure/A1_BlobStorage.cs` through `A6_IntegratedAzure.cs` when you want cloud-backed scenarios
 - Follow with `TestFramework.Showroom.Azure/A7_ComponentComposition.cs` when you want the container composition semantics behind multi-Function-App stacks
