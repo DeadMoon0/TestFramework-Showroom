@@ -30,8 +30,18 @@ Use it when you want to learn the framework in sequence before reading the xUnit
 - `A1` to `A5`: focused Azure building blocks
 - `A6_IntegratedAzure.cs`: capstone multi-service flow
 - `A7_ComponentComposition.cs`: container-backed composition model
-- `A8_FunctionApps.cs`: Function App HTTP patterns
+- `A8_FunctionApps.cs`: Function App path chooser and HTTP patterns
 - `A9_PersistentHostedFixture.cs`: persistent hosted fixture reuse with run-local config layering
+
+## Function App Path Chooser
+
+Use the Function App examples in this order depending on where the app runs.
+
+1. In-process hostless logic checks: use `AzureExt.Trigger.FunctionApp.InProcessHttp(...)` in the Azure package tests or your own focused tests.
+2. Local Docker-backed host: use the showroom Azure chapter with `DockerAzureEnvironment`, especially `A8_FunctionApps.cs`.
+3. Deployed remote host: keep the same remote Function App trigger surface from `TestFramework.Azure`, but provide real `FunctionAppConfig` values instead of the Docker-backed environment.
+
+The key boundary is simple: Timeline stays the same shape, `TestFramework.Azure` owns the trigger surface, and `TestFramework.Container.Azure` owns local Docker bootstrap.
 
 ## How To Use The Showroom Well
 

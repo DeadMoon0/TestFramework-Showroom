@@ -60,8 +60,16 @@ For infrastructure-backed retry behavior, see the container smoke tests in this 
 3. Run the Azure showroom tests. Blob, Table, Cosmos, SQL, and Service Bus samples use `DockerAzureEnvironment` from `TestFramework.Container`.
 4. The integrated Function App sample in `A6_IntegratedAzure.cs` now runs through the same container-backed Function App path as the normal Container.Azure smoke suite.
 5. `A7_ComponentComposition.cs` demonstrates the new container composition model directly: shared dependencies, contract-selected providers, and exclusive dependency failures.
-6. `A8_FunctionApps.cs` is the dedicated Function App chapter: liveness, route discovery, explicit request shaping, and default-route selection.
+6. `A8_FunctionApps.cs` is the dedicated Function App chapter: when to use in-process vs local Docker vs deployed remote, plus liveness, route discovery, explicit request shaping, and default-route selection.
 7. `A9_PersistentHostedFixture.cs` is the dedicated persistent-hosting chapter: one hosted container stack, many fresh run environments, and run-local config layering on top of a reused persistent slice.
+
+### Function App Path Guide
+
+- Use `A8_FunctionApps.cs` when you want the normal remote Function App trigger surface against a local Docker-backed host.
+- Use `TestFramework.Azure` in-process builders when you want hostless Function App tests with no container bootstrap.
+- Use the same remote Function App trigger surface against real Azure when you already have a deployed app and only need real `FunctionAppConfig` values.
+
+Container/bootstrap remains a `TestFramework.Container.Azure` concern. The Azure trigger APIs stay the same across local and deployed paths.
 
 ### A6 Integrated Azure Contract
 
