@@ -16,7 +16,7 @@ using TestFramework.Core.Variables;
 namespace TestFramework.Showroom.Azure;
 
 // ══════════════════════════════════════════════════════════════════════════════
-//  HOSTED PERSISTENCE DIVISION - MODULE A10
+//  HOSTED PERSISTENCE DIVISION - MODULE A9
 //  "One Stack. Many Test Runs. Less Waiting."
 //
 //  Earlier chapters rebuild the whole Azure test stack every time because that

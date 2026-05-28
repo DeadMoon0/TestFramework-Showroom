@@ -31,8 +31,7 @@ Use it when you want to learn the framework in sequence before reading the xUnit
 - `A6_IntegratedAzure.cs`: capstone multi-service flow
 - `A7_ComponentComposition.cs`: container-backed composition model
 - `A8_FunctionApps.cs`: Function App HTTP patterns
-- `A9_LogicApps.cs`: stateful versus stateless Logic App flows
-- `A10_PersistentHostedFixture.cs`: persistent hosted fixture reuse with run-local config layering
+- `A9_PersistentHostedFixture.cs`: persistent hosted fixture reuse with run-local config layering
 
 ## How To Use The Showroom Well
 

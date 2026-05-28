@@ -61,8 +61,7 @@ For infrastructure-backed retry behavior, see the container smoke tests in this 
 4. The integrated Function App sample in `A6_IntegratedAzure.cs` now runs through the same container-backed Function App path as the normal Container.Azure smoke suite.
 5. `A7_ComponentComposition.cs` demonstrates the new container composition model directly: shared dependencies, contract-selected providers, and exclusive dependency failures.
 6. `A8_FunctionApps.cs` is the dedicated Function App chapter: liveness, route discovery, explicit request shaping, and default-route selection.
-7. `A9_LogicApps.cs` is the dedicated Logic App chapter: stateful runs, stateless capture, and timer-triggered workflows.
-9. `A10_PersistentHostedFixture.cs` is the dedicated persistent-hosting chapter: one hosted container stack, many fresh run environments, and run-local config layering on top of a reused persistent slice.
+7. `A9_PersistentHostedFixture.cs` is the dedicated persistent-hosting chapter: one hosted container stack, many fresh run environments, and run-local config layering on top of a reused persistent slice.
 
 ### A6 Integrated Azure Contract
 
@@ -114,8 +113,7 @@ It currently includes:
 - `TestFramework.Showroom.Azure` for Azure-oriented scenarios built on the Azure extension package
 - `A7_ComponentComposition.cs` for the definition-graph composition rules behind the container-backed Azure environment
 - `A8_FunctionApps.cs` for dedicated remote Function App usage patterns
-- `A9_LogicApps.cs` for dedicated Logic App stateful/stateless/timer patterns
-- `A10_PersistentHostedFixture.cs` for xUnit-hosted persistent environment reuse
+- `A9_PersistentHostedFixture.cs` for xUnit-hosted persistent environment reuse
 
 ## What You Can Do With It
 
@@ -152,8 +150,7 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 - Move to `TestFramework.Showroom.Azure/A1_BlobStorage.cs` through `A6_IntegratedAzure.cs` when you want cloud-backed scenarios
 - Follow with `TestFramework.Showroom.Azure/A7_ComponentComposition.cs` when you want the container composition semantics behind multi-Function-App stacks
 - Use `TestFramework.Showroom.Azure/A8_FunctionApps.cs` when you want the focused Function App HTTP chapter
-- Use `TestFramework.Showroom.Azure/A9_LogicApps.cs` when you want the focused Logic App chapter
-- Use `TestFramework.Showroom.Azure/A10_PersistentHostedFixture.cs` when you want the hosted persistent-fixture pattern for larger Docker-backed suites
+- Use `TestFramework.Showroom.Azure/A9_PersistentHostedFixture.cs` when you want the hosted persistent-fixture pattern for larger Docker-backed suites
 
 ## Documentation Map
 
