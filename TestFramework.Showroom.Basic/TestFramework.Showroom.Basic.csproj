@@ -12,15 +12,12 @@
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="TestFramework.Config" Version="0.1.4" />
+    <PackageReference Include="TestFramework.Core" Version="0.1.7" />
+    <PackageReference Include="TestFramework.LocalIO" Version="0.1.5" />
+    <PackageReference Include="TestFramework.Simple" Version="0.1.4" />
     <PackageReference Include="xunit" Version="2.5.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
-  </ItemGroup>
-
-  <ItemGroup>
-	<ProjectReference Include="..\..\TestFramework-Core\TestFramework.Config\TestFramework.Config.csproj" />
-	<ProjectReference Include="..\..\TestFramework-Core\TestFramework.Core\TestFramework.Core.csproj" />
-	<ProjectReference Include="..\..\TestFramework-LocalIO\TestFramework.LocalIO\TestFramework.LocalIO.csproj" />
-	<ProjectReference Include="..\..\TestFramework-Core\TestFramework.Simple\TestFramework.Simple.csproj" />
   </ItemGroup>
 
   <ItemGroup>
