@@ -34,6 +34,62 @@ namespace TestFramework.Showroom.Azure;
 internal sealed class ShowroomFunctionAppDefinition : DockerFunctionAppDefinition<HttpTests>
 {
     public override FunctionAppIdentifier Identifier => "ShowroomFunction";
+
+    protected override void Configure(DockerFunctionAppBuilder builder)
+    {
+        builder
+            .UseStorage<ShowroomStorageDefinition>(tableNameSettingName: "StorageTableName")
+            .UseCosmos<ShowroomCosmosDefinition>()
+            .UseServiceBusTrigger<ShowroomSubmissionDefinition>()
+            .UseServiceBusReply<ShowroomReplyDefinition>();
+    }
+}
+
+internal sealed class ShowroomStorageDefinition : DockerStorageDefinition
+{
+    public override StorageAccountIdentifier Identifier => "MainStorage";
+
+    protected override string? BlobContainerName => "showroom-blob";
+    protected override string? QueueContainerName => "showroom-queue";
+    protected override string? TableContainerName => "MainTable";
+}
+
+internal sealed class ShowroomCosmosDefinition : DockerCosmosDefinition<CandidateProfile>
+{
+    public override CosmosContainerIdentifier Identifier => "MainDb";
+
+    protected override string? DatabaseName => "BaseDB";
+    protected override string? ContainerName => "BaseContainer";
+}
+
+internal sealed class ShowroomReplyDefinition : DockerServiceBusDefinition
+{
+    public override ServiceBusIdentifier Identifier => "ProcessingReply";
+
+    protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-int-out", "Default");
+
+    protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
+        => ShowroomServiceBusTopology.Configure(builder);
+}
+
+internal sealed class ShowroomSubmissionDefinition : DockerServiceBusDefinition
+{
+    public override ServiceBusIdentifier Identifier => "SampleSubmission";
+
+    protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-int-in", "Default");
+
+    protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
+        => ShowroomServiceBusTopology.Configure(builder);
+}
+
+internal static class ShowroomServiceBusTopology
+{
+    internal static void Configure(DockerServiceBusTopologyBuilder builder)
+    {
+        builder.AddNamespace("sbemulatorns", ns => ns
+            .AddTopic("sbt-int-in", topic => topic.AddSubscription("Default"))
+            .AddTopic("sbt-int-out", topic => topic.AddSubscription("Default")));
+    }
 }
 
 public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
