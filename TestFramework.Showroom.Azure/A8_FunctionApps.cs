@@ -11,7 +11,6 @@ using TestFramework.Container.Azure;
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using Xunit.Abstractions;
-
 namespace TestFramework.Showroom.Azure;
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -40,8 +39,8 @@ internal sealed class ShowroomFunctionAppDefinition : DockerFunctionAppDefinitio
         builder
             .UseStorage<ShowroomStorageDefinition>(tableNameSettingName: "StorageTableName")
             .UseCosmos<ShowroomCosmosDefinition>()
-            .UseServiceBusTrigger<ShowroomSubmissionDefinition>()
-            .UseServiceBusReply<ShowroomReplyDefinition>();
+                .UseServiceBusTrigger<ShowroomBusDefinition>(d => d.Submission)
+                .UseServiceBusReply<ShowroomBusDefinition>(d => d.Reply);
     }
 }
 
@@ -61,22 +60,15 @@ internal sealed class ShowroomCosmosDefinition : DockerCosmosDefinition<Candidat
     protected override string? DatabaseName => "BaseDB";
     protected override string? ContainerName => "BaseContainer";
 }
-
-internal sealed class ShowroomReplyDefinition : DockerServiceBusDefinition
+internal sealed class ShowroomBusDefinition : DockerServiceBusDefinition
 {
-    public override ServiceBusIdentifier Identifier => "ProcessingReply";
+    public override ServiceBusIdentifier Identifier => "ShowroomBus";
 
-    protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-int-out", "Default");
+    public DockerServiceBusEndpoint Submission
+        => DockerServiceBusEndpoint.TopicSubscription("sbt-int-in", "Default");
 
-    protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
-        => ShowroomServiceBusTopology.Configure(builder);
-}
-
-internal sealed class ShowroomSubmissionDefinition : DockerServiceBusDefinition
-{
-    public override ServiceBusIdentifier Identifier => "SampleSubmission";
-
-    protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-int-in", "Default");
+    public DockerServiceBusEndpoint Reply
+        => DockerServiceBusEndpoint.TopicSubscription("sbt-int-out", "Default");
 
     protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
         => ShowroomServiceBusTopology.Configure(builder);

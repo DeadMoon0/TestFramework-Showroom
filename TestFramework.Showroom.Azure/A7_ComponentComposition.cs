@@ -11,7 +11,6 @@ using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using Xunit.Abstractions;
 using TestFramework.Container.Azure.Contracts;
-
 namespace TestFramework.Showroom.Azure;
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -85,6 +84,12 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
                 .WithBody(Var.Ref<string>("contractRequest"))
                 .Call())
             .WithTimeOut(TimeSpan.FromMinutes(2))
+        .WaitForEvent(
+            AzureExt.Event.ServiceBus.MessageReceived(
+                "ReplyBus",
+                correlationId: Var.Const("a7-contract-reply"),
+                completeMessage: true))
+            .WithTimeOut(TimeSpan.FromSeconds(30))
         .CaptureArtifactVersion("contractResult")
         .Build();
 
@@ -145,7 +150,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
 
         Assert.Equal(["SharedStorage"], environment.UsedStorageIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
         Assert.Equal(["SharedCosmos"], environment.UsedCosmosIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
-        Assert.Equal(["SharedReply", "SharedSubmission"], environment.UsedServiceBusIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
+        Assert.Equal(["SharedBus"], environment.UsedServiceBusIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
 
         AnalysisResult ingestResult = run.ArtifactStore.GetTableEntityArtifact<AnalysisResult>("ingestResult").Last.Entity;
         AnalysisResult analyseResult = run.ArtifactStore.GetTableEntityArtifact<AnalysisResult>("analyseResult").Last.Entity;
@@ -188,7 +193,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         Assert.True(run.EnvironmentContext.Contains(DockerAzureEnvironment.ServiceBusComponentId));
 
         Assert.Equal(["ContractConsumer"], environment.UsedFunctionAppIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
-        Assert.Equal(["ReplyBus", "SharedSubmission"], environment.UsedServiceBusIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
+        Assert.Equal(["ReplyBus", "SharedBus"], environment.UsedServiceBusIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
         Assert.DoesNotContain("AuditBus", environment.UsedServiceBusIdentifiers);
 
         AnalysisResult contractResult = run.ArtifactStore.GetTableEntityArtifact<AnalysisResult>("contractResult").Last.Entity;
@@ -236,21 +241,15 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         protected override string? ContainerName => "BaseContainer";
     }
 
-    private sealed class SharedReplyBusDefinition : DockerServiceBusDefinition
+    private sealed class SharedBusDefinition : DockerServiceBusDefinition
     {
-        public override ServiceBusIdentifier Identifier => "SharedReply";
+        public override ServiceBusIdentifier Identifier => "SharedBus";
 
-        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-int-out", "Default");
+        public DockerServiceBusEndpoint Submission
+            => DockerServiceBusEndpoint.TopicSubscription("sbt-int-in", "Default");
 
-        protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
-            => ConfigureShowroomServiceBusTopology(builder);
-    }
-
-    private sealed class SharedSubmissionBusDefinition : DockerServiceBusDefinition
-    {
-        public override ServiceBusIdentifier Identifier => "SharedSubmission";
-
-        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-int-in", "Default");
+        public DockerServiceBusEndpoint Reply
+            => DockerServiceBusEndpoint.TopicSubscription("sbt-int-out", "Default");
 
         protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
             => ConfigureShowroomServiceBusTopology(builder);
@@ -265,8 +264,8 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
             builder
                 .UseStorage<SharedStorageDefinition>(tableNameSettingName: "StorageTableName")
                 .UseCosmos<SharedCosmosDefinition>()
-                .UseServiceBusTrigger<SharedSubmissionBusDefinition>()
-                .UseServiceBusReply<SharedReplyBusDefinition>()
+                .UseServiceBusTrigger<SharedBusDefinition>(d => d.Submission)
+                .UseServiceBusReply<SharedBusDefinition>(d => d.Reply)
                 .WithAppSetting("FunctionRole", "Ingestion");
         }
     }
@@ -280,8 +279,8 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
             builder
                 .UseStorage<SharedStorageDefinition>(tableNameSettingName: "StorageTableName")
                 .UseCosmos<SharedCosmosDefinition>()
-                .UseServiceBusTrigger<SharedSubmissionBusDefinition>()
-                .UseServiceBusReply<SharedReplyBusDefinition>()
+                .UseServiceBusTrigger<SharedBusDefinition>(d => d.Submission)
+                .UseServiceBusReply<SharedBusDefinition>(d => d.Reply)
                 .WithAppSetting("FunctionRole", "Analysis");
         }
     }
@@ -290,7 +289,11 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override ServiceBusIdentifier Identifier => "ReplyBus";
 
-        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-int-out", "Default");
+        public DockerServiceBusEndpoint Reply
+            => DockerServiceBusEndpoint.TopicSubscription("sbt-int-out", "Default");
+
+        protected override ServiceBusConfig? CreateDefaultConfig()
+            => BuildConfig(DockerAzureDefaults.PlaceholderConnectionString, Reply);
 
         protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
             => ConfigureShowroomServiceBusTopology(builder);
@@ -309,7 +312,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override ServiceBusIdentifier Identifier => "AuditBus";
 
-        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.Queue("audit-trail");
+        public DockerServiceBusEndpoint Queue => DockerServiceBusEndpoint.Queue("audit-trail");
 
         protected override void ConfigureContracts(DockerAzureContractBuilder contracts)
         {
@@ -330,8 +333,8 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
             builder
                 .UseStorage<SharedStorageDefinition>(tableNameSettingName: "StorageTableName")
                 .UseCosmos<SharedCosmosDefinition>()
-                .UseServiceBusTrigger<SharedSubmissionBusDefinition>()
-                .UseServiceBusReply<ReplyBusDefinition>();
+                .UseServiceBusTrigger<SharedBusDefinition>(d => d.Submission)
+                .UseServiceBusReply<ReplyBusDefinition>(d => d.Reply);
         }
 
         protected override void ConfigureContracts(DockerAzureContractBuilder contracts)
@@ -348,7 +351,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     {
         public override ServiceBusIdentifier Identifier => "ExclusiveBus";
 
-        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.Queue("exclusive-queue");
+        public DockerServiceBusEndpoint Queue => DockerServiceBusEndpoint.Queue("exclusive-queue");
     }
 
     private sealed class ExclusiveFunctionAppDefinitionA : DockerFunctionAppDefinition<AnalysisProcessor>

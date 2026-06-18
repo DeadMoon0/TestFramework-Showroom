@@ -1,5 +1,6 @@
 using FunctionApp;
 using TestFramework.Azure.Identifier;
+using TestFramework.Azure.Configuration.SpecificConfigs;
 using TestFramework.Core.Timelines;
 using TestFramework.Container.Azure;
 
@@ -35,31 +36,59 @@ internal static class AzureShowroom
     {
         public override ServiceBusIdentifier Identifier => "MainSBQueue";
 
-        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.Queue("sbq-main");
+        public DockerServiceBusEndpoint Queue => DockerServiceBusEndpoint.Queue("sbq-main");
+
+        protected override ServiceBusConfig? CreateDefaultConfig()
+            => BuildConfig(DockerAzureDefaults.PlaceholderConnectionString, Queue);
     }
 
     private sealed class MainSbTopicDefinition : DockerServiceBusDefinition
     {
         public override ServiceBusIdentifier Identifier => "MainSBTopic";
 
-        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-main", "Default");
+        public DockerServiceBusEndpoint Subscription => DockerServiceBusEndpoint.TopicSubscription("sbt-main", "Default");
+
+        protected override ServiceBusConfig? CreateDefaultConfig()
+            => BuildConfig(DockerAzureDefaults.PlaceholderConnectionString, Subscription);
     }
 
-    private sealed class ProcessingReplyDefinition : DockerServiceBusDefinition
+    private sealed class SampleSubmissionBusDefinition : DockerServiceBusDefinition
     {
-        public override ServiceBusIdentifier Identifier => "ProcessingReply";
+        public override ServiceBusIdentifier Identifier => "SampleSubmission";
 
-        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-int-out", "Default");
+        public DockerServiceBusEndpoint Topic => DockerServiceBusEndpoint.Topic("sbt-int-in");
+
+        protected override ServiceBusConfig? CreateDefaultConfig()
+            => BuildConfig(DockerAzureDefaults.PlaceholderConnectionString, Topic);
 
         protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
             => ConfigureShowroomServiceBusTopology(builder);
     }
 
-    private sealed class SampleSubmissionDefinition : DockerServiceBusDefinition
+    private sealed class ProcessingReplyBusDefinition : DockerServiceBusDefinition
     {
-        public override ServiceBusIdentifier Identifier => "SampleSubmission";
+        public override ServiceBusIdentifier Identifier => "ProcessingReply";
 
-        protected override DockerServiceBusEndpoint? Endpoint => DockerServiceBusEndpoint.TopicSubscription("sbt-int-in", "Default");
+        public DockerServiceBusEndpoint Reply => DockerServiceBusEndpoint.TopicSubscription("sbt-int-out", "Default");
+
+        protected override ServiceBusConfig? CreateDefaultConfig()
+            => BuildConfig(DockerAzureDefaults.PlaceholderConnectionString, Reply);
+
+        protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
+            => ConfigureShowroomServiceBusTopology(builder);
+    }
+    private sealed class ShowroomIntegrationBusDefinition : DockerServiceBusDefinition
+    {
+        public override ServiceBusIdentifier Identifier => "ShowroomBus";
+
+        public DockerServiceBusEndpoint Submission
+            => DockerServiceBusEndpoint.TopicSubscription("sbt-int-in", "Default");
+
+        public DockerServiceBusEndpoint Reply
+            => DockerServiceBusEndpoint.TopicSubscription("sbt-int-out", "Default");
+
+        protected override ServiceBusConfig? CreateDefaultConfig()
+            => BuildConfig(DockerAzureDefaults.PlaceholderConnectionString, Submission);
 
         protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
             => ConfigureShowroomServiceBusTopology(builder);
@@ -74,8 +103,8 @@ internal static class AzureShowroom
             builder
                 .UseStorage<MainStorageDefinition>(tableNameSettingName: "StorageTableName")
                 .UseCosmos<MainDbDefinition>()
-                .UseServiceBusTrigger<SampleSubmissionDefinition>()
-                .UseServiceBusReply<ProcessingReplyDefinition>();
+                .UseServiceBusTrigger<ShowroomIntegrationBusDefinition>(d => d.Submission)
+                .UseServiceBusReply<ShowroomIntegrationBusDefinition>(d => d.Reply);
         }
     }
 
@@ -96,7 +125,8 @@ internal static class AzureShowroom
             .Include<MainSqlDefinition>()
             .Include<MainSbQueueDefinition>()
             .Include<MainSbTopicDefinition>()
-            .Include<ProcessingReplyDefinition>()
-            .Include<SampleSubmissionDefinition>();
+            .Include<SampleSubmissionBusDefinition>()
+            .Include<ProcessingReplyBusDefinition>()
+            .Include<ShowroomIntegrationBusDefinition>();
     }
 }
