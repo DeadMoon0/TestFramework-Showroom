@@ -77,6 +77,7 @@ internal static class AzureShowroom
         protected override void ConfigureServiceBusTopology(DockerServiceBusTopologyBuilder builder)
             => ConfigureShowroomServiceBusTopology(builder);
     }
+
     private sealed class ShowroomIntegrationBusDefinition : DockerServiceBusDefinition
     {
         public override ServiceBusIdentifier Identifier => "ShowroomBus";
