@@ -24,9 +24,13 @@ Use it when you want to learn the framework in sequence before reading the xUnit
 - `10_IOContracts.cs`: declared inputs and outputs
 - `11_Retry.cs`: retry as a cross-cutting modifier
 - `12_PersistentEnvironment.cs`: low-level persistent environment reuse in pure Core
+- `13_Parallel.cs`: mergeable prepare work, explicit barriers, and setup serialization
+- `14_ArtifactLifecycle.cs`: artifact lifecycle as a consumer contract: declare, populate, discover, assert
+- `15_ErrorPaths.cs`: timeout exhaustion, discovery mismatches, and reading formatted recovery output
 
 ## Azure Chapter Map
 
+- `A0_ConfigurationPatterns.cs`: side-by-side runnable explanation of the default `ConfigInstance` path and the advanced `ConfigInstance + ConfigStore<T>` path
 - `A1` to `A5`: focused Azure building blocks
 - `A6_IntegratedAzure.cs`: capstone multi-service flow
 - `A7_ComponentComposition.cs`: container-backed composition model

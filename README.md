@@ -9,6 +9,14 @@ This solution is the example and learning space for that ecosystem.
 
 If you want a documentation-first walkthrough before opening the test projects, start with [Documentation/StartHere.md](./Documentation/StartHere.md).
 
+## Learning Path
+
+Treat Showroom as the teaching surface, not as the proof harness.
+
+- Start here when you want isolated, runnable examples that teach one concept at a time.
+- Move to ConsumerScenarios when you want proof that a real user journey still works once those concepts are combined.
+- Use [Documentation/LocalToDockerToLive.md](./Documentation/LocalToDockerToLive.md) when your real question is how the same scenario evolves across environments rather than how one API works in isolation.
+
 ## Quickstart
 
 Run the basic example suite:
@@ -32,6 +40,8 @@ Start with these files in order:
 - `TestFramework.Showroom.Basic/11_Retry.cs`
 - `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs`
 - `TestFramework.Showroom.Basic/13_Parallel.cs`
+- `TestFramework.Showroom.Basic/14_ArtifactLifecycle.cs`
+- `TestFramework.Showroom.Basic/15_ErrorPaths.cs`
 
 ## Retry Coverage
 
@@ -56,12 +66,30 @@ For infrastructure-backed retry behavior, see the container smoke tests in this 
 `TestFramework.Showroom.Azure` runs against the container-backed Azure environment by default.
 
 1. Start Docker Desktop.
-2. Create `TestFramework.Showroom.Azure/local.testSettings.json` from `TestFramework.Showroom.Azure/example.local.testsettings.json` and fill in your own local or test-only values. Do not commit populated secrets.
+2. Create `TestFramework.Showroom.Azure/local.testSettings.json` from the placeholder shape in [../TestFramework-Container/TestFramework.Container.Azure/example.local.testsettings.json](../TestFramework-Container/TestFramework.Container.Azure/example.local.testsettings.json) and fill in your own local or test-only values. Do not commit populated secrets.
 3. Run the Azure showroom tests. Blob, Table, Cosmos, SQL, and Service Bus samples use `DockerAzureEnvironment` from `TestFramework.Container`.
 4. The integrated Function App sample in `A6_IntegratedAzure.cs` now runs through the same container-backed Function App path as the normal Container.Azure smoke suite.
 5. `A7_ComponentComposition.cs` demonstrates the new container composition model directly: shared dependencies, contract-selected providers, and exclusive dependency failures.
 6. `A8_FunctionApps.cs` is the dedicated Function App chapter: when to use in-process vs local Docker vs deployed remote, plus liveness, route discovery, explicit request shaping, and default-route selection.
 7. `A9_PersistentHostedFixture.cs` is the dedicated persistent-hosting chapter: one hosted container stack, many fresh run environments, and run-local config layering on top of a reused persistent slice.
+
+Read `TestFramework.Showroom.Azure/A0_ConfigurationPatterns.cs` first if you want the shortest runnable explanation of why `ConfigInstance` and `ConfigStore<T>` can appear in the same Azure sample without representing two competing setup models.
+
+### Azure Configuration Pattern
+
+For almost all showroom scenarios, keep one ownership rule in mind:
+
+- `ConfigInstance` is the setup entry point.
+- module-specific typed stores such as Azure's `ConfigStore<T>` live inside the provider that `ConfigInstance` builds.
+
+That means the normal learning path is:
+
+1. create or load a `ConfigInstance`
+2. apply Azure helpers such as `LoadDockerAzureConfig()`
+3. build the provider for `SetupRun(...)`
+4. let advanced services resolve typed stores from DI only when they need named resource records at runtime
+
+If you want the side-by-side comparison between the simple path and the advanced mixed path, read [Documentation/ConfigurationPatterns.md](./Documentation/ConfigurationPatterns.md) before diving into `A5_SqlServer.cs` or `A6_IntegratedAzure.cs`.
 
 ### Function App Path Guide
 
@@ -117,11 +145,22 @@ It currently includes:
 
 - `TestFramework.Showroom.Basic` for core concepts such as timelines, variables, artifacts, events, control flow, and validations
 - `TestFramework.Showroom.Basic/13_Parallel.cs` for the phase-first scheduler: mergeable prepare work, explicit barriers, and serialized artifact setup
+- `TestFramework.Showroom.Basic/14_ArtifactLifecycle.cs` for the explicit artifact lifecycle: declare, populate, discover, and assert
+- `TestFramework.Showroom.Basic/15_ErrorPaths.cs` for timeout, discovery mismatch, and formatted recovery output in the normal test path
 - `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs` for the low-level Core persistent environment primitive without Docker or config wrappers
 - `TestFramework.Showroom.Azure` for Azure-oriented scenarios built on the Azure extension package
 - `A7_ComponentComposition.cs` for the definition-graph composition rules behind the container-backed Azure environment
 - `A8_FunctionApps.cs` for dedicated remote Function App usage patterns
 - `A9_PersistentHostedFixture.cs` for xUnit-hosted persistent environment reuse
+
+## How Showroom And ConsumerScenarios Differ
+
+Showroom and ConsumerScenarios are both intentional, but they do different jobs.
+
+- Showroom teaches isolated patterns and small narrative chapters.
+- ConsumerScenarios validates composed user journeys and catches friction between modules.
+- Showroom is where a new reader should learn first.
+- ConsumerScenarios is where the same reader should look next when asking "does this still hold up in a realistic workflow?"
 
 ## What You Can Do With It
 
@@ -153,9 +192,12 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 - Begin with `TestFramework.Showroom.Basic/01_MinimalTimeline.cs` to see the smallest possible timeline
 - Follow with `02_MSBTimeline.cs` and `03_DebugOutput.cs` for the message-box trigger and debug output basics before adding more framework concepts
 - Continue with `04_Variables.cs`, `05_Artifacts.cs`, `06_Events.cs`, `07_ControlFlow.cs`, `08_FluentAssertions.cs`, `09_StepValidations.cs`, `10_IOContracts.cs`, and `11_Retry.cs` to understand the core workflow model
+- Read `14_ArtifactLifecycle.cs` when you want the artifact model spelled out as declare vs register vs discover instead of learning it indirectly across multiple chapters
+- Read `15_ErrorPaths.cs` when you want to see how failure and recovery guidance show up in executable tests instead of only in docs
 - Follow with `13_Parallel.cs` when you want to see how the scheduler groups Prepare work, honors `.DoNotParallelize()`, and still serializes setup for artifact types that require it
 - Use `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs` when you want the Core-only persistent environment reuse primitive before moving to hosted/container wrappers
 - Move to `TestFramework.Showroom.Azure/A1_BlobStorage.cs` through `A6_IntegratedAzure.cs` when you want cloud-backed scenarios
+- Start with `TestFramework.Showroom.Azure/A0_ConfigurationPatterns.cs` if the config ownership model is the main thing you want to understand before the service-specific Azure chapters
 - Follow with `TestFramework.Showroom.Azure/A7_ComponentComposition.cs` when you want the container composition semantics behind multi-Function-App stacks
 - Use `TestFramework.Showroom.Azure/A8_FunctionApps.cs` when you want the focused Function App HTTP chapter
 - Use `TestFramework.Showroom.Azure/A9_PersistentHostedFixture.cs` when you want the hosted persistent-fixture pattern for larger Docker-backed suites
@@ -163,6 +205,8 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 ## Documentation Map
 
 - Architecture overview: [Documentation/Arc42.md](./Documentation/Arc42.md)
+- Configuration patterns: [Documentation/ConfigurationPatterns.md](./Documentation/ConfigurationPatterns.md)
+- Local to Docker to live migration: [Documentation/LocalToDockerToLive.md](./Documentation/LocalToDockerToLive.md)
 - Guided onboarding: [Documentation/StartHere.md](./Documentation/StartHere.md)
 - Basic examples: [TestFramework.Showroom.Basic](./TestFramework.Showroom.Basic)
 - Azure examples: [TestFramework.Showroom.Azure](./TestFramework.Showroom.Azure)
