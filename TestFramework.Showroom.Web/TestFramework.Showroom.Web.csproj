@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -12,17 +12,22 @@
 	<ItemGroup>
 		<PackageReference Include="coverlet.collector" Version="6.0.0" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
-		<PackageReference Include="TestFramework.Azure" Version="0.2.0" />
 		<PackageReference Include="TestFramework.Config" Version="0.2.0" />
-		<PackageReference Include="TestFramework.Container.Azure" Version="0.2.0" />
+		<PackageReference Include="TestFramework.Container.Web" Version="0.2.0" />
 		<PackageReference Include="TestFramework.Core" Version="0.2.0" />
+		<PackageReference Include="TestFramework.Web" Version="0.2.0" />
 		<PackageReference Include="xunit" Version="2.5.3" />
 		<PackageReference Include="xunit.runner.visualstudio" Version="2.5.3" />
 	</ItemGroup>
 
-	<ItemGroup>
-		<ProjectReference Include="..\Azure\FunctionApp\FunctionApp.csproj" />
-	</ItemGroup>
+	<!--
+		There is deliberately no reference to Web/OrdersApi here.
+
+		The application under test is named by its project file, not by a type, so the
+		test assembly never loads a single line of it. That is not an oversight and it
+		is not laziness; it is the only arrangement in which "the test does not know
+		how the application works" is a fact rather than a pleasant belief.
+	-->
 
 	<ItemGroup>
 		<Using Include="Xunit" />

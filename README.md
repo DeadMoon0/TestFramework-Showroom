@@ -43,6 +43,8 @@ Start with these files in order:
 - `TestFramework.Showroom.Basic/14_ArtifactLifecycle.cs`
 - `TestFramework.Showroom.Basic/15_ErrorPaths.cs`
 
+Then continue with the web lane in `TestFramework.Showroom.Web/` (see [Web Example Setup](#web-example-setup)) or the cloud lane in `TestFramework.Showroom.Azure/`.
+
 ## Retry Coverage
 
 `TestFramework.Showroom.Basic/11_Retry.cs` is the focused retry sample.
@@ -60,6 +62,48 @@ Timeline timeline = Timeline.Create()
 ```
 
 For infrastructure-backed retry behavior, see the container smoke tests in this repository. For the full modifier contract, prefer the Core documentation first.
+
+## Web Example Setup
+
+`TestFramework.Showroom.Web` covers the web lane: REST APIs, the SQL Server behind them, the
+dependencies they call, and the container environment that supplies all three.
+
+1. Start Docker Desktop.
+2. Run the suite. There is nothing to configure and no settings file to fill in — every address is
+   published at run time by `DockerWebEnvironment`.
+
+```bash
+dotnet test TestFramework.Showroom.Web/TestFramework.Showroom.Web.csproj --configuration Release
+```
+
+Read the modules in order:
+
+- `TestFramework.Showroom.Web/WebShowroom.cs` — the facility: one database, one stub, one application, declared once
+- `TestFramework.Showroom.Web/W1_RestApi.cs` — requests as steps, responses as results, and why a 404 is neither
+- `TestFramework.Showroom.Web/W2_SqlServer.cs` — rows are artifacts, statements are steps, totals are observations
+- `TestFramework.Showroom.Web/W3_SchemaFromModels.cs` — generating tables from the model map (runs without Docker)
+- `TestFramework.Showroom.Web/W4_Stubs.cs` — asserting what the application sent *outwards*
+- `TestFramework.Showroom.Web/W5_ContainerLane.cs` — all four sources of truth in one run
+
+Only `W3` runs without a Docker daemon; everything else is marked `Category=DockerSmoke`.
+
+### The Application Under Test
+
+`Web/OrdersApi` is the specimen. Note what is missing from
+`TestFramework.Showroom.Web.csproj`: there is **no project reference to it**. The application is
+named by its project file through `ContainerSource.Project(...)`, the framework builds it and puts
+it in an image, and the test assembly never loads a line of it.
+
+That is what makes "the test does not depend on the implementation" a fact rather than a habit. The
+API is reached by path and identifier, exactly as a deployed one would be.
+
+### Why The Web Modules Run Serially
+
+`W0_FacilityRules.cs` disables test parallelisation for this project. Several modules building the
+same application project concurrently collide in the build system's own working directory, and each
+full-facility module starts three containers. A production suite would share one environment across
+a collection, as the Azure wing does; the showroom keeps every module standalone so it can be read
+standalone, and pays for it in wall-clock time.
 
 ## Azure Example Setup
 
@@ -148,6 +192,7 @@ It currently includes:
 - `TestFramework.Showroom.Basic/14_ArtifactLifecycle.cs` for the explicit artifact lifecycle: declare, populate, discover, and assert
 - `TestFramework.Showroom.Basic/15_ErrorPaths.cs` for timeout, discovery mismatch, and formatted recovery output in the normal test path
 - `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs` for the low-level Core persistent environment primitive without Docker or config wrappers
+- `TestFramework.Showroom.Web` for the web lane: REST APIs, SQL Server, stubbed dependencies, and the container environment behind them
 - `TestFramework.Showroom.Azure` for Azure-oriented scenarios built on the Azure extension package
 - `A7_ComponentComposition.cs` for the definition-graph composition rules behind the container-backed Azure environment
 - `A8_FunctionApps.cs` for dedicated remote Function App usage patterns
