@@ -1,0 +1,54 @@
+<Project>
+
+	<!--
+		One version per package for the whole solution.
+
+		Before this file the three lanes pinned three different Core versions (0.1.8, 0.1.9, 0.1.8),
+		which is how the web lane's unrestorable references stayed invisible: nothing in the build
+		compared them. Versions now live here and nowhere else, so a mismatch is impossible to write.
+
+		CentralPackageTransitivePinningEnabled keeps a transitive dependency from quietly pulling in
+		an older Core than the one declared here.
+	-->
+
+	<PropertyGroup>
+		<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+		<CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+	</PropertyGroup>
+
+	<ItemGroup Label="TestFramework">
+		<PackageVersion Include="TestFramework.Azure" Version="0.2.0" />
+		<PackageVersion Include="TestFramework.Config" Version="0.2.0" />
+		<PackageVersion Include="TestFramework.Container" Version="0.2.0" />
+		<PackageVersion Include="TestFramework.Container.Azure" Version="0.2.0" />
+		<PackageVersion Include="TestFramework.Container.Web" Version="0.2.0" />
+		<PackageVersion Include="TestFramework.Core" Version="0.2.0" />
+		<PackageVersion Include="TestFramework.LocalIO" Version="0.2.0" />
+		<PackageVersion Include="TestFramework.Simple" Version="0.2.0" />
+		<PackageVersion Include="TestFramework.Web" Version="0.2.0" />
+	</ItemGroup>
+
+	<ItemGroup Label="Test host">
+		<PackageVersion Include="coverlet.collector" Version="6.0.0" />
+		<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+		<PackageVersion Include="xunit" Version="2.5.3" />
+		<PackageVersion Include="xunit.runner.visualstudio" Version="2.5.3" />
+	</ItemGroup>
+
+	<ItemGroup Label="Applications under test">
+		<PackageVersion Include="Azure.Data.Tables" Version="12.9.1" />
+		<PackageVersion Include="Microsoft.ApplicationInsights.WorkerService" Version="2.23.0" />
+		<!-- 3.59.0, not the 3.57.1 the Function App used to pin: TestFramework.Azure 0.2.0 needs
+		     at least 3.59.0, and one central version means the higher floor wins for both. -->
+		<PackageVersion Include="Microsoft.Azure.Cosmos" Version="3.59.0" />
+		<PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.1.0" />
+		<PackageVersion Include="Microsoft.Azure.Functions.Worker.ApplicationInsights" Version="2.0.0" />
+		<PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore" Version="2.0.2" />
+		<PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.ServiceBus" Version="5.24.0" />
+		<PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Timer" Version="4.3.1" />
+		<PackageVersion Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.5" />
+		<PackageVersion Include="Microsoft.Data.SqlClient" Version="6.1.2" />
+		<PackageVersion Include="Newtonsoft.Json" Version="13.0.4" />
+	</ItemGroup>
+
+</Project>
