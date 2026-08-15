@@ -33,7 +33,8 @@ public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
         //   That is the pattern. Get used to it. It saves lives and storage accounts.
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
@@ -64,7 +65,8 @@ public class BlobStorage_WithMetadata(ITestOutputHelper outputHelper)
         .SetupArtifact("blob")
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();

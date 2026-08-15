@@ -49,7 +49,7 @@ public class Sql_SeededRowIsAnArtifact(ITestOutputHelper outputHelper)
         .Trigger(WebExt.Sql.Scalar<int>("orders-db", "SELECT COUNT(1) FROM [Orders]")).Name("count")
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
@@ -101,7 +101,7 @@ public class Sql_RegisterArtifactAdoptsAnExistingRow(ITestOutputHelper outputHel
         //     removed at teardown exactly like a row the test had seeded itself.
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
@@ -140,7 +140,7 @@ public class Sql_FinderObservesWithoutOwning(ITestOutputHelper outputHelper)
         //     statement, which closes an entire genre of afternoon.
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
@@ -181,7 +181,7 @@ public class Sql_StatementsAndObservations(ITestOutputHelper outputHelper)
             .WithParameter("id", Var.Const(1))).Name("read-back")
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {

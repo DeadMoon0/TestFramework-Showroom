@@ -38,7 +38,7 @@ public class RestApi_Liveness(ITestOutputHelper outputHelper)
         .Trigger(WebExt.Api.IsLive("orders", ApiAlivenessLevel.Healthy)).Name("live")
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
@@ -72,7 +72,7 @@ public class RestApi_PostAndRead(ITestOutputHelper outputHelper)
         .Trigger(WebExt.Api.Http("orders").Get("api/orders").Call()).Name("list")
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
@@ -109,7 +109,7 @@ public class RestApi_UnsuccessfulStatusIsAResult(ITestOutputHelper outputHelper)
             .Call()).Name("rejected")
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {

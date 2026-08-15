@@ -48,7 +48,8 @@ public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
         // ^ Setup owns the upsert. Cleanup owns the delete. Predictability is the point and also the sales pitch.
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
@@ -93,7 +94,8 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
                 new QueryDefinition("SELECT * FROM c WHERE c.score = 99 AND c.PartitionKey = 'showroom-query'")))
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();

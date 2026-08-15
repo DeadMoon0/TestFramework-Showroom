@@ -47,7 +47,8 @@ public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
         //   personality trait, it is a maintenance problem wearing confidence.
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
@@ -100,7 +101,8 @@ public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
         //  ^ Matching rows come back as individual artifacts you can assert on. Civilized behavior from a query engine.
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();

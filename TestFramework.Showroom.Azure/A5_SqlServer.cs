@@ -106,7 +106,8 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
         .SetupArtifact("product")
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         var configSub = ShowroomSqlSetup.BuildConfig();
@@ -147,7 +148,8 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
         .SetupArtifact("invoiceLine")
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         var configSub = ShowroomSqlSetup.BuildConfig();
@@ -193,7 +195,8 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
         // ^ Only the instrument rows come back as found artifacts. The snack remains judged and excluded.
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         var configSub = ShowroomSqlSetup.BuildConfig();

@@ -100,7 +100,8 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
             .WithTimeOut(TimeSpan.FromMinutes(2))
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Shared_dependencies_are_reused_across_multiple_function_apps()
     {
         IServiceProvider serviceProvider = ConfigInstance.Create().LoadDockerAzureConfig().BuildServiceProvider();
@@ -160,7 +161,8 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         Assert.Equal("sample-analyse", analyseResult.SampleDocId);
     }
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Contracts_select_the_intended_provider_when_multiple_candidates_exist()
     {
         IServiceProvider serviceProvider = ConfigInstance.Create().LoadDockerAzureConfig().BuildServiceProvider();
@@ -201,7 +203,8 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         Assert.Equal("sample-contract", contractResult.SampleDocId);
     }
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Exclusive_dependencies_reject_shared_realizations()
     {
         IServiceProvider serviceProvider = ConfigInstance.Create().LoadDockerAzureConfig().BuildServiceProvider();

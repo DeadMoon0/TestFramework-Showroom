@@ -43,7 +43,7 @@ public class Container_TheWholeLane(ITestOutputHelper outputHelper)
         .Trigger(WebExt.Stub.Calls("pricing")).Name("audit")
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
@@ -82,7 +82,7 @@ public class Container_ThePlanIsOnTheRecord(ITestOutputHelper outputHelper)
         .Trigger(WebExt.Api.IsLive("orders")).Name("live")
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
@@ -131,7 +131,7 @@ public class Container_WhatSurvivesBetweenRuns(ITestOutputHelper outputHelper)
         .Trigger(WebExt.Sql.Scalar<int>("orders-db", "SELECT COUNT(1) FROM [Orders]")).Name("count")
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {

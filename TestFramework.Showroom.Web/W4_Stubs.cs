@@ -43,7 +43,7 @@ public class Stub_TheCallIsObservable(ITestOutputHelper outputHelper)
         .Trigger(WebExt.Stub.Calls("pricing")).Name("everything")
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
@@ -89,7 +89,7 @@ public class Stub_UnmatchedCallsAreTheInterestingOnes(ITestOutputHelper outputHe
         .Trigger(WebExt.Stub.Calls("pricing")).Name("audit")
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
@@ -125,7 +125,7 @@ public class Stub_DeclarationsAreData(ITestOutputHelper outputHelper)
         .Trigger(WebExt.Stub.Calls("pricing", HttpMethod.Get, "/api/health")).Name("health-calls")
         .Build();
 
-    [Fact]
+    [DockerFact]
     [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {

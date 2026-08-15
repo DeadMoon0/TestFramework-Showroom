@@ -38,7 +38,8 @@ public class ConfigurationPatterns_DefaultPath(ITestOutputHelper outputHelper)
         .SetupArtifact("blob")
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         ConfigInstance config = ConfigInstance.Create()
@@ -70,7 +71,8 @@ public class ConfigurationPatterns_AdvancedMixedPath(ITestOutputHelper outputHel
         .SetupArtifact("product")
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         ConfigInstance config = ShowroomSqlSetup.BuildConfig();

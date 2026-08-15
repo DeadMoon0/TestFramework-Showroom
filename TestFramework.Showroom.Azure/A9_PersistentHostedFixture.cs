@@ -38,7 +38,7 @@ namespace TestFramework.Showroom.Azure;
 
 [Collection(PersistentHostedCollectionDefinition.CollectionName)]
 public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
-    DockerAzureHostedCollectionFixture<PersistentHostedFixtureState> fixture)
+    PersistentHostedFixture fixture)
 {
     // One tiny timeline is enough here. We are not testing business flow.
     // We are interrogating the contract: does the same hosted slice survive
@@ -47,7 +47,8 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
         .Trigger(new InspectStorageConfigStep()).Name("inspect-storage-config")
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Persistent_fixture_reuses_the_same_storage_runtime_slice()
     {
         // Two runs. Same fixture. No excuses. If the persistent slice works,
@@ -68,7 +69,8 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
             secondRun.EnvironmentContext.GetState<object>(DockerAzureEnvironment.AzuriteComponentId));
     }
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Persistent_fixture_allows_run_local_config_overrides_without_restarting_the_stack()
     {
         // Baseline first, then a run that changes only its local view of the
@@ -150,11 +152,44 @@ internal sealed class PersistentStorageDefinition : DockerStorageDefinition
 }
 
 [CollectionDefinition(CollectionName, DisableParallelization = true)]
-public sealed class PersistentHostedCollectionDefinition : ICollectionFixture<DockerAzureHostedCollectionFixture<PersistentHostedFixtureState>>
+public sealed class PersistentHostedCollectionDefinition : ICollectionFixture<PersistentHostedFixture>
 {
     // xUnit needs a stable identity for the shared hosted fixture. Give it one
     // and it stops trying to be creative, which is best for everyone involved.
     public const string CollectionName = "AzureShowroom.PersistentHosted";
+}
+
+/// <summary>
+/// The xUnit v2 adapter for the hosted fixture, plus the Docker gate.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Two jobs, both load-bearing. First, <c>DockerAzureHostedCollectionFixture</c> deliberately does
+/// not implement <c>IAsyncLifetime</c> — xunit is not a runtime dependency of the container package —
+/// so nothing would ever call <c>InitializeAsync</c> and <c>GetEnv()</c> would refuse to hand out an
+/// environment. Declaring the interface here is the adapter the package README asks consumers for.
+/// </para>
+/// <para>
+/// Second, the gate. A collection fixture is constructed before any test in the collection runs, so
+/// a <c>[DockerFact]</c> skip cannot save a fixture that has already tried to boot a container stack.
+/// Checking here means a machine without Docker gets two explained skips instead of one boot failure.
+/// </para>
+/// </remarks>
+public sealed class PersistentHostedFixture : DockerAzureHostedCollectionFixture<PersistentHostedFixtureState>, IAsyncLifetime
+{
+    private bool _booted;
+
+    Task IAsyncLifetime.InitializeAsync()
+    {
+        if (!ShowroomEnvironmentGate.TryEnableDockerHost(out _))
+            return Task.CompletedTask;
+
+        _booted = true;
+        return base.InitializeAsync();
+    }
+
+    Task IAsyncLifetime.DisposeAsync()
+        => _booted ? base.DisposeAsync() : Task.CompletedTask;
 }
 
 public sealed class PersistentHostedFixtureState : IDockerAzureHostedFixtureState

@@ -102,7 +102,8 @@ public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
         .Name("function-call")
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         ConfigInstance config = ConfigInstance.Create().LoadDockerAzureConfig().Build();
@@ -140,7 +141,8 @@ public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
         .Name("function-echo")
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         ConfigInstance config = ConfigInstance.Create().LoadDockerAzureConfig().Build();
@@ -179,7 +181,8 @@ public class FunctionApps_DefaultFunctionRoute(ITestOutputHelper outputHelper)
         .Name("function-default-route")
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         ConfigInstance config = ConfigInstance.Create().LoadDockerAzureConfig().Build();

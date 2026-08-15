@@ -69,9 +69,11 @@ For infrastructure-backed retry behavior, see the container smoke tests in this 
 `TestFramework.Showroom.Web` covers the web lane: REST APIs, the SQL Server behind them, the
 dependencies they call, and the container environment that supplies all three.
 
-1. Start Docker Desktop.
-2. Run the suite. There is nothing to configure and no settings file to fill in — every address is
+1. Run the suite. There is nothing to configure and no settings file to fill in — every address is
    published at run time by `DockerWebEnvironment`.
+2. Docker is not a precondition to *run* this: every chapter that needs a daemon skips itself with a
+   reason when none answers, so a machine without Docker gets thirteen explained skips instead of
+   thirteen container errors. Start Docker Desktop when you want those chapters to actually execute.
 
 ```bash
 dotnet test TestFramework.Showroom.Web/TestFramework.Showroom.Web.csproj --configuration Release
@@ -86,7 +88,10 @@ Read the modules in order:
 - `TestFramework.Showroom.Web/W4_Stubs.cs` — asserting what the application sent *outwards*
 - `TestFramework.Showroom.Web/W5_ContainerLane.cs` — all four sources of truth in one run
 
-Only `W3` runs without a Docker daemon; everything else is marked `Category=DockerSmoke`.
+Only `W3` runs without a Docker daemon. Everything else carries both `[DockerFact]` and
+`Category=DockerSmoke`, because the two answer different questions: the trait answers "should the
+fast lane run this?" and needs the runner to remember a filter, while the skip answers "will this
+fail environmentally?" and needs nothing from anybody.
 
 ### The Application Under Test
 
@@ -110,8 +115,9 @@ standalone, and pays for it in wall-clock time.
 
 `TestFramework.Showroom.Azure` runs against the container-backed Azure environment by default.
 
-1. Start Docker Desktop.
-2. Create `TestFramework.Showroom.Azure/local.testSettings.json` from the placeholder shape in [../TestFramework-Container/TestFramework.Container.Azure/example.local.testsettings.json](../TestFramework-Container/TestFramework.Container.Azure/example.local.testsettings.json) and fill in your own local or test-only values. Do not commit populated secrets.
+1. Docker is not a precondition to *run* this lane: every chapter needs a daemon and every chapter
+   skips itself with a reason when none answers. Start Docker Desktop when you want them to execute.
+2. Create `TestFramework.Showroom.Azure/local.testSettings.json` from the placeholder shape in [example.local.testsettings.json](https://github.com/DeadMoon0/TestFramework-Container/blob/main/TestFramework.Container.Azure/example.local.testsettings.json) and fill in your own local or test-only values. Do not commit populated secrets.
 3. Run the Azure showroom tests. Blob, Table, Cosmos, SQL, and Service Bus samples use `DockerAzureEnvironment` from `TestFramework.Container`.
 4. The integrated Function App sample in `A6_IntegratedAzure.cs` now runs through the same container-backed Function App path as the normal Container.Azure smoke suite.
 5. `A7_ComponentComposition.cs` demonstrates the new container composition model directly: shared dependencies, contract-selected providers, and exclusive dependency failures.
@@ -172,7 +178,7 @@ The examples now exercise the same fluent topology path that the container packa
 
 ### Azure Troubleshooting
 
-- If Blob, Table, Cosmos, SQL, or Service Bus examples fail immediately, check that Docker Desktop is running before the test host starts.
+- If Blob, Table, Cosmos, SQL, or Service Bus examples *skip* with "Requires Docker Desktop or another reachable Windows Docker named pipe.", the daemon is not answering. The gate also sets `DOCKER_HOST` from whichever Docker Desktop named pipe exists, so a machine that has Docker running usually needs nothing else.
 - If `A6_IntegratedAzure` fails during setup, verify that the Function App definition bindings and showroom config store identifiers still line up exactly.
 - If Service Bus waits time out, inspect the correlation IDs in the example and confirm that the function emits replies on the expected queue/topic.
 - If SQL-backed samples fail, make sure migrations or schema initialization from the container-backed environment have completed before re-running.

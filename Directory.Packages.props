@@ -18,6 +18,11 @@
 
 	<ItemGroup Label="TestFramework">
 		<PackageVersion Include="TestFramework.Azure" Version="0.2.0" />
+		<!-- 0.1.5, deliberately not the freshly packed 0.1.6. Config 0.1.6 changed the return type of
+		     ConfigInstance.BuildServiceProvider(), and the Azure, Web and Container packages in the
+		     local feed were compiled against 0.1.5 — pairing them with 0.1.6 produces a
+		     MissingMethodException the moment a container-backed chapter starts. Move this to 0.1.6
+		     in the same change that republishes those four packages, not before. -->
 		<PackageVersion Include="TestFramework.Config" Version="0.2.0" />
 		<PackageVersion Include="TestFramework.Container" Version="0.2.0" />
 		<PackageVersion Include="TestFramework.Container.Azure" Version="0.2.0" />

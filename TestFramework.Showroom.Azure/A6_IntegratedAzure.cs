@@ -211,7 +211,8 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
 
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         // Every identifier hangs off the runId so concurrent executions do not

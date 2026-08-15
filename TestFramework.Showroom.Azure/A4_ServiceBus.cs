@@ -38,7 +38,8 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
         //  ^ If nothing matching arrives in time, the run fails with a specific timeout and no sympathy.
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
@@ -69,7 +70,8 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
             .WithTimeOut(TimeSpan.FromSeconds(10))
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
@@ -103,7 +105,8 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
             .WithTimeOut(TimeSpan.FromSeconds(10))
         .Build();
 
-    [Fact]
+    [DockerFact]
+    [Trait("Category", "DockerSmoke")]
     public async Task Run()
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
