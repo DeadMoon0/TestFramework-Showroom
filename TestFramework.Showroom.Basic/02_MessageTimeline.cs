@@ -1,9 +1,9 @@
-﻿using TestFramework.Core.Timelines;
+using TestFramework.Core.Timelines;
 using TestFramework.Simple;
 
 namespace TestFramework.Showroom.Basic;
 
-public class MessageBoxTimeline
+public class MessageTimeline
 {
     // This chapter adds one actual trigger and nothing else. Deliberately.
     // The goal is to show the timeline shape with exactly one moving part, not
@@ -18,7 +18,7 @@ public class MessageBoxTimeline
     // The timeline is the blueprint. Each run is one fresh attempt to carry out
     // that blueprint without dragging leftovers from the previous attempt like contraband through customs.
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(SimpleExt.Trigger.MessageBox("Hello from Test"))
+        .Trigger(SimpleExt.Trigger.Message("Hello from Test"))
         .Build();
 
     [Fact]

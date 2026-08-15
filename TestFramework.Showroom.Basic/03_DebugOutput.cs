@@ -1,4 +1,4 @@
-﻿using TestFramework.Core.Timelines;
+using TestFramework.Core.Timelines;
 using TestFramework.Simple;
 using Xunit.Abstractions;
 
@@ -9,8 +9,10 @@ public class DebugOutput(ITestOutputHelper outputHelper)
     // Give the run an output helper and it stops suffering in silence. That is
     // the entire bargain here. More visibility, less interpretive guessing, fewer speeches about "probably the environment."
 
+    // The trigger writes through the run logger, so "Hello from Test" arrives in the very output
+    // stream this chapter is about. That is the point: the payload and the lesson are the same thing.
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(SimpleExt.Trigger.MessageBox("Hello from Test"))
+        .Trigger(SimpleExt.Trigger.Message("Hello from Test"))
         .Build();
 
     [Fact]

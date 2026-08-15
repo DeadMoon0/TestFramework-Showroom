@@ -18,6 +18,15 @@ file static class ArtifactLifecycleSamplePaths
         Directory.CreateDirectory(path);
         return path;
     }
+
+    // The lifecycle is the lesson; the shell is plumbing. The file name is unique per run, so
+    // appending and creating amount to the same thing. Note there is no space before `>>`: with
+    // one, cmd's echo writes the space into the file too and ExpectedLine stops being exact.
+    public static string AppendLine(string text, string file)
+        => OperatingSystem.IsWindows() ? $"echo {text}>> {file}" : $"printf '%s\\n' '{text}' >> {file}";
+
+    public static string ExpectedLine(string text)
+        => OperatingSystem.IsWindows() ? $"{text}\r\n" : $"{text}\n";
 }
 
 public class ArtifactLifecycle_DeclareThenPopulate(ITestOutputHelper outputHelper)
@@ -63,13 +72,13 @@ public class ArtifactLifecycle_RegisterThenAssert(ITestOutputHelper outputHelper
         string artifactFileName = Path.GetFileName(artifactPath);
 
         var run = await this._timeline.SetupRun(outputHelper)
-            .AddVariable("cmdCreate", $"echo registered at runtime > {artifactFileName}")
+            .AddVariable("cmdCreate", ArtifactLifecycleSamplePaths.AppendLine("registered at runtime", artifactFileName))
             .AddVariable("cwd", ArtifactLifecycleSamplePaths.BuildOutput)
             .AddVariable("artifactPath", artifactPath)
             .RunAsync();
 
         run.EnsureRanToCompletion();
-        run.FileArtifact("createdFile").Utf8Text().Should().Be("registered at runtime \r\n");
+        run.FileArtifact("createdFile").Utf8Text().Should().Be(ArtifactLifecycleSamplePaths.ExpectedLine("registered at runtime"));
     }
 }
 

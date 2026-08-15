@@ -30,7 +30,12 @@ public class ErrorPaths_TimeoutExhaustion(ITestOutputHelper outputHelper)
 
         Assert.Single(exception.FailedSteps);
         Assert.Contains("File Exists Event", exception.FailedSteps[0].StepName, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("timed out", exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.IsType<TimeoutException>(exception.FailedSteps[0].StepException);
+
+        // Assert on the exception type, not on its wording. Two timeouts are racing here — the step
+        // modifier's and the event's own — and each phrases the failure differently, so a substring
+        // match on one of the two sentences is a coin flip. The type is the same either way.
+        Assert.Contains(nameof(TimeoutException), exception.Message, StringComparison.Ordinal);
     }
 }
 

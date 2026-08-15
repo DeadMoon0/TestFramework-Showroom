@@ -1,4 +1,4 @@
-﻿using TestFramework.Core.Timelines;
+using TestFramework.Core.Timelines;
 using TestFramework.Core.Timelines.Assertions;
 using TestFramework.Simple;
 using Xunit.Abstractions;
@@ -12,7 +12,7 @@ public class StepValidations(ITestOutputHelper outputHelper)
     // final success flag glued to the top by somebody with confidence and no receipts.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(SimpleExt.Trigger.MessageBox("Hello from Test")).Name("hello")
+        .Trigger(SimpleExt.Trigger.Message("Hello from Test")).Name("hello")
         .Build();
 
     [Fact]

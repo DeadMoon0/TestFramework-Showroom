@@ -14,7 +14,7 @@ public class RunAssertions_Basic(ITestOutputHelper outputHelper)
     // means what it meant last Tuesday before the refactor and the regrettable optimism.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(SimpleExt.Trigger.MessageBox("Is anyone out there?"))
+        .Trigger(SimpleExt.Trigger.Message("Is anyone out there?"))
             .Name("ping")
         //    ^ Name the step once. Future-you gets stable lookups instead of
         //      archaeological work and the slow realization that index-based reasoning was a cry for help.
@@ -50,7 +50,7 @@ public class RunAssertions_ForEach(ITestOutputHelper outputHelper)
     private readonly Timeline _timeline = Timeline.Create()
         .ForEach(["Alice", "Bob", "Charlie"], "item", loop =>
         {
-            loop.Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("item"))).Name("greet");
+            loop.Trigger(SimpleExt.Trigger.Message(Var.Ref<string>("item"))).Name("greet");
             // ^ Same label, many instances. That is what makes grouped assertions work and your file remain shorter than a legal warning.
         })
         .Build();
@@ -72,7 +72,7 @@ public class RunAssertions_Scope(ITestOutputHelper outputHelper)
     // story. Collect the damage first, then report it as one complete problem like a proper incident report with better lighting.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(SimpleExt.Trigger.MessageBox("Are we good?"))
+        .Trigger(SimpleExt.Trigger.Message("Are we good?"))
             .Name("check")
         .Build();
 

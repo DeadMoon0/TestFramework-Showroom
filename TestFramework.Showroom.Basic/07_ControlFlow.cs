@@ -1,4 +1,4 @@
-﻿using TestFramework.Core.Timelines;
+using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using TestFramework.Simple;
 using Xunit.Abstractions;
@@ -15,11 +15,11 @@ public class ControlFlow_Conditional(ITestOutputHelper outputHelper)
         {
             //           ^ Control flow reads immutable values because the path
             //             must be decided before execution starts moving and absolutely before anyone improvises a tragedy.
-            thenBranch.Trigger(SimpleExt.Trigger.MessageBox("Hello from Path A"));
+            thenBranch.Trigger(SimpleExt.Trigger.Message("Hello from Path A"));
         })
         .Conditional(Var.RefImmutable<bool>("doPathB"), thenBranch =>
         {
-            thenBranch.Trigger(SimpleExt.Trigger.MessageBox("Hello from Path B"));
+            thenBranch.Trigger(SimpleExt.Trigger.Message("Hello from Path B"));
         })
         .Build();
 
@@ -52,7 +52,7 @@ public class ControlFlow_ForEach(ITestOutputHelper outputHelper)
     private readonly Timeline _timeline = Timeline.Create()
         .ForEach(Var.RefImmutable<string[]>("messages"), "item", loop =>
         {
-            loop.Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("item").Transform(item => $"Hello: {item}")));
+            loop.Trigger(SimpleExt.Trigger.Message(Var.Ref<string>("item").Transform(item => $"Hello: {item}")));
         })
         .Build();
 

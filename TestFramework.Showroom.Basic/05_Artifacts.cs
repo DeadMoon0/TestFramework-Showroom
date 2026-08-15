@@ -1,4 +1,4 @@
-﻿using TestFramework.Core.Timelines;
+using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using TestFramework.LocalIO;
 using TestFramework.Simple;
@@ -12,6 +12,17 @@ file static class ArtifactSamplePaths
 
     public static string UniqueFile(string prefix)
         => Path.Combine(BuildOutput, $"{prefix}-{Guid.NewGuid():N}.txt");
+
+    // The chapters below are about artifacts, not about shells, so the portability lives here
+    // instead of in every call site. Note there is no space before `>>`: cmd's echo copies
+    // everything between the text and the redirect into the file, trailing space included, which
+    // is exactly the sort of detail that makes an assertion pass on one machine and fail on another.
+    // On Unix, printf beats echo because the bash builtin and /bin/sh disagree about escapes.
+    public static string AppendLine(string text, string file)
+        => OperatingSystem.IsWindows() ? $"echo {text}>> {file}" : $"printf '%s\\n' '{text}' >> {file}";
+
+    public static string ExpectedLine(string text)
+        => OperatingSystem.IsWindows() ? $"{text}\r\n" : $"{text}\n";
 }
 
 public class Artifacts_Setup(ITestOutputHelper outputHelper)
@@ -21,7 +32,7 @@ public class Artifacts_Setup(ITestOutputHelper outputHelper)
 
     private readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("msgFile") // Register the artifact slot up front so the run knows this file matters and not just spiritually.
-        .Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("cmdCommand")))
+        .Trigger(SimpleExt.Trigger.Message(Var.Ref<string>("cmdCommand")))
         .Build();
 
     [Fact]
@@ -47,7 +58,7 @@ public class Artifacts_Register(ITestOutputHelper outputHelper)
         .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
         //                           ^ A reference is the address. Without it,
         //                             you do not have tracking, you have gossip and blame allocation.
-        .Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("cmdShow")))
+        .Trigger(SimpleExt.Trigger.Message(Var.Ref<string>("cmdShow")))
         .Build();
 
     [Fact]
@@ -57,7 +68,7 @@ public class Artifacts_Register(ITestOutputHelper outputHelper)
         string artifactFileName = Path.GetFileName(artifactPath);
 
         var run = await this._timeline.SetupRun(outputHelper)
-            .AddVariable("cmdCreate", $"echo Hello from the new Artifact >> {artifactFileName}")
+            .AddVariable("cmdCreate", ArtifactSamplePaths.AppendLine("Hello from the new Artifact", artifactFileName))
             .AddVariable("cmdShow", "Hello from the new Artifact")
             .AddVariable("cwd", ArtifactSamplePaths.BuildOutput)
             .AddVariable("artifactPath", artifactPath)
@@ -83,13 +94,13 @@ public class Artifacts_Assert(ITestOutputHelper outputHelper)
         string artifactFileName = Path.GetFileName(artifactPath);
 
         var run = await this._timeline.SetupRun(outputHelper)
-            .AddVariable("cmdCreate", $"echo Hello from the new Artifact >> {artifactFileName}")
+            .AddVariable("cmdCreate", ArtifactSamplePaths.AppendLine("Hello from the new Artifact", artifactFileName))
             .AddVariable("cwd", ArtifactSamplePaths.BuildOutput)
             .AddVariable("artifactPath", artifactPath)
             .RunAsync();
         run.EnsureRanToCompletion();
 
-        run.FileArtifact("newFile").Utf8Text().Should().Be("Hello from the new Artifact \r\n");
+        run.FileArtifact("newFile").Utf8Text().Should().Be(ArtifactSamplePaths.ExpectedLine("Hello from the new Artifact"));
         //                    ^ The run stores artifact versions in one place you
         //                      can inspect instead of re-deriving them from chaos and stale confidence.
     }
@@ -114,14 +125,14 @@ public class Artifacts_Versions(ITestOutputHelper outputHelper)
         string artifactFileName = Path.GetFileName(artifactPath);
 
         var run = await this._timeline.SetupRun(outputHelper)
-            .AddVariable("cmdAppend", $"echo Some Log >> {artifactFileName}")
+            .AddVariable("cmdAppend", ArtifactSamplePaths.AppendLine("Some Log", artifactFileName))
             .AddVariable("cwd", ArtifactSamplePaths.BuildOutput)
             .AddVariable("artifactPath", artifactPath)
             .RunAsync();
         run.EnsureRanToCompletion();
 
-        Assert.Equal("Some Log \r\n", run.ArtifactStore.GetFileArtifact("newFile").First.DataAsUtf8String);
-        Assert.Equal("Some Log \r\nSome Log \r\n", run.ArtifactStore.GetFileArtifact("newFile")["laterVersion"].DataAsUtf8String);
+        Assert.Equal(ArtifactSamplePaths.ExpectedLine("Some Log"), run.ArtifactStore.GetFileArtifact("newFile").First.DataAsUtf8String);
+        Assert.Equal(ArtifactSamplePaths.ExpectedLine("Some Log") + ArtifactSamplePaths.ExpectedLine("Some Log"), run.ArtifactStore.GetFileArtifact("newFile")["laterVersion"].DataAsUtf8String);
         //                                                       ^ Named versions pin the exact state you care about, which beats "the earlier one, but not the first earlier one."
     }
 }

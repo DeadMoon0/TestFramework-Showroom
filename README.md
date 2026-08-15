@@ -28,7 +28,7 @@ dotnet test TestFramework.Showroom.Basic/TestFramework.Showroom.Basic.csproj --c
 Start with these files in order:
 
 - `TestFramework.Showroom.Basic/01_MinimalTimeline.cs`
-- `TestFramework.Showroom.Basic/02_MSBTimeline.cs` (`MSB` = message-box timeline)
+- `TestFramework.Showroom.Basic/02_MessageTimeline.cs`
 - `TestFramework.Showroom.Basic/03_DebugOutput.cs`
 - `TestFramework.Showroom.Basic/04_Variables.cs`
 - `TestFramework.Showroom.Basic/05_Artifacts.cs`
@@ -42,6 +42,7 @@ Start with these files in order:
 - `TestFramework.Showroom.Basic/13_Parallel.cs`
 - `TestFramework.Showroom.Basic/14_ArtifactLifecycle.cs`
 - `TestFramework.Showroom.Basic/15_ErrorPaths.cs`
+- `TestFramework.Showroom.Basic/16_InteractiveTriggers.cs`
 
 Then continue with the web lane in `TestFramework.Showroom.Web/` (see [Web Example Setup](#web-example-setup)) or the cloud lane in `TestFramework.Showroom.Azure/`.
 
@@ -235,7 +236,7 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 ## Where To Start
 
 - Begin with `TestFramework.Showroom.Basic/01_MinimalTimeline.cs` to see the smallest possible timeline
-- Follow with `02_MSBTimeline.cs` and `03_DebugOutput.cs` for the message-box trigger and debug output basics before adding more framework concepts
+- Follow with `02_MessageTimeline.cs` and `03_DebugOutput.cs` for the message trigger and debug output basics before adding more framework concepts
 - Continue with `04_Variables.cs`, `05_Artifacts.cs`, `06_Events.cs`, `07_ControlFlow.cs`, `08_FluentAssertions.cs`, `09_StepValidations.cs`, `10_IOContracts.cs`, and `11_Retry.cs` to understand the core workflow model
 - Read `14_ArtifactLifecycle.cs` when you want the artifact model spelled out as declare vs register vs discover instead of learning it indirectly across multiple chapters
 - Read `15_ErrorPaths.cs` when you want to see how failure and recovery guidance show up in executable tests instead of only in docs

@@ -13,7 +13,7 @@ Use it when you want to learn the framework in sequence before reading the xUnit
 ## Basic Chapter Map
 
 - `01_MinimalTimeline.cs`: smallest build -> run -> assert shape
-- `02_MSBTimeline.cs`: simple interaction flow
+- `02_MessageTimeline.cs`: simple interaction flow
 - `03_DebugOutput.cs`: logging and readable output during a run
 - `04_Variables.cs`: runtime data flow through variables
 - `05_Artifacts.cs`: tracked runtime resources

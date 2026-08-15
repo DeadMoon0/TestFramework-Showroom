@@ -1,4 +1,4 @@
-﻿using TestFramework.Core.Timelines;
+using TestFramework.Core.Timelines;
 using TestFramework.Core.Timelines.Assertions;
 using TestFramework.Core.Variables;
 using TestFramework.LocalIO;
@@ -13,7 +13,7 @@ public class Variables(ITestOutputHelper outputHelper)
     // Same structure, different inputs, no duplicate timeline definitions every time a string gets ambitious.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("cmdCommand")))
+        .Trigger(SimpleExt.Trigger.Message(Var.Ref<string>("cmdCommand")))
         .Build();
 
     [Fact]
@@ -56,7 +56,7 @@ public class Variables_Transforms(ITestOutputHelper outputHelper)
     // The consumer still gets exactly the shape it needs. Suspiciously efficient, but we allow it.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("cmdCommand").Transform(x => x + ". And it is even Transformed!")))
+        .Trigger(SimpleExt.Trigger.Message(Var.Ref<string>("cmdCommand").Transform(x => x + ". And it is even Transformed!")))
         .Build();
 
     [Fact]
@@ -75,7 +75,7 @@ public class Variables_DoNotParallelize(ITestOutputHelper outputHelper)
     // that sharing time with other work is no longer an option. Think quarantine, but for concurrency.
 
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(SimpleExt.Trigger.MessageBox(Var.Ref<string>("cmdCommand")))
+        .Trigger(SimpleExt.Trigger.Message(Var.Ref<string>("cmdCommand")))
         .DoNotParallelize()
         .Build();
 
