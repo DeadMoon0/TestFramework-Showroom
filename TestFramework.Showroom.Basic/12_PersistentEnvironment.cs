@@ -39,7 +39,11 @@ public class PersistentEnvironmentContextSample
             .Trigger(new RequireWorkerStep())
             .Build();
 
-        await using (PersistentEnvironmentContext<ShowroomPersistentSetup> persistent = new(setup))
+        // CreateAsync, not the constructor: constructing one blocks the calling thread for the whole
+        // bootstrap and deadlocks under a SynchronizationContext, which is why that overload is now
+        // marked obsolete. A teaching chapter should show the shape you want copied.
+        await using (PersistentEnvironmentContext<ShowroomPersistentSetup> persistent =
+                     await PersistentEnvironmentContext<ShowroomPersistentSetup>.CreateAsync(setup))
         {
             // Same timeline, same persistent context, two separate runs. If the
             // primitive works, the shared root survives and the worker does not. Very Darwinian. Very efficient.

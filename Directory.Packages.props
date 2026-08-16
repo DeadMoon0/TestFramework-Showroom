@@ -9,6 +9,11 @@
 
 		CentralPackageTransitivePinningEnabled keeps a transitive dependency from quietly pulling in
 		an older Core than the one declared here.
+
+		Every version below is published on nuget.org. That is the rule for this file: the showroom
+		is what a stranger clones first, so it must restore from the public feed alone. If a version
+		here is not published, a fresh clone fails - which is exactly how the web lane once shipped
+		references to a Core and a Config that existed only in a local feed.
 	-->
 
 	<PropertyGroup>
@@ -18,11 +23,6 @@
 
 	<ItemGroup Label="TestFramework">
 		<PackageVersion Include="TestFramework.Azure" Version="0.2.0" />
-		<!-- 0.1.5, deliberately not the freshly packed 0.1.6. Config 0.1.6 changed the return type of
-		     ConfigInstance.BuildServiceProvider(), and the Azure, Web and Container packages in the
-		     local feed were compiled against 0.1.5 — pairing them with 0.1.6 produces a
-		     MissingMethodException the moment a container-backed chapter starts. Move this to 0.1.6
-		     in the same change that republishes those four packages, not before. -->
 		<PackageVersion Include="TestFramework.Config" Version="0.2.0" />
 		<PackageVersion Include="TestFramework.Container" Version="0.2.0" />
 		<PackageVersion Include="TestFramework.Container.Azure" Version="0.2.0" />
