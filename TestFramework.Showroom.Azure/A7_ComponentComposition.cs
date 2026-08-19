@@ -105,7 +105,10 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     public async Task Shared_dependencies_are_reused_across_multiple_function_apps()
     {
         IServiceProvider serviceProvider = ConfigInstance.Create().LoadDockerAzureConfig().BuildServiceProvider();
-        using IDisposable _ = (IDisposable)serviceProvider;
+        // Disposed asynchronously, and that is not a style choice. The provider holds an
+        // AzureClientCache, which implements IAsyncDisposable and not IDisposable, and the
+        // container refuses a synchronous Dispose of such a service rather than blocking on it.
+        await using IAsyncDisposable _ = (IAsyncDisposable)serviceProvider;
         DockerAzureEnvironment environment = DockerAzureEnvironment.For<IntakeFunctionAppDefinition>()
             .Include<AnalysisFunctionAppDefinition>();
 
@@ -166,7 +169,10 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     public async Task Contracts_select_the_intended_provider_when_multiple_candidates_exist()
     {
         IServiceProvider serviceProvider = ConfigInstance.Create().LoadDockerAzureConfig().BuildServiceProvider();
-        using IDisposable _ = (IDisposable)serviceProvider;
+        // Disposed asynchronously, and that is not a style choice. The provider holds an
+        // AzureClientCache, which implements IAsyncDisposable and not IDisposable, and the
+        // container refuses a synchronous Dispose of such a service rather than blocking on it.
+        await using IAsyncDisposable _ = (IAsyncDisposable)serviceProvider;
         DockerAzureEnvironment environment = new DockerAzureEnvironment()
             .Include<ReplyBusDefinition>()
             .Include<AuditBusDefinition>()
@@ -208,7 +214,10 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     public async Task Exclusive_dependencies_reject_shared_realizations()
     {
         IServiceProvider serviceProvider = ConfigInstance.Create().LoadDockerAzureConfig().BuildServiceProvider();
-        using IDisposable _ = (IDisposable)serviceProvider;
+        // Disposed asynchronously, and that is not a style choice. The provider holds an
+        // AzureClientCache, which implements IAsyncDisposable and not IDisposable, and the
+        // container refuses a synchronous Dispose of such a service rather than blocking on it.
+        await using IAsyncDisposable _ = (IAsyncDisposable)serviceProvider;
         DockerAzureEnvironment environment = new DockerAzureEnvironment()
             .Include<ExclusiveBusDefinition>()
             .Include<ExclusiveFunctionAppDefinitionA>()
