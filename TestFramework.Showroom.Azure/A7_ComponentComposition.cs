@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using FunctionApp;
 using TestFramework.Azure;
 using TestFramework.Azure.Configuration.SpecificConfigs;
@@ -104,11 +105,14 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     [Trait("Category", "DockerSmoke")]
     public async Task Shared_dependencies_are_reused_across_multiple_function_apps()
     {
-        IServiceProvider serviceProvider = ConfigInstance.Create().LoadDockerAzureConfig().BuildServiceProvider();
-        // Disposed asynchronously, and that is not a style choice. The provider holds an
-        // AzureClientCache, which implements IAsyncDisposable and not IDisposable, and the
-        // container refuses a synchronous Dispose of such a service rather than blocking on it.
-        await using IAsyncDisposable _ = (IAsyncDisposable)serviceProvider;
+        // Held as the concrete ServiceProvider, which is what BuildServiceProvider returns: the
+        // provider owns every singleton it built, and the concrete type is what makes that
+        // ownership visible here instead of hiding it behind IServiceProvider.
+        //
+        // Disposed asynchronously, and that is not a style choice. It holds an AzureClientCache,
+        // which implements IAsyncDisposable and not IDisposable, and the container refuses a
+        // synchronous Dispose of such a service rather than blocking on it.
+        await using ServiceProvider serviceProvider = ConfigInstance.Create().LoadDockerAzureConfig().BuildServiceProvider();
         DockerAzureEnvironment environment = DockerAzureEnvironment.For<IntakeFunctionAppDefinition>()
             .Include<AnalysisFunctionAppDefinition>();
 
@@ -168,11 +172,14 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     [Trait("Category", "DockerSmoke")]
     public async Task Contracts_select_the_intended_provider_when_multiple_candidates_exist()
     {
-        IServiceProvider serviceProvider = ConfigInstance.Create().LoadDockerAzureConfig().BuildServiceProvider();
-        // Disposed asynchronously, and that is not a style choice. The provider holds an
-        // AzureClientCache, which implements IAsyncDisposable and not IDisposable, and the
-        // container refuses a synchronous Dispose of such a service rather than blocking on it.
-        await using IAsyncDisposable _ = (IAsyncDisposable)serviceProvider;
+        // Held as the concrete ServiceProvider, which is what BuildServiceProvider returns: the
+        // provider owns every singleton it built, and the concrete type is what makes that
+        // ownership visible here instead of hiding it behind IServiceProvider.
+        //
+        // Disposed asynchronously, and that is not a style choice. It holds an AzureClientCache,
+        // which implements IAsyncDisposable and not IDisposable, and the container refuses a
+        // synchronous Dispose of such a service rather than blocking on it.
+        await using ServiceProvider serviceProvider = ConfigInstance.Create().LoadDockerAzureConfig().BuildServiceProvider();
         DockerAzureEnvironment environment = new DockerAzureEnvironment()
             .Include<ReplyBusDefinition>()
             .Include<AuditBusDefinition>()
@@ -213,11 +220,14 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     [Trait("Category", "DockerSmoke")]
     public async Task Exclusive_dependencies_reject_shared_realizations()
     {
-        IServiceProvider serviceProvider = ConfigInstance.Create().LoadDockerAzureConfig().BuildServiceProvider();
-        // Disposed asynchronously, and that is not a style choice. The provider holds an
-        // AzureClientCache, which implements IAsyncDisposable and not IDisposable, and the
-        // container refuses a synchronous Dispose of such a service rather than blocking on it.
-        await using IAsyncDisposable _ = (IAsyncDisposable)serviceProvider;
+        // Held as the concrete ServiceProvider, which is what BuildServiceProvider returns: the
+        // provider owns every singleton it built, and the concrete type is what makes that
+        // ownership visible here instead of hiding it behind IServiceProvider.
+        //
+        // Disposed asynchronously, and that is not a style choice. It holds an AzureClientCache,
+        // which implements IAsyncDisposable and not IDisposable, and the container refuses a
+        // synchronous Dispose of such a service rather than blocking on it.
+        await using ServiceProvider serviceProvider = ConfigInstance.Create().LoadDockerAzureConfig().BuildServiceProvider();
         DockerAzureEnvironment environment = new DockerAzureEnvironment()
             .Include<ExclusiveBusDefinition>()
             .Include<ExclusiveFunctionAppDefinitionA>()

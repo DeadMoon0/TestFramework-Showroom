@@ -77,7 +77,10 @@ public class ConfigurationPatterns_AdvancedMixedPath(ITestOutputHelper outputHel
     {
         ConfigInstance config = ShowroomSqlSetup.BuildConfig();
 
-        IServiceProvider provider = config.BuildServiceProvider();
+        // Owned here, so disposed here. BuildServiceProvider hands back the concrete
+        // ServiceProvider precisely so that obligation is visible: the provider owns every
+        // singleton it created, including the ones holding clients and connections.
+        await using ServiceProvider provider = config.BuildServiceProvider();
 
         var run = await _timeline
             .SetupRun(provider, outputHelper)
