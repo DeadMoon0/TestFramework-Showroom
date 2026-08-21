@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Azure;
 using Azure.Data.Tables;
 using TestFramework.Azure;
@@ -53,8 +54,13 @@ public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddTableEntityArtifact(
                 "tableRow",               // artifact name
@@ -107,8 +113,13 @@ public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddTableEntityArtifact("row1", "MainStorage", "MainTable",
                 new ShowroomTableEntity { PartitionKey = "showroom-query", RowKey = "r1", Payload = "Alpha", Priority = 10 })

@@ -222,8 +222,13 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
 
         var configSub = LabSqlSetup.BuildConfig();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
 
             // ── Step 1: Seed artifacts ────────────────────────────────────────

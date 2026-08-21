@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http;
 using FunctionApp;
@@ -108,8 +109,13 @@ public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
     {
         ConfigInstance config = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = config.BuildServiceProvider();
+
         TimelineRun run = await _timeline
-            .SetupRun(config.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(DockerAzureEnvironment.For<ShowroomFunctionAppDefinition>())
             .RunAsync();
 
@@ -147,8 +153,13 @@ public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
     {
         ConfigInstance config = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = config.BuildServiceProvider();
+
         TimelineRun run = await _timeline
-            .SetupRun(config.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(DockerAzureEnvironment.For<ShowroomFunctionAppDefinition>())
             .RunAsync();
 
@@ -187,8 +198,13 @@ public class FunctionApps_DefaultFunctionRoute(ITestOutputHelper outputHelper)
     {
         ConfigInstance config = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = config.BuildServiceProvider();
+
         TimelineRun run = await _timeline
-            .SetupRun(config.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(DockerAzureEnvironment.For<ShowroomFunctionAppDefinition>())
             .RunAsync();
 

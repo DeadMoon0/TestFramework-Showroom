@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using System.Text;
 using TestFramework.Azure.Extensions;
 using TestFramework.Config;
@@ -39,8 +40,13 @@ public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddBlobArtifact(
                 "blob",                                    // artifact name — used later to assert against
@@ -71,8 +77,13 @@ public class BlobStorage_WithMetadata(ITestOutputHelper outputHelper)
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddBlobArtifact(
                 "blob",

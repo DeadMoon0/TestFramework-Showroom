@@ -46,8 +46,13 @@ public class ConfigurationPatterns_DefaultPath(ITestOutputHelper outputHelper)
             .LoadDockerAzureConfig()
             .Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = config.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(config.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddBlobArtifact(
                 "blob",

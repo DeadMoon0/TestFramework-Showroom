@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Azure.Messaging.ServiceBus;
 using TestFramework.Azure;
 using TestFramework.Azure.Extensions;
@@ -44,8 +45,13 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .RunAsync();
 
@@ -76,8 +82,13 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .RunAsync();
 
@@ -111,8 +122,13 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddVariable("outboundMessage", new ServiceBusMessage("Payload assembled at runtime. It is what it is.")
             {

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Azure.Cosmos;
 using Newtonsoft.Json;
 using TestFramework.Azure;
@@ -54,8 +55,13 @@ public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddCosmosItemArtifact(
                 "cosmosDoc",    // artifact name — ties everything together
@@ -100,8 +106,13 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
     {
         var configSub = ConfigInstance.Create().LoadDockerAzureConfig().Build();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddCosmosItemArtifact("candidate1", "MainDb",
                 new CosmosShowroomItem { Id = "q-001", PartitionKey = "showroom-query", Name = "High Achiever A", Score = 99 })

@@ -112,8 +112,13 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
     {
         var configSub = ShowroomSqlSetup.BuildConfig();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddSqlArtifact(
                 "product",     // artifact name
@@ -154,8 +159,13 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
     {
         var configSub = ShowroomSqlSetup.BuildConfig();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddSqlArtifact(
                 "invoiceLine",
@@ -201,8 +211,13 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
     {
         var configSub = ShowroomSqlSetup.BuildConfig();
 
+        // The provider is owned by this test, so it is named and disposed rather than
+        // built inline and abandoned. BuildServiceProvider returns the concrete
+        // ServiceProvider to make that ownership visible.
+        await using ServiceProvider provider = configSub.BuildServiceProvider();
+
         var run = await _timeline
-            .SetupRun(configSub.BuildServiceProvider(), outputHelper)
+            .SetupRun(provider, outputHelper)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddSqlArtifact("prodTools1", "MainSql",
                 new ShowroomProduct { Sku = "INST-001", Name = "Precision Gauge",     Price = 149m, Category = "Instruments" },
