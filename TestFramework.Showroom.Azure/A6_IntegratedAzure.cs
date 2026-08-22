@@ -21,36 +21,38 @@ using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Azure;
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  LABORATORY SAMPLE PROCESSING SYSTEM - MODULE A6
-//  "This Is Where The Services Start Needing Each Other"
-//
-//  A1 through A5 were the polite introductions. One service at a time. Nice,
-//  isolated, easy to reason about. That phase is over. Put the safety pamphlet down.
-//
-//  A6 is the integrated system. Messages move. Data crosses boundaries. One
-//  component writes something another component must deserve to trust. This is
-//  where a framework stops being a demo and starts proving it can supervise an
-//  actual workflow.
-//
-//  The pipeline looks like this:
-//    1. The test seeds the submission manifest and SQL work order.
-//    2. Service Bus kicks off sample ingestion.
-//    3. The ingestion function writes the candidate profile to Cosmos and emits
-//       an acknowledgement.
-//    4. An HTTP call drives the analysis function.
-//    5. The analysis function reads Cosmos, writes Table Storage, and emits its
-//       own acknowledgement.
-//    6. The test retrieves artifacts from every layer and demands proof.
-//
-//  Nothing in this chapter is assumed just because a previous call returned 200.
-//  That kind of optimism belongs in product demos, not integration tests or aerospace.
-// ══════════════════════════════════════════════════════════════════════════════
+//doc: This is where the services start needing each other.
+//doc:
+//doc: A1 through A5 were the polite introductions: one service at a time, isolated, easy to reason about.
+//doc: That phase is over. Put the safety pamphlet down.
+//doc:
+//doc: A6 is the integrated system. Messages move, data crosses boundaries, and one component writes
+//doc: something another component must deserve to trust. This is where a framework stops being a demo and
+//doc: starts proving it can supervise an actual workflow.
+//doc:
+//doc: The pipeline:
+//doc:
+//doc: 1. The test seeds the submission manifest (a blob) and the SQL work order.
+//doc: 2. A Service Bus message kicks off sample ingestion.
+//doc: 3. The ingestion function writes the candidate profile to Cosmos and emits an acknowledgement.
+//doc: 4. An HTTP call drives the analysis function.
+//doc: 5. The analysis function reads Cosmos, writes Table Storage, and emits its own acknowledgement.
+//doc: 6. The test retrieves artifacts from every layer and demands proof.
+//doc:
+//doc: Nothing here is assumed just because a previous call returned 200. That kind of optimism belongs in
+//doc: product demos, not in integration tests or aerospace. Every stage boundary in that list is a wait on
+//doc: a correlated acknowledgement, because "the HTTP call returned" and "the work finished" are different
+//doc: facts about a distributed system.
+//doc:
+//doc: This is also the first chapter whose environment resolves to nearly everything -
+//doc: `components [azure-reset, azurite, cosmos-emulator, functionapp, …]` - because for the first time
+//doc: something in the run actually asks for all of it.
 
-// ─── Data models ──────────────────────────────────────────────────────────────
-// The types are plain on purpose. The interesting part is not clever modeling.
-// The interesting part is watching data survive a trip through multiple systems
-// without coming back with new opinions.
+//doc: The data models are plain on purpose. The interesting part is not clever modelling, it is watching
+//doc: data survive a trip through several systems without coming back with new opinions. Note that these
+//doc: three types are the *contract* between the test and the functions: the ingestion function writes the
+//doc: Cosmos document, the analysis function writes the Table entity, and the test asserts on both without
+//doc: ever loading the functions' code.
 
 /// <summary>Cosmos document written by the Sample Ingestion function when a new sample is registered.</summary>
 public record CandidateProfile
@@ -102,6 +104,10 @@ public class LabDbContext(DbContextOptions<LabDbContext> options) : DbContext(op
     }
 }
 
+//doc: The config helper is chapter A5's pattern again, with a different `DbContext`. One builder centralises
+//doc: the SQL and Azure setup so the test can focus on orchestration instead of building service providers
+//doc: like a part-time plumber with trust issues.
+
 // ─── Shared config helper ─────────────────────────────────────────────────────
 // One config builder centralizes the SQL + Azure setup so the test can focus on
 // orchestration instead of building service providers like a part-time plumber with trust issues.
@@ -123,6 +129,20 @@ internal static class LabSqlSetup
         })
         .Build();
 }
+
+//doc: Now the timeline, and it is the longest one in the Showroom. Read it as four movements - the comments
+//doc: mark them - and notice that not one of them mentions an address, a connection string or a URL. Only
+//doc: identifiers and variables.
+//doc:
+//doc: Three techniques in here are worth taking away, and they are all in the setup movement:
+//doc:
+//doc: - `SetupArtifact` for the two things the test owns. They exist before orchestration starts.
+//doc: - `RegisterArtifact` for something that does **not exist yet**. The Table result is registered by
+//doc:   reference now and materialised at the end with `CaptureArtifactVersion` - which is why the later
+//doc:   capture step has to earn it rather than assume it.
+//doc: - `FindArtifacts` with a *transformed* variable for the Cosmos query, so the query text is built from
+//doc:   the run's own id rather than hardcoded. That is how a query can be part of a frozen plan and still be
+//doc:   specific to one run.
 
 // ══════════════════════════════════════════════════════════════════════════════
 //  The Test Class
@@ -210,6 +230,22 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         //   moment the test cashes the promise it registered earlier. Finance would be thrilled.
 
         .Build();
+
+    //doc: And the run, which is where every identifier in that plan gets its value. The first line is the
+    //doc: one to copy: a short per-run id, and everything else derived from it - the blob path, the SQL key,
+    //doc: the table row key, both correlation IDs. Concurrent executions then cannot collide and blame each
+    //doc: other in the logs like exhausted coworkers.
+    //doc:
+    //doc: The assertions at the end are deliberately arranged by source rather than by importance: blob, then
+    //doc: Cosmos, then SQL, then Table. Each one answers a different question about the same run, and the
+    //doc: last two are the load-bearing pair - the Table entity's `SampleDocId` is the id the *test* chose
+    //doc: and the *ingestion* function wrote to Cosmos and the *analysis* function read back out. Blob to
+    //doc: Service Bus to Cosmos to HTTP to Table, with every link forced to testify under assertion and none
+    //doc: of them allowed a lawyer.
+    //doc:
+    //doc: One assertion is interesting for what it does *not* claim: the SQL work order is still `pending`.
+    //doc: This chapter is about cross-service flow, not SQL mutation, and asserting that something correctly
+    //doc: stayed unchanged is a real assertion.
 
     [DockerFact]
     [Trait("Category", "DockerSmoke")]

@@ -5,14 +5,22 @@ using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;
 
+//doc: A short chapter with one idea: order of interrogation. A completed run exposes every step result, so
+//doc: execution is not a black box with a success flag glued to the top by somebody with confidence and no
+//doc: receipts - but the two questions are still different questions, and they are asked in this order.
+//doc:
+//doc: 1. `EnsureRanToCompletion()` - did the run finish. If it did not, it throws with the failed steps
+//doc:    attached, and nothing below it would have been worth reading anyway.
+//doc: 2. `run.Step("hello").Should()…` - and was this particular thing true.
+//doc:
+//doc: Skip the first and you get the failure mode chapter 15 is built around: every assertion passes
+//doc: against a run that never worked, because you asserted on the parts that did.
+
 public class StepValidations(ITestOutputHelper outputHelper)
 {
-    // Every completed run exposes its step results. That means you can inspect
-    // exactly what happened instead of treating execution as a black box with a
-    // final success flag glued to the top by somebody with confidence and no receipts.
-
     private readonly Timeline _timeline = Timeline.Create()
-        .Trigger(SimpleExt.Trigger.Message("Hello from Test")).Name("hello")
+        .Trigger(SimpleExt.Trigger.Message("Hello from Test"))
+            .Name("hello")
         .Build();
 
     [Fact]

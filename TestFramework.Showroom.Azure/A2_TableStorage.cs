@@ -10,17 +10,21 @@ using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Azure;
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  CLOUD INFRASTRUCTURE DIVISION - PARTICIPANT ORIENTATION MODULE A2
-//  "PartitionKey. RowKey. Consequences."
-//
-//  Table Storage is what happens when you want structured rows without dragging
-//  in the whole relational ceremony. The price of that simplicity is clarity:
-//  your PartitionKey and RowKey must actually mean something and not just look busy.
-//
-//  If they do, this module is straightforward. If they do not, the system will
-//  still work, but your future self will eventually hold a meeting about you and bring charts.
-// ══════════════════════════════════════════════════════════════════════════════
+//doc: PartitionKey. RowKey. Consequences.
+//doc:
+//doc: Table Storage is what happens when you want structured rows without dragging in the whole relational
+//doc: ceremony. The price of that simplicity is clarity: your partition key and row key have to actually mean
+//doc: something rather than just look busy. If they do, this chapter is straightforward. If they do not, the
+//doc: system will still work, but your future self will eventually hold a meeting about you and bring charts.
+//doc:
+//doc: Two chapters: one row by exact key, and a set of rows by query. Both run against `azurite` -
+//doc: `components [azure-reset, azurite]`, the same emulator chapter A1 used, because a table and a blob are
+//doc: the same storage account as far as the environment is concerned.
+
+//doc: The entity type comes first, and it implements `ITableEntity` because Azure insists on a predictable
+//doc: contract. Azure is correct about this one, which is irritating but survivable. The four required
+//doc: members are the contract; everything after them is yours - keep it practical, because this is storage,
+//doc: not a creative writing exercise for nested object graphs and emotional complexity.
 
 // Table entities implement ITableEntity because Azure insists on a predictable
 // contract. Azure is correct about this one, which is irritating but survivable.
@@ -37,11 +41,16 @@ public class ShowroomTableEntity : ITableEntity
     public int Priority { get; set; }
 }
 
+//doc: One row, upserted on setup and removed on teardown. The artifact name ties the three moments together:
+//doc: `SetupArtifact("tableRow")` declares it, `AddTableEntityArtifact("tableRow", …)` supplies it, and
+//doc: `TableArtifact<ShowroomTableEntity>("tableRow")` reads it back.
+//doc:
+//doc: `Entity(entity => entity.Payload)` is the general shape of an artifact assertion in this framework:
+//doc: select a member of the captured thing, then assert on that. Not because the row cannot be dumped
+//doc: wholesale, but because a failure message that names one field is worth ten that name an object.
+
 public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
 {
-    // First example: upsert one row, verify it, and let cleanup erase the test
-    // evidence after the lesson is over. A tidy operation. Almost suspiciously tidy.
-
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("tableRow")
         // ^ Setup writes the row. Cleanup removes it. Manual teardown is not a
@@ -87,11 +96,19 @@ public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: Now find rows by query rather than by exact key - useful when the test cares about a subset of
+//doc: entities, not one preselected address and its autobiography.
+//doc:
+//doc: Three rows are seeded, then the finder queries the partition they share. Every match becomes its own
+//doc: tracked artifact - `foundRows_0`, `foundRows_1`, `foundRows_2` - which is what makes them assertable
+//doc: individually instead of arriving as loose data drifting by like escaped paperwork.
+//doc:
+//doc: All three rows are the test's own here, so ownership is not the lesson. It is worth knowing anyway,
+//doc: because it is the same rule as everywhere else: a discovered table entity is deleted at teardown like
+//doc: any other, and `MarkReadonly()` on the `FindArtifacts` call is the way to say you only came to look.
+
 public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
 {
-    // Second example: find rows by query rather than exact key. Useful when the
-    // test cares about a subset of entities, not one preselected address and its autobiography.
-
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("row1")
         .SetupArtifact("row2")

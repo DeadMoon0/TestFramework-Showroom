@@ -5,29 +5,50 @@ using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
+using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  CORE PERSISTENCE DIVISION - MODULE 12
-//  "Keep The Expensive Part. Rebuild The Cheap Part."
-//
-//  This file is the stripped-down lab version of persistence. No Docker. No
-//  config overlays. No helpful wrappers. Just the raw Core primitive standing
-//  in the light where everybody can inspect the bolts and judge the welds.
-//
-//  The deal is simple:
-//    1. A shared root component is expensive enough to earn persistence.
-//    2. A worker component depends on that root but remains per-run.
-//    3. Each run gets fresh runtime state where freshness matters and reused
-//       state where rebuilding would be wasteful.
-//
-//  If that sounds obvious, good. Good architecture should sound obvious right
-//  after it stops wasting your time and your afternoon.
-// ══════════════════════════════════════════════════════════════════════════════
+//doc: Keep the expensive part. Rebuild the cheap part.
+//doc:
+//doc: A run is isolated from every other run, which is the property everything else in this framework
+//doc: rests on - and it is also why a suite that starts a database per run spends its life starting
+//doc: databases. `PersistentEnvironmentContext` is the way out: it keeps chosen components alive across
+//doc: runs while everything that depends on them is still rebuilt per run.
+//doc:
+//doc: This file is the stripped-down lab version. No Docker, no config overlays, no helpful wrappers -
+//doc: just the raw Core primitive standing in the light where everybody can inspect the bolts and judge
+//doc: the welds. Chapter A9 in the cloud lane is the same idea with real containers under it.
+//doc:
+//doc: The deal is:
+//doc:
+//doc: 1. A shared root component is expensive enough to earn persistence.
+//doc: 2. A worker component depends on that root but stays per-run.
+//doc: 3. Each run gets fresh state where freshness matters, and reused state where rebuilding would be
+//doc:    waste.
+//doc:
+//doc: If that sounds obvious, good. Good architecture should sound obvious right after it stops wasting
+//doc: your afternoon.
 
-public class PersistentEnvironmentContextSample
+public class PersistentEnvironmentContextSample(ITestOutputHelper output)
 {
+    //doc: One test, and it is an experiment rather than a scenario: two runs of the same timeline against
+    //doc: one persistent context, and then a ledger of what was built and disposed.
+    //doc:
+    //doc: The four assertions in the middle are the entire claim. The shared state is the *same object* in
+    //doc: both runs; the worker is not; and each worker points at that same shared root. Then the counters:
+    //doc: one shared create, two worker creates, **zero** shared disposals while the context is open, two
+    //doc: worker disposals. The shared root is finally disposed after the `await using` block closes -
+    //doc: nothing persists forever, not even our favourite shortcuts.
+    //doc:
+    //doc: Both runs report into one output helper, so the panel below holds two reports back to back. What
+    //doc: they show is that each run is a whole run - its own environment step in `Prepare`, its own
+    //doc: `require-worker`, its own teardown - and that is worth seeing, because reuse is not the same as
+    //doc: skipping work.
+    //doc:
+    //doc: What the log does *not* show is which components were built, so it cannot tell you the shared root
+    //doc: was created once. Only the tracker can, which is why this chapter counts instead of reading.
+
     [Fact]
     public async Task Reuses_the_shared_root_but_keeps_run_components_per_run()
     {
@@ -47,11 +68,11 @@ public class PersistentEnvironmentContextSample
         {
             // Same timeline, same persistent context, two separate runs. If the
             // primitive works, the shared root survives and the worker does not. Very Darwinian. Very efficient.
-            TimelineRun firstRun = await timeline.SetupRun()
+            TimelineRun firstRun = await timeline.SetupRun(output)
                 .SetEnv(persistent.CreateEnvironment())
                 .RunAsync();
 
-            TimelineRun secondRun = await timeline.SetupRun()
+            TimelineRun secondRun = await timeline.SetupRun(output)
                 .SetEnv(persistent.CreateEnvironment())
                 .RunAsync();
 
@@ -82,6 +103,12 @@ public class PersistentEnvironmentContextSample
         Assert.Equal(1, setup.Tracker.SharedDisposals);
     }
 
+    //doc: Everything below is the machinery the test drives, and it is worth reading in order.
+    //doc:
+    //doc: The setup is the contract surface: how to build a full environment, and which component roots
+    //doc: deserve persistence. Note that the second question is answered by identifier, in one list. A tiny
+    //doc: constitution for tiny machinery.
+
     public sealed class ShowroomPersistentSetup : IPersistentEnvironmentSetup
     {
         // The setup is the contract surface: how to build a full environment,
@@ -93,6 +120,14 @@ public class PersistentEnvironmentContextSample
         public IReadOnlyCollection<EnvComponentIdentifier> GetPersistentComponentIdentifiers()
             => [ShowroomPersistentEnvironment.SharedComponentId];
     }
+
+    //doc: The environment declares both components in one shape, and `MapResourceKind` is how a step's
+    //doc: stated requirement finds the component that satisfies it. Persistence is a policy choice about a
+    //doc: component, not a separate environment type with its own parade.
+    //doc:
+    //doc: `IPersistentEnvironmentStateSink` is the seam that makes reuse possible: a fresh environment
+    //doc: instance is built per run, and the context injects the already-created state back into it. Reuse
+    //doc: without mystery, which is a rare pleasure.
 
     private sealed class ShowroomPersistentEnvironment : EnvironmentProviderBase, IPersistentEnvironmentStateSink
     {
@@ -131,6 +166,15 @@ public class PersistentEnvironmentContextSample
         }
     }
 
+    //doc: The expensive machinery, and the one line that makes it expensive-but-tolerable:
+    //doc: `ReuseMode.PersistentContext`. A component says for itself whether it may be reused; the setup
+    //doc: says which of those this context actually keeps. Both have to agree - name a component in the
+    //doc: setup that never opted in and the context refuses to start rather than quietly running per-run.
+    //doc:
+    //doc: A component is a create/deconstruct pair and a dependency list, and both halves get the run's
+    //doc: services, variables, artifacts and logger - so a component can do real work, and say so in the
+    //doc: report while doing it.
+
     private sealed class SharedRootComponent(PersistentEnvironmentTracker tracker) : EnvComponent
     {
         // This is the expensive machinery we refuse to rebuild every run. Principles are nice. Saved minutes are nicer.
@@ -153,6 +197,10 @@ public class PersistentEnvironmentContextSample
         }
     }
 
+    //doc: The worker declares the shared root as a dependency and states no reuse mode, so it lands on the
+    //doc: per-run side of the border. It gets a fresh identity every run and anchors itself to the reused
+    //doc: root like a professional freeloader - which is exactly the arrangement being tested.
+
     private sealed class WorkerComponent(PersistentEnvironmentTracker tracker) : EnvComponent
     {
         // This component still lives on the per-run side of the border. It gets
@@ -174,6 +222,12 @@ public class PersistentEnvironmentContextSample
             return Task.CompletedTask;
         }
     }
+
+    //doc: The timeline needs exactly one step: something that *demands* the worker. `IHasEnvironmentRequirements`
+    //doc: is how a step says so, and it matters more than it looks: the environment creates the components
+    //doc: that were *asked for*, not the ones that were declared. A run collects the requirements its steps
+    //doc: state, plus whatever its tracked artifacts imply, and builds that set. Declaring a component you
+    //doc: never use costs nothing at all.
 
     private sealed class RequireWorkerStep : Step<EmptyStepResultContext>, IHasEnvironmentRequirements
     {
@@ -199,6 +253,10 @@ public class PersistentEnvironmentContextSample
 
         public override StepInstance<Step<EmptyStepResultContext>, EmptyStepResultContext> GetInstance() => new(this);
     }
+
+    //doc: Two state records and a counter. The worker state carries both its own run identity and a pointer
+    //doc: back to the shared root, which is what makes the assertion story blunt, undeniable and pleasantly
+    //doc: rude - and a tiny ledger beats a long speech about what persistence saved.
 
     public sealed record SharedRuntimeState(string Token);
 

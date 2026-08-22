@@ -7,10 +7,19 @@ using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;
 
+//doc: A timeline is built once and held in a field. That is only useful if the same structure can run
+//doc: against different inputs, and variables are how. `Var.Ref<T>("name")` puts a hole in the plan;
+//doc: `AddVariable` fills it at setup. One structure, many inputs, no duplicated timeline definitions
+//doc: every time a string gets ambitious.
+//doc:
+//doc: Four classes follow, in increasing order of what they ask of the mechanism: reference it, assert
+//doc: on what a step produced, transform it at the point of use, and opt a step out of parallelism.
+
 public class Variables(ITestOutputHelper outputHelper)
 {
-    // Variables are how one static timeline stops behaving like a cardboard cutout.
-    // Same structure, different inputs, no duplicate timeline definitions every time a string gets ambitious.
+    //doc: The plainest form. The timeline names `cmdCommand` without knowing anything about it - not its
+    //doc: value, not where it comes from, only that it must be a string and must be there by the time
+    //doc: the step runs.
 
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(SimpleExt.Trigger.Message(Var.Ref<string>("cmdCommand")))
@@ -26,14 +35,18 @@ public class Variables(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: Variables travel in both directions. A step can produce one as well as consume one, and a
+//doc: produced variable is run state you can interrogate afterwards - confidence is not a data type.
+//doc:
+//doc: `LocalIOExt.Trigger.Cmd` runs a command; `GetExitCode("CmdExitCode")` names the exit code it
+//doc: produced so the test can assert on it. In the report below, that pairing shows up as the step's
+//doc: declared input and its observed output, side by side.
+
 public class Variables_Assert(ITestOutputHelper outputHelper)
 {
-    // Variables are not decoration. They are runtime data, and runtime data gets
-    // inspected like everything else worth trusting. Confidence is not a data type.
-
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdCommand")))
-        .GetExitCode("CmdExitCode")
+            .GetExitCode("CmdExitCode")
         .Build();
 
     [Fact]
@@ -50,11 +63,12 @@ public class Variables_Assert(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: `Transform` shapes a value where it is used rather than where it is supplied. The source stays
+//doc: one plain string; the consumer still gets exactly the shape it needs. Suspiciously efficient,
+//doc: but we allow it.
+
 public class Variables_Transforms(ITestOutputHelper outputHelper)
 {
-    // Variables can be transformed at the point of use. The source stays simple.
-    // The consumer still gets exactly the shape it needs. Suspiciously efficient, but we allow it.
-
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(SimpleExt.Trigger.Message(Var.Ref<string>("cmdCommand").Transform(x => x + ". And it is even Transformed!")))
         .Build();
@@ -69,14 +83,19 @@ public class Variables_Transforms(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: Last, the one modifier that belongs in this chapter rather than in chapter 13: some steps deserve
+//doc: solitude. `DoNotParallelize()` tells the planner this step gets a layer to itself - think
+//doc: quarantine, but for concurrency.
+//doc:
+//doc: With one step there is nothing to be exclusive of, which is exactly why it is shown here: the
+//doc: modifier is a property of a step, not a property of a busy timeline. Chapter 13 puts it in a
+//doc: timeline where the layers visibly split around it.
+
 public class Variables_DoNotParallelize(ITestOutputHelper outputHelper)
 {
-    // Some steps deserve solitude. Mark them exclusive and the scheduler learns
-    // that sharing time with other work is no longer an option. Think quarantine, but for concurrency.
-
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(SimpleExt.Trigger.Message(Var.Ref<string>("cmdCommand")))
-        .DoNotParallelize()
+            .DoNotParallelize()
         .Build();
 
     [Fact]

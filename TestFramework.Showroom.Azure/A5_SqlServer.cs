@@ -14,22 +14,26 @@ using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Azure;
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  CLOUD INFRASTRUCTURE DIVISION - PARTICIPANT ORIENTATION MODULE A5
-//  "Schema, Keys, And The Kind Of Storage That Remembers What You Meant"
-//
-//  SQL enters the showroom with more ceremony than the previous modules because
-//  relational storage asks for explicit schema knowledge. That is not a flaw.
-//  That is the deal. You get joins, keys, and consequences.
-//
-//  The framework meets SQL halfway:
-//    1. You provide the DbContext.
-//    2. The config registers it for artifact handling.
-//    3. First use handles migrations or EnsureCreated automatically.
-//
-//  In return, the test gets tracked rows, query-based discovery, and cleanup
-//  without hand-written setup scripts wandering through the suite like feral shell history.
-// ══════════════════════════════════════════════════════════════════════════════
+//doc: Schema, keys, and the kind of storage that remembers what you meant.
+//doc:
+//doc: SQL arrives with more ceremony than the previous chapters because relational storage asks for explicit
+//doc: schema knowledge. That is not a flaw, that is the deal: you get joins, keys, and consequences.
+//doc:
+//doc: The framework meets SQL halfway. You provide the `DbContext`; the config registers it for artifact
+//doc: handling; first use handles migrations or falls back to `EnsureCreated`. In return the test gets
+//doc: tracked rows, query-based discovery and cleanup, without hand-written setup scripts wandering through
+//doc: the suite like feral shell history.
+//doc:
+//doc: Note which SQL this is. The web lane's chapter W2 talks to SQL through `TestFramework.Web`, which
+//doc: models rows from a model map and speaks in statements. This is `TestFramework.Azure`, which speaks
+//doc: through EF Core and a `DbContext` you already own. Same database, two different bargains - pick the one
+//doc: that matches where your schema knowledge already lives.
+//doc:
+//doc: All three chapters resolve to `components [azure-reset, mssql]`.
+
+//doc: The `DbContext` is the schema contract. Ignore it and the runtime will eventually explain, in detail,
+//doc: why that was a mistake, possibly with line numbers. Two entities, because the interesting difference
+//doc: between the chapters below is how many columns a key has.
 
 // ─── Step 0: Define your entity and DbContext ─────────────────────────────────
 // The DbContext is the schema contract. Ignore it and eventually the runtime
@@ -53,6 +57,11 @@ public class ShowroomInvoiceLine
     public int    Quantity   { get; set; }
 }
 
+//doc: Two things in `OnModelCreating` are worth copying rather than skimming. Table names are prefixed so
+//doc: that several sample contexts can share one database without friendly fire and passive-aggressive
+//doc: migration notes. And the composite key is declared explicitly, because EF Core is not a mind reader
+//doc: and frankly has enough to do.
+
 public class ShowroomDbContext(DbContextOptions<ShowroomDbContext> options) : DbContext(options)
 {
     public DbSet<ShowroomProduct>     Products     { get; set; } = null!;
@@ -69,6 +78,21 @@ public class ShowroomDbContext(DbContextOptions<ShowroomDbContext> options) : Db
             .HasKey(l => new { l.InvoiceId, l.LineNumber });
     }
 }
+
+//doc: The setup helper is the whole SQL-specific wiring, in one place, so the chapters can talk about
+//doc: behaviour instead of connection-string archaeology. Three moves, and each is a decision:
+//doc:
+//doc: - `AddDbContext` builds the context from config rather than from a literal - the connection string
+//doc:   comes out of `ConfigStore<SqlDatabaseConfig>` under the identifier `MainSql`, which is the same name
+//doc:   the timelines use.
+//doc: - `AddSqlArtifactContexts` is what lets `AddSqlArtifact` work at all: it tells the framework which
+//doc:   context to reach for when it has to insert, read or delete a row.
+//doc: - `ApplyMigrationsOnFirstUse()` does what it says, and with no migrations in this sample it falls back
+//doc:   to `EnsureCreated`. After that the process reuses the initialised schema like a respectable
+//doc:   freeloader.
+//doc:
+//doc: Chapter A0's advanced path is this same helper, which is why it can resolve a typed config store at the
+//doc: end and find `MainSql` waiting there.
 
 // ─── Shared setup helper ──────────────────────────────────────────────────────
 // One helper keeps the DI registration and EF setup in one place so the tests
@@ -95,13 +119,16 @@ internal static class ShowroomSqlSetup
             .Build();
 }
 
+//doc: One row, one key. `AddSqlArtifact` takes the entity and then its key values, and the artifact behaves
+//doc: like every other: created on setup, read back for assertions, removed on teardown.
+//doc:
+//doc: `Row(row => row.Name)` is the SQL flavour of the select-then-assert shape - the same idea as
+//doc: `Entity(...)` for a table row and `Item(...)` for a Cosmos document. Different storage, one habit.
+
 // ─── Module A5.1: Single-column primary key ──────────────────────────────────
 
 public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
 {
-    // First example: insert one product row, verify it, and let cleanup close
-    // the file on that tiny piece of evidence before it starts a family.
-
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("product")
         .Build();
@@ -142,13 +169,18 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: Same artifact mechanics, stricter about one thing: with a composite key, the values must be supplied
+//doc: in the order the model declared them. Get that wrong and the database becomes educational.
+//doc:
+//doc: Note that the second value is written as a string, `Var.Const("1")`, for an `int` column. Key values
+//doc: travel as strings and are converted through EF metadata with the patience of a saint - which is what
+//doc: lets one artifact mechanism serve `string`, `int` and everything else without a generic parameter per
+//doc: key part.
+
 // ─── Module A5.2: Composite primary key ──────────────────────────────────────
 
 public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
 {
-    // Second example: composite keys. Same artifact mechanics, stricter key order.
-    // The values must be supplied in the same order the model declared them or the database will become educational.
-
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("invoiceLine")
         .Build();
@@ -185,14 +217,20 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: And discovery, when the exact key is not the point. The finder takes a LINQ expression over the entity
+//doc: - `q => q.Where(p => p.Category == "Instruments")` - which the framework evaluates through EF Core,
+//doc: capturing each match as its own artifact: `toolsProducts_0`, `toolsProducts_1`, and so on. Predictable
+//doc: names. Wild concept.
+//doc:
+//doc: The third seeded row is there to be excluded. A finder test that seeds only matching rows proves that
+//doc: seeding works; seeding a non-match is what proves the *filter* works. And the snack is still cleaned up
+//doc: afterwards: the query ignored it, teardown did not, because the test seeded it either way. Justice
+//doc: comes for all rows.
+
 // ─── Module A5.3: Query finder (LINQ over EF Core) ───────────────────────────
 
 public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
 {
-    // Third example: query for rows when the exact key is not the point. The
-    // framework evaluates the LINQ query, captures the matches as artifacts, and
-    // still cleans up the full seeded set afterward because somebody around here remembers standards.
-
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("prodTools1")
         .SetupArtifact("prodTools2")

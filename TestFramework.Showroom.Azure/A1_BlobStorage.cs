@@ -8,26 +8,28 @@ using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Azure;
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  CLOUD INFRASTRUCTURE DIVISION - PARTICIPANT ORIENTATION MODULE A1
-//  "Put Bytes In Storage. Then Demand Proof."
-//
-//  Blob Storage is where the showroom starts because it is the simplest useful
-//  contract: put some bytes somewhere remote, then verify they actually arrived
-//  instead of merely inspiring confidence on the local machine. Confidence, as
-//  we have learned, is not a transport protocol.
-//
-//  The second lesson matters just as much as the first: test data gets cleaned
-//  up automatically. Manual cleanup is how temporary experiments become unpaid
-//  infrastructure archaeology with a follow-up budget meeting.
-// ══════════════════════════════════════════════════════════════════════════════
+//doc: Put bytes in storage. Then demand proof.
+//doc:
+//doc: Blob Storage is where the cloud lane starts because it is the simplest useful contract: put some bytes
+//doc: somewhere remote, then verify they actually arrived instead of merely inspiring confidence on the local
+//doc: machine. Confidence, as we have learned, is not a transport protocol.
+//doc:
+//doc: The second lesson matters as much as the first: the test data is removed for you. Manual cleanup is how
+//doc: temporary experiments become unpaid infrastructure archaeology with a follow-up budget meeting.
+//doc:
+//doc: Both chapters run against `azurite`, and the environment step says so - `components [azure-reset,
+//doc: azurite]`, because a blob is all these chapters ask for.
+
+//doc: The cleanest form there is: declare the artifact, hand the run its bytes, assert. No ceremony, no
+//doc: manual teardown. Very neat. Almost suspiciously neat.
+//doc:
+//doc: `AddBlobArtifact` takes the four things a blob needs and nothing else - the artifact name the timeline
+//doc: declared, the storage identifier from `AzureShowroom.cs`, the path inside the container, and the
+//doc: payload. Note that the identifier is a name, not an account: which account `MainStorage` means is the
+//doc: environment's business, which is why this same timeline would work against a real storage account.
 
 public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
 {
-    // First example: upload one blob and let the framework own its lifecycle.
-    // No ceremony. No manual teardown. Just the contract in its cleanest form.
-    // Very neat. Almost suspiciously neat.
-
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("blob")
         // ^ The artifact is created during setup and removed during cleanup.
@@ -61,12 +63,16 @@ public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: Same blob mechanics, now with metadata - because the bytes matter, but the labels around the bytes
+//doc: often drive the real behaviour. Think of them as sticky notes that survive power cycles and human
+//doc: incompetence.
+//doc:
+//doc: The assertions are the part to copy. Metadata is read back off the captured artifact rather than
+//doc: through a client the test built itself, and the payload is checked as well as the labels: metadata
+//doc: without payload integrity is just a well-labelled mistake in a nice jacket.
+
 public class BlobStorage_WithMetadata(ITestOutputHelper outputHelper)
 {
-    // Second example: same blob mechanics, now with metadata. The bytes matter,
-    // but the labels around the bytes often drive the real behavior. Think of
-    // them as sticky notes that survive power cycles and human incompetence.
-
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("blob")
         .Build();

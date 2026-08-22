@@ -10,17 +10,25 @@ using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Azure;
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  CLOUD INFRASTRUCTURE DIVISION - PARTICIPANT ORIENTATION MODULE A3
-//  "JSON Documents, Partition Keys, And The Price Of Pretending They Are Optional"
-//
-//  Cosmos is where the showroom starts dealing in documents instead of rows.
-//  Flexible schema, powerful queries, serious scaling potential. All of that is
-//  true. So is the partition key requirement, which arrives like tax law and stays longer.
-//
-//  Ignore partitioning strategy long enough and eventually the system writes a
-//  very expensive letter to whoever thought it was somebody else's problem. It may use metrics.
-// ══════════════════════════════════════════════════════════════════════════════
+//doc: JSON documents, partition keys, and the price of pretending they are optional.
+//doc:
+//doc: Cosmos is where the lane starts dealing in documents instead of rows. Flexible schema, powerful
+//doc: queries, serious scaling potential - all true. So is the partition key requirement, which arrives like
+//doc: tax law and stays longer. Ignore partitioning strategy long enough and eventually the system writes a
+//doc: very expensive letter to whoever thought it was somebody else's problem. It may use metrics.
+//doc:
+//doc: Both chapters here run against `components [azure-reset, cosmos-emulator]`. No storage, no Service Bus:
+//doc: the same declared facility as every other cloud chapter, resolved down to what these two actually use.
+
+//doc: The document type first. Cosmos documents are plain records with explicit JSON property names, and
+//doc: every document gets an `id` - not because it is fashionable, but because Cosmos asks and does not
+//doc: negotiate.
+//doc:
+//doc: Two of these properties are load-bearing rather than decorative. The framework finds the id and the
+//doc: partition key by convention: a property called `Id` or `PartitionKey`, or any property whose *mapped*
+//doc: JSON name is `id` or `partitionKey`. Name them something else without a mapping and you get a specific
+//doc: exception naming your type, not a mystery at insert time. That resolution is also how the container
+//doc: gets its partition key path, so the model is the single source of both.
 
 // Cosmos documents are plain records with explicit JSON property names. Also,
 // every document gets an id. Not because it is fashionable. Because Cosmos asks and does not negotiate.
@@ -39,11 +47,16 @@ public record CosmosShowroomItem
     public int Score { get; init; }
 }
 
+//doc: One document, upserted and verified. Setup owns the upsert, cleanup owns the delete, and the
+//doc: predictability is both the point and the sales pitch.
+//doc:
+//doc: `AddCosmosItemArtifact` needs no key arguments, unlike the SQL and Table equivalents: the document
+//doc: carries its own `id` and partition key, so the reference reads them off the object it was given. The
+//doc: `MainDb` identifier resolves through config exactly like `MainStorage` did - it is the name under
+//doc: `CosmosDb:MainDb`, not a connection string in a test file.
+
 public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
 {
-    // First example: upsert one document, verify it exists, and let cleanup take
-    // responsibility for removing it afterward before it gets comfortable.
-
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("cosmosDoc")
         // ^ Setup owns the upsert. Cleanup owns the delete. Predictability is the point and also the sales pitch.
@@ -82,11 +95,20 @@ public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: And querying by property rather than by id - where Cosmos stops being a key-value shelf and starts
+//doc: being a search surface with opinions.
+//doc:
+//doc: Three documents are seeded and the query asks for two of them: `c.score = 99` and the shared partition.
+//doc: Matches come back as `topScorers_0` and `topScorers_1`; the third document does not appear, because the
+//doc: query contract filtered it out. Brutal, but mathematically fair.
+//doc:
+//doc: The seeded non-match is the detail worth copying. Seed something the query must *not* return, and the
+//doc: assertion proves the filter works instead of proving that seeding works. And note that being excluded
+//doc: from the query is not being excluded from cleanup: all three documents were seeded by the test, so all
+//doc: three are removed. Fairness is not the same as leniency.
+
 public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
 {
-    // Second example: query for documents by property rather than exact id. That
-    // is where Cosmos stops being a key-value shelf and starts being a search surface with opinions.
-
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("candidate1")
         .SetupArtifact("candidate2")

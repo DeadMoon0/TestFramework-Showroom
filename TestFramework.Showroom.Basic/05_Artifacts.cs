@@ -6,6 +6,30 @@ using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;
 
+//doc: Variables are values. Artifacts are *things*: files, blobs, rows - anything heavy enough to need
+//doc: creating before the run and removing after it, and just annoying enough to be dangerous when
+//doc: abandoned. The framework tracks them so that removal is not a teardown script somebody has to
+//doc: remember to write.
+//doc:
+//doc: Four chapters, in the order the question usually arrives:
+//doc:
+//doc: 1. The test creates it - `SetupArtifact` in the timeline, `AddFileArtifact` on the run.
+//doc: 2. Something else creates it mid-run - `RegisterArtifact` with a reference.
+//doc: 3. Once tracked, it can be asserted on.
+//doc: 4. And it can be pinned at more than one point in time.
+//doc:
+//doc: One rule spans all four, and it is worth having before the code: **teardown deletes a tracked
+//doc: artifact by default.** The declaring verb does not change that - registering is not "borrowing".
+//doc: `MarkReadonly()` is the single opt-out, and the compiler offers it only on the verbs that adopt or
+//doc: discover something (`RegisterArtifact`, `FindArtifact`, `FindArtifacts`, `FindArtifactsAs`), never
+//doc: on `SetupArtifact`. An artifact the test created is the test's to remove. Chapters W2 and W5 in the
+//doc: web lane are where the opt-out earns its keep.
+
+//doc: First, the plumbing. These chapters are about artifacts, not about shells, so the platform
+//doc: differences live in one place instead of at every call site. Two details in here are the kind that
+//doc: make an assertion pass on one machine and fail on another, which is why they are written down
+//doc: rather than remembered.
+
 file static class ArtifactSamplePaths
 {
     public static string BuildOutput => AppContext.BaseDirectory;
@@ -25,11 +49,12 @@ file static class ArtifactSamplePaths
         => OperatingSystem.IsWindows() ? $"{text}\r\n" : $"{text}\n";
 }
 
+//doc: The declare-then-populate path. `SetupArtifact("msgFile")` reserves the name in the plan; the run
+//doc: supplies the actual file and its content. The timeline never mentions a path, because a path is a
+//doc: per-run detail and the plan is not.
+
 public class Artifacts_Setup(ITestOutputHelper outputHelper)
 {
-    // Artifacts are the concrete things a run creates or depends on. Files,
-    // blobs, rows, all the evidence heavy enough to need setup and cleanup and just annoying enough to be dangerous when abandoned.
-
     private readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("msgFile") // Register the artifact slot up front so the run knows this file matters and not just spiritually.
         .Trigger(SimpleExt.Trigger.Message(Var.Ref<string>("cmdCommand")))
@@ -48,11 +73,15 @@ public class Artifacts_Setup(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: Sometimes the artifact appears in the middle of the run rather than before it. Fine. Register the
+//doc: reference and the framework can still track it, instead of you staring at the aftermath like a
+//doc: detective in overbudget shoes.
+//doc:
+//doc: The reference is the address, and it is variable-backed like everything else - so the timeline
+//doc: says *how to find* the file without knowing where it will be.
+
 public class Artifacts_Register(ITestOutputHelper outputHelper)
 {
-    // Sometimes the artifact appears in the middle of the run rather than before
-    // it. Fine. Register the reference and the framework can still track it instead of staring at the aftermath like a detective in overbudget shoes.
-
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
         .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
@@ -77,11 +106,15 @@ public class Artifacts_Register(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: Once an artifact is tracked, it graduates from side effect to testable evidence. That promotion is
+//doc: the whole reason to bother: untracked side effects are how meetings get longer.
+//doc:
+//doc: In the report below, look at the Register Artifact step's outputs. The artifact is listed with a
+//doc: state - `Setup` while the run holds it, `Cleaned` once the Cleanup Stage has been through - so the
+//doc: run tells you what it did to your file rather than leaving you to check.
+
 public class Artifacts_Assert(ITestOutputHelper outputHelper)
 {
-    // Once an artifact is tracked, it graduates from side effect to testable
-    // evidence. That promotion matters. Untracked side effects are how meetings get longer.
-
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdCreate"), Var.Ref<string>("cwd")))
         .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath")))
@@ -106,11 +139,16 @@ public class Artifacts_Assert(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: Artifacts change over time, and pretending otherwise is how you lose the exact moment something
+//doc: became wrong. `CaptureArtifactVersion` reads the artifact again and files the result under a name,
+//doc: so the test can compare two points in the same run.
+//doc:
+//doc: Here the same append command runs twice. `First` is the state the register step captured; the named
+//doc: version is the state after the second append. That beats "the earlier one, but not the first
+//doc: earlier one", and it beats historical fiction disguised as debugging.
+
 public class Artifacts_Versions(ITestOutputHelper outputHelper)
 {
-    // Artifacts change over time. Pretending otherwise is how you lose the exact
-    // moment something became wrong. Capture versions when the state matters, unless you enjoy historical fiction disguised as debugging.
-
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(LocalIOExt.Trigger.Cmd(Var.Ref<string>("cmdAppend"), Var.Ref<string>("cwd")))
         .RegisterArtifact("newFile", LocalIOExt.Artifacts.FileRef(Var.Ref<string>("artifactPath")))

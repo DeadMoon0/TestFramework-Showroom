@@ -14,22 +14,30 @@ using TestFramework.Core.Variables;
 using Xunit.Abstractions;
 namespace TestFramework.Showroom.Azure;
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  REMOTE EXECUTION DIVISION - MODULE A8
-//  "Can We Hit The Function App, Or Are We Just Being Optimistic?"
-//
-//  Up to now the Function App has mostly acted like a useful accomplice in
-//  larger scenarios. That arrangement is over. This chapter drags it into the
-//  center of the room and asks the questions people actually care about, loudly and with intent.
-//
-//  Not philosophical questions. Operational questions.
-//    1. Can the framework reach the app at all?
-//    2. Can route discovery work from method metadata instead of hand-typed hope?
-//    3. Can you still shape the HTTP request when you want full control?
-//
-//  If those three answers are not solid, the rest of the integration story is
-//  just decorative wiring with a motivational budget.
-// ══════════════════════════════════════════════════════════════════════════════
+//doc: Can we hit the Function App, or are we just being optimistic?
+//doc:
+//doc: Up to now the Function App has mostly acted as a useful accomplice in larger scenarios. That
+//doc: arrangement is over. This chapter drags it into the centre of the room and asks the questions people
+//doc: actually care about, loudly and with intent - and they are operational rather than philosophical:
+//doc:
+//doc: 1. Can the framework reach the app at all?
+//doc: 2. Can a route be discovered from method metadata instead of hand-typed hope?
+//doc: 3. Can you still shape the HTTP request yourself when you want full control?
+//doc:
+//doc: If those three answers are not solid, the rest of the integration story is just decorative wiring with
+//doc: a motivational budget.
+//doc:
+//doc: Three ways to select an endpoint appear below, in decreasing order of cleverness:
+//doc: `SelectEndpointWithMethod<T>(nameof(T.Method))` reads the route off the function method,
+//doc: `SelectFunction("Name", method)` uses the default `api/{functionName}` convention, and between them
+//doc: sits explicit request shaping with headers and a body. Prefer the first: the fewer magic strings you
+//doc: hand-maintain, the fewer chances you have to confidently call the wrong thing and defend it in chat.
+
+//doc: The definitions come first, and they are the same shape as everywhere else - one app, its storage, its
+//doc: Cosmos container, its bus, and the emulator topology those names require. Note the app is declared
+//doc: separately from the ones in `AzureShowroom.cs` even though the resources overlap: this chapter uses
+//doc: `DockerAzureEnvironment.For<ShowroomFunctionAppDefinition>()` directly, so that it owns exactly what it
+//doc: needs and nothing more.
 
 internal sealed class ShowroomFunctionAppDefinition : DockerFunctionAppDefinition<HttpTests>
 {
@@ -85,22 +93,29 @@ internal static class ShowroomServiceBusTopology
     }
 }
 
+//doc: First move: reach it, then call it. The liveness probe answers question one on its own -
+//doc: `AlivenessLevel.Reachable` proves the socket opened, without any claim about what is behind it - and
+//doc: then the route is discovered from the function method's own metadata.
+//doc:
+//doc: Two details worth carrying forward. Both steps override the default timeout with one minute, because a
+//doc: container that has to start is a different kind of wait than an HTTP call to something already running.
+//doc: And the response arrives as a `HttpResponseResultContext` on the named step's `LastResult` - a status
+//doc: code and a body, asserted like data, exactly as in the web lane's chapter W1.
+
 public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
 {
-    // First move: let the framework discover the route from the function method
-    // metadata. The fewer magic strings you hand-maintain, the fewer chances you
-    // have to confidently call the wrong thing and defend it in chat.
 
     private static readonly Timeline _timeline = Timeline.Create()
-        .Trigger(AzureExt.Trigger.IsLive.FunctionApp("ShowroomFunction", AlivenessLevel.Reachable)).WithTimeOut(TimeSpan.FromMinutes(1))
-        .Name("function-live")
+        .Trigger(AzureExt.Trigger.IsLive.FunctionApp("ShowroomFunction", AlivenessLevel.Reachable))
+            .WithTimeOut(TimeSpan.FromMinutes(1))
+            .Name("function-live")
         .Trigger(
             AzureExt.Trigger.FunctionApp
                 .Http("ShowroomFunction")
                 .SelectEndpointWithMethod<HttpTests>(nameof(HttpTests.Run))
                 .Call())
-        .WithTimeOut(TimeSpan.FromMinutes(1))
-        .Name("function-call")
+            .WithTimeOut(TimeSpan.FromMinutes(1))
+            .Name("function-call")
         .Build();
 
     [DockerFact]
@@ -130,10 +145,15 @@ public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: Second move: when the headers and the body matter, shape them in the timeline. `WithHeader` and
+//doc: `WithBody` take variable references like everything else, so the request is data rather than a helper
+//doc: method with an innocent name hiding three decisions.
+//doc:
+//doc: The echo function reflects what it received, which is why the assertions can check method, header and
+//doc: body in one go. Distributed behaviour should stay visible where the test can interrogate it.
+
 public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
 {
-    // Second move: when headers and body matter, shape them in the timeline.
-    // Distributed behavior should stay visible where the test can interrogate it instead of hiding behind helper methods with innocent names.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
@@ -143,8 +163,8 @@ public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
                 .WithHeader(Var.Const("x-test"), Var.Const("showroom"))
                 .WithBody(Var.Const("payload=calibrated"))
                 .Call())
-        .WithTimeOut(TimeSpan.FromMinutes(1))
-        .Name("function-echo")
+            .WithTimeOut(TimeSpan.FromMinutes(1))
+            .Name("function-echo")
         .Build();
 
     [DockerFact]
@@ -175,11 +195,16 @@ public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: Third move, and the simplest: if the app keeps the default `api/{functionName}` route, selecting by
+//doc: function name is enough. No scavenger hunt, no custom map. Use the convention and cash the simplicity
+//doc: before somebody "improves" it.
+//doc:
+//doc: Note that the method has to be stated here - `SelectFunction("HttpEchoTest", HttpMethod.Post)` - where
+//doc: the metadata-driven overload knew it already. That is the trade: one less type reference, one more
+//doc: thing you are asserting by hand.
+
 public class FunctionApps_DefaultFunctionRoute(ITestOutputHelper outputHelper)
 {
-    // Third move: if the app keeps the default api/{functionName} route, selecting
-    // by function name is enough. No scavenger hunt. No custom map. Just use the
-    // convention and cash the simplicity before somebody "improves" it.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
@@ -188,8 +213,8 @@ public class FunctionApps_DefaultFunctionRoute(ITestOutputHelper outputHelper)
                 .SelectFunction("HttpEchoTest", HttpMethod.Post)
                 .WithBody(Var.Const("payload=default-route"))
                 .Call())
-        .WithTimeOut(TimeSpan.FromMinutes(1))
-        .Name("function-default-route")
+            .WithTimeOut(TimeSpan.FromMinutes(1))
+            .Name("function-default-route")
         .Build();
 
     [DockerFact]

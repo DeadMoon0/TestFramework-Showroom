@@ -10,23 +10,32 @@ using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Azure;
 
-// ══════════════════════════════════════════════════════════════════════════════
-//  CLOUD INFRASTRUCTURE DIVISION - PARTICIPANT ORIENTATION MODULE A4
-//  "Send A Message. Wait For Reality To Catch Up."
-//
-//  Service Bus is where the showroom starts caring about time. Not just whether
-//  a message can be sent, but whether the right message shows up later and can
-//  be identified without guesswork or wishful thinking.
-//
-//  That is why correlation IDs matter here. Asynchronous systems are already
-//  generous with ambiguity. The test does not need to add more and then act surprised.
-// ══════════════════════════════════════════════════════════════════════════════
+//doc: Send a message. Wait for reality to catch up.
+//doc:
+//doc: Service Bus is where the lane starts caring about time. Not just whether a message can be sent, but
+//doc: whether the right message shows up later and can be identified without guesswork or wishful thinking.
+//doc:
+//doc: That is why correlation IDs are in every chapter here. Asynchronous systems are already generous with
+//doc: ambiguity; the test does not need to add more and then act surprised. A wait that accepts *any*
+//doc: message will happily accept the previous test's, and it will do it intermittently, which is the worst
+//doc: available failure mode.
+//doc:
+//doc: All three chapters resolve to `components [azure-reset, servicebus-emulator]`. The queue and the topic
+//doc: they use are declared in `AzureShowroom.cs`, along with the emulator topology that has to exist for
+//doc: either to be addressable at all.
+
+//doc: The basic asynchronous trust exercise: send one message to a topic, then wait for the exact correlated
+//doc: receipt. Very simple. Emotionally difficult.
+//doc:
+//doc: Three modifiers on that wait, each pulling its weight. `correlationId:` is what makes the wait specific.
+//doc: `completeMessage: true` acknowledges and removes the message once it has been observed - clean hands,
+//doc: fewer ghosts. `GetMessage("out")` binds the received message into a variable, which is how it becomes
+//doc: assertable afterwards. And `WithTimeOut(10s)` replaces the ten-minute default with something a
+//doc: messaging test deserves: if nothing matching arrives in time, the run fails with a specific timeout and
+//doc: no sympathy.
 
 public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
 {
-    // First example: send one message and wait for the exact correlated receipt.
-    // This is the basic asynchronous trust exercise. Very simple. Emotionally difficult.
-
     private const string CorrelationId = "showroom-42";
 
     private static readonly Timeline _timeline = Timeline.Create()
@@ -65,6 +74,10 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: The same timeline against a queue instead of a topic subscription, and the point is how little
+//doc: changes: one identifier. Queue-versus-topic is a property of the declared resource, not of the
+//doc: timeline, so a test written against one reads identically against the other.
+
 public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
 {
     private const string CorrelationId = "showroom-queue-42";
@@ -100,11 +113,17 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
     }
 }
 
+//doc: And building the outbound message per run instead of baking it into the static timeline. The structure
+//doc: stays fixed; the payload arrives through a variable, like every other per-run value since chapter 04.
+//doc: Same structure, dynamic payload, fewer creative excuses.
+//doc:
+//doc: Notice that the correlation ID stays a constant here even though the message is now dynamic - not
+//doc: because it has to be, but because nothing in this chapter needs it to vary. The wait takes a variable
+//doc: reference just as happily, and in a suite where several runs share one namespace it should: chapter A6
+//doc: hangs every identifier off a per-run id for exactly that reason.
+
 public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
 {
-    // Third example: build the outbound message per run instead of hardcoding it
-    // into the static timeline. Same structure, dynamic payload, fewer creative excuses.
-
     private const string CorrelationId = "showroom-dynamic";
     private const string Subject = "Showroom Test";
 
