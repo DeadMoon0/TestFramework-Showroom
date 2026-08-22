@@ -40,6 +40,9 @@ public class Container_TheWholeLane(ITestOutputHelper outputHelper)
             .WithTimeOut(TimeSpan.FromSeconds(30)).Name("quoted")
         .FindArtifact("written", WebExt.ArtifactFinder.Sql.Where<ShowroomOrder>("orders-db", "Name = @name")
             .WithParameter("name", Var.Const("Complete Order")))
+            .MarkReadonly()
+        //   ^ The application wrote this row, so the test reads it and leaves it. Without
+        //     MarkReadonly() teardown would delete it, which is the default everywhere.
         .Trigger(WebExt.Stub.Calls("pricing")).Name("audit")
         .Build();
 

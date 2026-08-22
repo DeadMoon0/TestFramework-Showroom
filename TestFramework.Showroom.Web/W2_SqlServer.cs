@@ -25,14 +25,16 @@ namespace TestFramework.Showroom.Web;
 //  There are three ways to put a row in front of a test, and they differ in exactly
 //  one respect: who is responsible for it afterwards.
 //
-//    SetupArtifact + AddArtifact   the test creates it, and OWNS it
-//    RegisterArtifact              something else created it, the test ADOPTS it
-//    FindArtifact                  located by predicate, and only OBSERVED
+//    SetupArtifact + AddArtifact   the test creates it
+//    RegisterArtifact              something else created it, the test adopts it
+//    FindArtifact                  located by predicate
 //
-//  Ownership decides teardown, and teardown is where a careless test does its real
-//  damage. An owned row is removed. An observed row is left exactly where it was
-//  found, because deleting data you merely looked at is not tidying up, it is an
-//  incident with a ticket number.
+//  None of those three decides teardown. Deleting is the default for all of them, and
+//  MarkReadonly() on the declaring step is the one way out. That is deliberate: a test
+//  that leaves its own rows behind poisons the next run, so the safe-looking default
+//  would be the wrong one. Say MarkReadonly() when you only meant to look, because
+//  deleting data you merely looked at is not tidying up, it is an incident with a
+//  ticket number.
 // ══════════════════════════════════════════════════════════════════════════════
 
 // ─── Module W2.1: A row is an artifact ───────────────────────────────────────
@@ -121,21 +123,24 @@ public class Sql_RegisterArtifactAdoptsAnExistingRow(ITestOutputHelper outputHel
 
 public class Sql_FinderObservesWithoutOwning(ITestOutputHelper outputHelper)
 {
-    // A finder locates rows by predicate. What it finds is OBSERVED, not OWNED, and
-    // teardown leaves it alone.
+    // A finder locates rows by predicate. Those rows belong to whoever wrote them, so
+    // this chapter says MarkReadonly() and teardown leaves them alone.
     //
     // Worth knowing precisely, because the run log says so out loud: teardown walks
-    // every artifact, notices that this one carries no way to remove itself, records
-    // that it is being left in place, and moves on. That line is informational. It
-    // is not a warning, it is not a failure, and it does not mean cleanup was
-    // skipped by accident. It means the framework declined to delete something that
-    // was never yours.
+    // every artifact, reaches this one, records that it is readonly and being left in
+    // place, and moves on. That line is informational. It is not a warning, it is not
+    // a failure, and it does not mean cleanup was skipped by accident. It means you
+    // told the framework not to delete something that was never yours.
+    //
+    // Drop the MarkReadonly() below and teardown deletes these rows instead - which is
+    // exactly why it is not the default.
 
     private static readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("first")
         .SetupArtifact("second")
         .FindArtifact("bulk", WebExt.ArtifactFinder.Sql.Where<ShowroomOrder>("orders-db", "Quantity >= @minimum")
             .WithParameter("minimum", Var.Const(10)))
+            .MarkReadonly()
         //   ^ Parameters are variable-backed. Nothing is concatenated into the
         //     statement, which closes an entire genre of afternoon.
         .Build();
