@@ -24,13 +24,15 @@
 	<ItemGroup Label="TestFramework">
 		<PackageVersion Include="TestFramework.Azure" Version="0.3.0" />
 		<PackageVersion Include="TestFramework.Config" Version="0.2.1" />
-		<PackageVersion Include="TestFramework.Container" Version="0.2.1" />
+		<PackageVersion Include="TestFramework.Container" Version="0.3.0" />
 		<PackageVersion Include="TestFramework.Container.Azure" Version="0.2.1" />
-		<PackageVersion Include="TestFramework.Container.Web" Version="0.2.1" />
+		<PackageVersion Include="TestFramework.Container.Web" Version="0.3.0" />
 		<PackageVersion Include="TestFramework.Core" Version="0.3.0" />
 		<PackageVersion Include="TestFramework.LocalIO" Version="0.3.0" />
 		<PackageVersion Include="TestFramework.Simple" Version="0.2.1" />
-		<PackageVersion Include="TestFramework.Web" Version="0.3.0" />
+		<PackageVersion Include="TestFramework.UI.Browser" Version="0.1.0" />
+		<PackageVersion Include="TestFramework.UI.Web" Version="0.1.0" />
+		<PackageVersion Include="TestFramework.Web" Version="0.4.0" />
 	</ItemGroup>
 
 	<ItemGroup Label="Test host">

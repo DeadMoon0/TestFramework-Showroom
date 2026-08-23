@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="coverlet.collector" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="TestFramework.Config" />
+		<PackageReference Include="TestFramework.Container.Web" />
+		<PackageReference Include="TestFramework.Core" />
+		<PackageReference Include="TestFramework.UI.Browser" />
+		<PackageReference Include="TestFramework.UI.Web" />
+		<PackageReference Include="TestFramework.Web" />
+		<PackageReference Include="xunit" />
+		<PackageReference Include="xunit.runner.visualstudio" />
+	</ItemGroup>
+
+	<!--
+		There is deliberately no reference to Web/StorefrontSite here.
+
+		The site is named by its directory and shipped into a container, so this test assembly
+		never serves a byte of it. The browser gets the same thing a customer would: whatever
+		the web server hands out.
+	-->
+
+	<ItemGroup>
+		<Using Include="Xunit" />
+	</ItemGroup>
+
+</Project>

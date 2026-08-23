@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Rustholm Supply</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    /* Styling is deliberately free to change: the UI showroom addresses this page by its words and
+       its structure, never by these class names - and nothing here transforms text, because the
+       framework reads RENDERED text and "CHECKOUT NOW" would not be "Checkout now". */
+    body { margin: 0; font-family: system-ui, sans-serif; background: #faf8f5; color: #1f1b16; }
+    main { max-width: 40rem; margin: 0 auto; padding: 2rem 1rem; }
+    h1 { font-size: 1.4rem; }
+    section { background: #fff; border: 1px solid #e4ded5; border-radius: 8px; padding: 1rem 1.25rem; margin: 1rem 0; }
+    shop-product-list { display: block; }
+    shop-product { display: flex; gap: 1rem; align-items: center; padding: .5rem 0; border-bottom: 1px solid #eee; }
+    shop-product:last-of-type { border-bottom: 0; }
+    shop-product .name { font-weight: 600; min-width: 5rem; }
+    shop-product .price { color: #57503f; flex: 1; }
+    button { font: inherit; padding: .4rem .9rem; border: 1px solid #cfc6b8; border-radius: 5px; background: #fff; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Rustholm Supply</h1>
+
+    <section aria-label="Catalogue">
+      <h2>Catalogue</h2>
+      <shop-product-list role="list" data-count="3">
+        <shop-product role="listitem" data-sku="ANV-01">
+          <span class="name">Anvil</span><span class="price">€129.00</span>
+          <button type="button" aria-label="Add Anvil to cart">Add to cart</button>
+        </shop-product>
+        <shop-product role="listitem" data-sku="RPE-12">
+          <span class="name">Rope</span><span class="price">€9.00</span>
+          <button type="button" aria-label="Add Rope to cart">Add to cart</button>
+        </shop-product>
+        <shop-product role="listitem" data-sku="CRT-02">
+          <span class="name">Crate</span><span class="price">€24.50</span>
+          <button type="button" aria-label="Add Crate to cart">Add to cart</button>
+        </shop-product>
+      </shop-product-list>
+    </section>
+
+    <section aria-label="Cart">
+      <h2>Cart</h2>
+      <p data-testid="cart-summary">0 items in cart</p>
+      <!-- The UI showroom's tests say Click("Checkout"); this button says more. That mismatch is on
+           purpose: the framework still presses it, and records that it had to match loosely. -->
+      <button type="button">Checkout now</button>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
