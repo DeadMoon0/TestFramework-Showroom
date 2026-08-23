@@ -26,28 +26,45 @@
 
     <section aria-label="Catalogue">
       <h2>Catalogue</h2>
+      <p>
+        <label for="filter">Search products</label>
+        <input id="filter" type="search">
+      </p>
       <shop-product-list role="list" data-count="3">
-        <shop-product role="listitem" data-sku="ANV-01">
+        <shop-product role="listitem" data-sku="ANV-01" draggable="true">
           <span class="name">Anvil</span><span class="price">€129.00</span>
+          <span class="stock" hidden>3 in stock</span>
           <button type="button" aria-label="Add Anvil to cart">Add to cart</button>
         </shop-product>
-        <shop-product role="listitem" data-sku="RPE-12">
+        <shop-product role="listitem" data-sku="RPE-12" draggable="true">
           <span class="name">Rope</span><span class="price">€9.00</span>
+          <span class="stock" hidden>12 in stock</span>
           <button type="button" aria-label="Add Rope to cart">Add to cart</button>
         </shop-product>
-        <shop-product role="listitem" data-sku="CRT-02">
+        <shop-product role="listitem" data-sku="CRT-02" draggable="true">
           <span class="name">Crate</span><span class="price">€24.50</span>
+          <span class="stock" hidden>7 in stock</span>
           <button type="button" aria-label="Add Crate to cart">Add to cart</button>
         </shop-product>
       </shop-product-list>
     </section>
 
-    <section aria-label="Cart">
+    <!-- data-state is the section's own report of where the order stands: 'open' until a checkout
+         settles, 'confirmed' a moment after - the way a payment round-trip would land. -->
+    <section aria-label="Cart" data-state="open">
       <h2>Cart</h2>
       <p data-testid="cart-summary">0 items in cart</p>
       <!-- The UI showroom's tests say Click("Checkout"); this button says more. That mismatch is on
            purpose: the framework still presses it, and records that it had to match loosely. -->
       <button type="button">Checkout now</button>
+    </section>
+
+    <section aria-label="Provenance">
+      <h2>Provenance</h2>
+      <p>Every item leaves Rustholm with its batch on record. The record is long on purpose: a page
+        has to be taller than a viewport before scrolling is worth testing.</p>
+      <ol data-testid="provenance-list"></ol>
+      <p data-testid="provenance-end">End of the provenance record</p>
     </section>
   </main>
 
