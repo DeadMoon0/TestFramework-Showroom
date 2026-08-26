@@ -10,34 +10,36 @@
 		CentralPackageTransitivePinningEnabled keeps a transitive dependency from quietly pulling in
 		an older Core than the one declared here.
 
-		The rule for this file is that every version below is published on nuget.org: the showroom is
-		what a stranger clones first, so it must restore from the public feed alone. If a version here
-		is not published, a fresh clone fails - which is exactly how the web lane once shipped
-		references to a Core and a Config that existed only in a local feed.
+		The rule for this file is about the RELEASED showroom: when it is released, every version below
+		has to be on nuget.org, because the showroom is what a stranger clones first and it must restore
+		from the public feed alone. Getting that wrong is how the web lane once shipped references to a
+		Core and a Config that existed only in a local feed.
 
-		THE RULE IS CURRENTLY BROKEN, ON PURPOSE, AND HERE IS THE LIST. The structural-fix
-		train changed the step contract, so the showroom's own custom steps and environment components
-		had to move with it, and that needs versions the feed does not have yet. Nine of the eleven
-		pins below are ahead of what is published:
+		While the chain is being developed, the local feed (artifacts/nuget-local, wired up by the
+		NuGet.config one directory above this repository) is what serves it, and pinning a version that
+		exists only there is the normal way one package consumes another's work in progress. What must
+		not happen is the reverse: publishing to nuget.org in order to make a pin here resolve.
 
-		  Core            0.3.0 published, 0.4.0 pinned
-		  Config          0.2.1 published, 0.3.0 pinned
-		  Simple          0.2.1 published, 0.3.0 pinned
-		  Azure           0.3.0 published, 0.4.0 pinned
-		  LocalIO         0.3.0 published, 0.4.0 pinned
-		  Container       0.3.0 published, 0.4.0 pinned
-		  Container.Azure 0.3.0 published, 0.4.0 pinned
-		  Container.Web   0.3.0 published, 0.4.0 pinned
-		  UI.Browser      never published, 0.2.0 pinned
-		  UI.Web          never published, 0.2.0 pinned
-		  Web             0.4.0 published, 0.4.0 pinned  (the one that is already fine)
+		So this list is a statement of where the chain currently is, not a defect to go and fix:
 
-		Until those are released, a fresh clone of this repository alone does not restore. It builds
-		here because the working tree above it carries a NuGet.config with a local feed
-		(artifacts/nuget-local). Release order is dependency order: Core, Simple, Config, LocalIO,
-		Azure, Web, Container, Container.Azure, Container.Web, then the UI trio - and nothing else in
-		this file needs touching once they are on the feed, because the numbers are already the ones
-		that will be published. Nothing here is a placeholder.
+		  Core            0.4.0 pinned, local feed  (0.3.0 is the newest released)
+		  Config          0.3.0 pinned, local feed  (0.2.1 released)
+		  Simple          0.3.0 pinned, local feed  (0.2.1 released)
+		  Azure           0.4.0 pinned, local feed  (0.3.0 released)
+		  LocalIO         0.4.0 pinned, local feed  (0.3.0 released)
+		  Container       0.4.0 pinned, local feed  (0.3.0 released)
+		  Container.Azure 0.4.0 pinned, local feed  (0.3.0 released)
+		  Container.Web   0.4.0 pinned, local feed  (0.3.0 released)
+		  UI.Browser      0.2.0 pinned, local feed  (nothing released yet)
+		  UI.Web          0.2.0 pinned, local feed  (nothing released yet)
+		  Web             0.4.0 pinned, released    (the one already on the public feed)
+
+		Two consequences worth knowing rather than discovering. A clone of this repository on its own
+		does not restore while a pin is local-only - it needs the sibling repositories and the feed built
+		from them. And the numbers here are the numbers that will be published, so when the chain is
+		released this file needs no edit: nothing in it is a placeholder. Release order, when someone
+		decides to release, is dependency order: Core, Simple, Config, LocalIO, Azure, Web, Container,
+		Container.Azure, Container.Web, then the UI trio.
 	-->
 
 	<PropertyGroup>
