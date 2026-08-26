@@ -1,6 +1,5 @@
-using TestFramework.Core.Artifacts;
+﻿using TestFramework.Core.Artifacts;
 using TestFramework.Core.Environment;
-using TestFramework.Core.Logging;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Timelines;
@@ -171,9 +170,15 @@ public class PersistentEnvironmentContextSample(ITestOutputHelper output)
     //doc: says which of those this context actually keeps. Both have to agree - name a component in the
     //doc: setup that never opted in and the context refuses to start rather than quietly running per-run.
     //doc:
-    //doc: A component is a create/deconstruct pair and a dependency list, and both halves get the run's
-    //doc: services, variables, artifacts and logger - so a component can do real work, and say so in the
-    //doc: report while doing it.
+    //doc: A component is a create/deconstruct pair and a dependency list, and both halves get the same
+    //doc: `RunContext` a step gets - so a component can do real work, say so in the report while doing it,
+    //doc: and read its own deadline rather than starting a container with no idea how long it has.
+    //doc:
+    //doc: One thing about that context is worth knowing before writing a component that starts something
+    //doc: expensive. A component belonging to a *persistent* context outlives the run that created it, so
+    //doc: what it keeps cannot live in a variable - a finished run's stores are frozen. `context.State` is
+    //doc: where a run keeps live things, and the environment context is where a persistent one does; the
+    //doc: `GetState` calls below are that second thing.
 
     private sealed class SharedRootComponent(PersistentEnvironmentTracker tracker) : EnvComponent
     {
@@ -184,13 +189,13 @@ public class PersistentEnvironmentContextSample(ITestOutputHelper output)
 
         public override IReadOnlyList<EnvComponentIdentifier> Dependencies => [];
 
-        public override Task<object?> CreateAsync(IEnvironmentProvider environment, IServiceProvider serviceProvider, VariableStore variableStore, ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
+        public override Task<object?> CreateAsync(IEnvironmentProvider environment, RunContext context)
         {
             tracker.SharedCreates++;
             return Task.FromResult((object?)new SharedRuntimeState(Guid.NewGuid().ToString("N")));
         }
 
-        public override Task DeconstructAsync(object? state, IEnvironmentProvider environment, IServiceProvider serviceProvider, VariableStore variableStore, ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
+        public override Task DeconstructAsync(object? state, IEnvironmentProvider environment, RunContext context)
         {
             tracker.SharedDisposals++;
             return Task.CompletedTask;
@@ -209,14 +214,14 @@ public class PersistentEnvironmentContextSample(ITestOutputHelper output)
 
         public override IReadOnlyList<EnvComponentIdentifier> Dependencies => [ShowroomPersistentEnvironment.SharedComponentId];
 
-        public override Task<object?> CreateAsync(IEnvironmentProvider environment, IServiceProvider serviceProvider, VariableStore variableStore, ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
+        public override Task<object?> CreateAsync(IEnvironmentProvider environment, RunContext context)
         {
             tracker.WorkerCreates++;
             SharedRuntimeState sharedRoot = ShowroomPersistentEnvironment.Unwrap(environment).GetSharedRootState();
             return Task.FromResult((object?)new RunScopedRuntimeState(Guid.NewGuid(), sharedRoot));
         }
 
-        public override Task DeconstructAsync(object? state, IEnvironmentProvider environment, IServiceProvider serviceProvider, VariableStore variableStore, ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
+        public override Task DeconstructAsync(object? state, IEnvironmentProvider environment, RunContext context)
         {
             tracker.WorkerDisposals++;
             return Task.CompletedTask;
@@ -242,7 +247,7 @@ public class PersistentEnvironmentContextSample(ITestOutputHelper output)
         public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore)
             => [new("showroom.worker", "worker")];
 
-        public override Task<EmptyStepResultContext?> Execute(IServiceProvider serviceProvider, VariableStore variableStore, ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
+        public override Task<EmptyStepResultContext?> Execute(RunContext context)
             => Task.FromResult<EmptyStepResultContext?>(null);
 
         public override Step<EmptyStepResultContext> Clone() => new RequireWorkerStep().WithClonedOptions(this);

@@ -10,10 +10,34 @@
 		CentralPackageTransitivePinningEnabled keeps a transitive dependency from quietly pulling in
 		an older Core than the one declared here.
 
-		Every version below is published on nuget.org. That is the rule for this file: the showroom
-		is what a stranger clones first, so it must restore from the public feed alone. If a version
-		here is not published, a fresh clone fails - which is exactly how the web lane once shipped
+		The rule for this file is that every version below is published on nuget.org: the showroom is
+		what a stranger clones first, so it must restore from the public feed alone. If a version here
+		is not published, a fresh clone fails - which is exactly how the web lane once shipped
 		references to a Core and a Config that existed only in a local feed.
+
+		THE RULE IS CURRENTLY BROKEN, ON PURPOSE, AND HERE IS THE LIST. The structural-fix
+		train changed the step contract, so the showroom's own custom steps and environment components
+		had to move with it, and that needs versions the feed does not have yet. Nine of the eleven
+		pins below are ahead of what is published:
+
+		  Core            0.3.0 published, 0.4.0 pinned
+		  Config          0.2.1 published, 0.3.0 pinned
+		  Simple          0.2.1 published, 0.3.0 pinned
+		  Azure           0.3.0 published, 0.4.0 pinned
+		  LocalIO         0.3.0 published, 0.4.0 pinned
+		  Container       0.3.0 published, 0.4.0 pinned
+		  Container.Azure 0.3.0 published, 0.4.0 pinned
+		  Container.Web   0.3.0 published, 0.4.0 pinned
+		  UI.Browser      never published, 0.2.0 pinned
+		  UI.Web          never published, 0.2.0 pinned
+		  Web             0.4.0 published, 0.4.0 pinned  (the one that is already fine)
+
+		Until those are released, a fresh clone of this repository alone does not restore. It builds
+		here because the working tree above it carries a NuGet.config with a local feed
+		(artifacts/nuget-local). Release order is dependency order: Core, Simple, Config, LocalIO,
+		Azure, Web, Container, Container.Azure, Container.Web, then the UI trio - and nothing else in
+		this file needs touching once they are on the feed, because the numbers are already the ones
+		that will be published. Nothing here is a placeholder.
 	-->
 
 	<PropertyGroup>
@@ -22,16 +46,16 @@
 	</PropertyGroup>
 
 	<ItemGroup Label="TestFramework">
-		<PackageVersion Include="TestFramework.Azure" Version="0.3.0" />
-		<PackageVersion Include="TestFramework.Config" Version="0.2.1" />
-		<PackageVersion Include="TestFramework.Container" Version="0.3.0" />
-		<PackageVersion Include="TestFramework.Container.Azure" Version="0.2.1" />
-		<PackageVersion Include="TestFramework.Container.Web" Version="0.3.0" />
-		<PackageVersion Include="TestFramework.Core" Version="0.3.0" />
-		<PackageVersion Include="TestFramework.LocalIO" Version="0.3.0" />
-		<PackageVersion Include="TestFramework.Simple" Version="0.2.1" />
-		<PackageVersion Include="TestFramework.UI.Browser" Version="0.1.0" />
-		<PackageVersion Include="TestFramework.UI.Web" Version="0.1.0" />
+		<PackageVersion Include="TestFramework.Azure" Version="0.4.0" />
+		<PackageVersion Include="TestFramework.Config" Version="0.3.0" />
+		<PackageVersion Include="TestFramework.Container" Version="0.4.0" />
+		<PackageVersion Include="TestFramework.Container.Azure" Version="0.4.0" />
+		<PackageVersion Include="TestFramework.Container.Web" Version="0.4.0" />
+		<PackageVersion Include="TestFramework.Core" Version="0.4.0" />
+		<PackageVersion Include="TestFramework.LocalIO" Version="0.4.0" />
+		<PackageVersion Include="TestFramework.Simple" Version="0.3.0" />
+		<PackageVersion Include="TestFramework.UI.Browser" Version="0.2.0" />
+		<PackageVersion Include="TestFramework.UI.Web" Version="0.2.0" />
 		<PackageVersion Include="TestFramework.Web" Version="0.4.0" />
 	</ItemGroup>
 

@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
 using TestFramework.Azure.Configuration;
 using TestFramework.Azure.Configuration.SpecificConfigs;
@@ -7,7 +7,6 @@ using TestFramework.Azure.Identifier;
 using TestFramework.Container.Azure;
 using TestFramework.Config;
 using TestFramework.Core.Environment;
-using TestFramework.Core.Logging;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Timelines;
@@ -152,9 +151,9 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
         public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore)
             => [new(AzureEnvironmentResourceKinds.Storage, "PersistentStorage")];
 
-        public override Task<InspectStorageConfigResult?> Execute(IServiceProvider serviceProvider, VariableStore variableStore, TestFramework.Core.Artifacts.ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
+        public override Task<InspectStorageConfigResult?> Execute(RunContext context)
         {
-            StorageAccountConfig config = ((ConfigStore<StorageAccountConfig>)serviceProvider.GetService(typeof(ConfigStore<StorageAccountConfig>))!).GetConfig("PersistentStorage");
+            StorageAccountConfig config = ((ConfigStore<StorageAccountConfig>)context.Services.GetService(typeof(ConfigStore<StorageAccountConfig>))!).GetConfig("PersistentStorage");
             return Task.FromResult<InspectStorageConfigResult?>(new(config.TableContainerName ?? throw new InvalidOperationException("PersistentStorage table name was not configured.")));
         }
 

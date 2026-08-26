@@ -1,9 +1,7 @@
-using TestFramework.Core.Artifacts;
-using TestFramework.Core.Logging;
+﻿using TestFramework.Core.Artifacts;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Timelines;
-using TestFramework.Core.Variables;
 using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Basic;
@@ -76,9 +74,14 @@ public class Retry_Basic(ITestOutputHelper outputHelper)
     //doc: - `DoesReturn` says whether a result exists to bind. Result bindings are skipped when it is false.
     //doc: - `Clone()` exists because a timeline is a frozen plan that many runs execute, so each run needs
     //doc:   its own instance. `WithClonedOptions(this)` carries the retry, timeout and naming over.
-    //doc: - `Execute` does the work, and gets the run's variable store, artifact store, logger and
-    //doc:   cancellation token handed to it. Throwing is how a step fails; there is no result code to
-    //doc:   remember to check.
+    //doc: - `Execute` does the work, and gets one `RunContext` handed to it. Everything a step is allowed
+    //doc:   to know arrives on it: `Variables` and `Artifacts` (the two channels a run communicates
+    //doc:   through), `Services`, `Logger`, `Values` for where the run's resources ended up, `State` for
+    //doc:   anything live the run has to keep, `Attempt` for which try this is - and `Deadline`, which is
+    //doc:   how long this step has and the token that fires when it runs out. It used to be four loose
+    //doc:   parameters and no deadline at all, which meant a step could not tell "my time is up" from "the
+    //doc:   run was cancelled" and had to guess a margin to say anything useful about a timeout.
+    //doc: - Throwing is how a step fails; there is no result code to remember to check.
     //doc: - `GetInstance()` wraps the step in the per-run instance the runner tracks attempts and results on.
     //doc: - `DeclareIO` is the contract from chapter 10. Empty here, honestly so: this step reads nothing
     //doc:   and writes nothing.
@@ -93,7 +96,7 @@ public class Retry_Basic(ITestOutputHelper outputHelper)
 
         public override Step<TextResultContext> Clone() => new EventuallySuccessfulStep(probe).WithClonedOptions(this);
 
-        public override Task<TextResultContext?> Execute(IServiceProvider serviceProvider, VariableStore variableStore, ArtifactStore artifactStore, ScopedLogger logger, CancellationToken cancellationToken)
+        public override Task<TextResultContext?> Execute(RunContext context)
         {
             // First attempt fails on purpose. Otherwise this is not a retry demo,
             // it is just a very confident no-op with a stopwatch attached and opinions about resilience.
