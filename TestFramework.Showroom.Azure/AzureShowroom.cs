@@ -3,6 +3,20 @@ using TestFramework.Azure.Identifier;
 using TestFramework.Azure.Configuration.SpecificConfigs;
 using TestFramework.Core.Timelines;
 using TestFramework.Container.Azure;
+using TestFramework.Container.Sources;
+using Xunit;
+
+// Chapters in this lane run one at a time, for the same reasons the web lane does it in W0: the
+// Function App is built from its project, and several chapters publishing that one project at the
+// same moment contend over its obj/ whatever their output directories say - on the published
+// Container this lane pins, the loser reports that the project "could not be published". Newer
+// builds of the framework serialise that themselves, which makes this a cost question rather than a
+// correctness one; either way three full Azure stacks at once is not what a reader came here for.
+//
+// The lane did not need this while a Function App shipped the build output behind a type. It does now
+// that the payload is a declared source, because a declared project source is published rather than
+// copied.
+[assembly: CollectionBehavior(DisableTestParallelization = true)]
 
 namespace TestFramework.Showroom.Azure;
 
@@ -95,9 +109,14 @@ internal static class AzureShowroom
             => ConfigureShowroomServiceBusTopology(builder);
     }
 
-    internal sealed class DefaultFunctionAppDefinition : DockerFunctionAppDefinition<AnalysisProcessor>
+    internal sealed class DefaultFunctionAppDefinition : DockerFunctionAppDefinition
     {
         public override FunctionAppIdentifier Identifier => "Default";
+
+        public override ContainerSource Source =>
+            ContainerSource.Project("../Azure/FunctionApp/FunctionApp.csproj").BuiltOnHost();
+        // ^ Published on the host, because the payload is mounted into the Functions
+        //   host image rather than run as an image of its own.
 
         protected override void Configure(DockerFunctionAppBuilder builder)
         {

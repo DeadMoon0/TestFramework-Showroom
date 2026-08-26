@@ -9,6 +9,7 @@ using TestFramework.Azure.Runtime;
 using TestFramework.Azure.Extensions;
 using TestFramework.Config;
 using TestFramework.Container.Azure;
+using TestFramework.Container.Sources;
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using Xunit.Abstractions;
@@ -38,10 +39,27 @@ namespace TestFramework.Showroom.Azure;
 //doc: separately from the ones in `AzureShowroom.cs` even though the resources overlap: this chapter uses
 //doc: `DockerAzureEnvironment.For<ShowroomFunctionAppDefinition>()` directly, so that it owns exactly what it
 //doc: needs and nothing more.
+//doc:
+//doc: The app also states where its payload comes from. `Source` names the Function App's project file - a
+//doc: path that reads the way it looks in the repository, because it is resolved against this source file
+//doc: rather than against whatever the working directory happened to be - and `BuiltOnHost()` publishes it on
+//doc: the host, because a Function App payload is mounted into the Functions host image instead of being run
+//doc: as an image of its own. Declared, not discovered: nothing here depends on where an assembly was loaded
+//doc: from.
+//doc:
+//doc: That declaration changes what a chapter costs, which is worth stating because it is invisible until it
+//doc: bites: a declared project source is *published*, not copied, and the three classes below all name the
+//doc: same project. So this lane runs its chapters one at a time - the same rule the web lane states in W0,
+//doc: which has always built its application from a project - and the reasoning there applies here unchanged:
+//doc: publishing one project from three places at once is contention nobody asked for, and three full Azure
+//doc: stacks at once is a stress test of your machine rather than a way to learn an API.
 
-internal sealed class ShowroomFunctionAppDefinition : DockerFunctionAppDefinition<HttpTests>
+internal sealed class ShowroomFunctionAppDefinition : DockerFunctionAppDefinition
 {
     public override FunctionAppIdentifier Identifier => "ShowroomFunction";
+
+    public override ContainerSource Source =>
+        ContainerSource.Project("../Azure/FunctionApp/FunctionApp.csproj").BuiltOnHost();
 
     protected override void Configure(DockerFunctionAppBuilder builder)
     {

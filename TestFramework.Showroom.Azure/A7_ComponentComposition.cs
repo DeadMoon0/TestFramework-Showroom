@@ -5,6 +5,7 @@ using TestFramework.Azure.Configuration.SpecificConfigs;
 using TestFramework.Azure.Extensions;
 using TestFramework.Azure.Identifier;
 using TestFramework.Container.Azure;
+using TestFramework.Container.Sources;
 using TestFramework.Config;
 using TestFramework.Core.Exceptions;
 using TestFramework.Core.Environment;
@@ -303,6 +304,9 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     //doc:   `Require`s one. Provide and require are the two halves, and they meet on the contract key.
     //doc: - `ExclusiveFunctionAppDefinitionA` and `…B` use `ConfigureDependencies` rather than `Configure`,
     //doc:   because ownership is a statement about the dependency graph rather than about app settings.
+    //doc: - All five apps name the same payload through `Source`, and that is the point of the chapter in one
+    //doc:   line: identical code, five different places in the dependency graph. What separates them is what
+    //doc:   they declare about their neighbours, never what they are built from.
     //doc: - And the topology helper at the bottom declares the queues and topics the emulator must actually
     //doc:   have. A bus identifier is a name; the entities behind it still have to exist.
 
@@ -337,9 +341,15 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
             => ConfigureShowroomServiceBusTopology(builder);
     }
 
-    private sealed class IntakeFunctionAppDefinition : DockerFunctionAppDefinition<SampleIngestionFunction>
+    // Every app below ships this same payload, published on the host because a Function App payload is
+    // mounted into the Functions host image rather than run as an image of its own.
+    private const string FunctionAppProject = "../Azure/FunctionApp/FunctionApp.csproj";
+
+    private sealed class IntakeFunctionAppDefinition : DockerFunctionAppDefinition
     {
         public override FunctionAppIdentifier Identifier => "Ingest";
+
+        public override ContainerSource Source => ContainerSource.Project(FunctionAppProject).BuiltOnHost();
 
         protected override void Configure(DockerFunctionAppBuilder builder)
         {
@@ -352,9 +362,11 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         }
     }
 
-    private sealed class AnalysisFunctionAppDefinition : DockerFunctionAppDefinition<AnalysisProcessor>
+    private sealed class AnalysisFunctionAppDefinition : DockerFunctionAppDefinition
     {
         public override FunctionAppIdentifier Identifier => "Analyse";
+
+        public override ContainerSource Source => ContainerSource.Project(FunctionAppProject).BuiltOnHost();
 
         protected override void Configure(DockerFunctionAppBuilder builder)
         {
@@ -406,9 +418,11 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         }
     }
 
-    private sealed class ContractConsumerFunctionAppDefinition : DockerFunctionAppDefinition<HttpTests>
+    private sealed class ContractConsumerFunctionAppDefinition : DockerFunctionAppDefinition
     {
         public override FunctionAppIdentifier Identifier => "ContractConsumer";
+
+        public override ContainerSource Source => ContainerSource.Project(FunctionAppProject).BuiltOnHost();
 
         protected override void Configure(DockerFunctionAppBuilder builder)
         {
@@ -436,9 +450,11 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         public DockerServiceBusEndpoint Queue => DockerServiceBusEndpoint.Queue("exclusive-queue");
     }
 
-    private sealed class ExclusiveFunctionAppDefinitionA : DockerFunctionAppDefinition<AnalysisProcessor>
+    private sealed class ExclusiveFunctionAppDefinitionA : DockerFunctionAppDefinition
     {
         public override FunctionAppIdentifier Identifier => "ExclusiveA";
+
+        public override ContainerSource Source => ContainerSource.Project(FunctionAppProject).BuiltOnHost();
 
         protected override void ConfigureDependencies(DockerAzureDependencyBuilder dependencies)
         {
@@ -446,9 +462,11 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         }
     }
 
-    private sealed class ExclusiveFunctionAppDefinitionB : DockerFunctionAppDefinition<HttpTests>
+    private sealed class ExclusiveFunctionAppDefinitionB : DockerFunctionAppDefinition
     {
         public override FunctionAppIdentifier Identifier => "ExclusiveB";
+
+        public override ContainerSource Source => ContainerSource.Project(FunctionAppProject).BuiltOnHost();
 
         protected override void ConfigureDependencies(DockerAzureDependencyBuilder dependencies)
         {
