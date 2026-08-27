@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Text;
 using Azure;
 using Azure.Data.Tables;
@@ -116,14 +116,13 @@ internal static class LabSqlSetup
     internal static ConfigInstance BuildConfig() =>
         ConfigInstance.Create()
         .LoadDockerAzureConfig()
-        .AddService((services, _) =>
+        .AddService(services =>
         {
-            services.AddDbContext<LabDbContext>((serviceProvider, opts) =>
-                opts.UseSqlServer(serviceProvider.GetRequiredService<ConfigStore<SqlDatabaseConfig>>().GetConfig("MainSql").ConnectionString));
-
+            // The options handed to this callback already point at the database this run is using, so
+            // nothing here reads an address. See chapter A5 for why AddDbContext cannot.
             services.AddSqlArtifactContexts(reg =>
             {
-                reg.AddDefault<LabDbContext>();
+                reg.AddDefault<LabDbContext>(opts => new LabDbContext(opts));
                 reg.ApplyMigrationsOnFirstUse();
             });
         })

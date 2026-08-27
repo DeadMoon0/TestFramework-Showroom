@@ -124,23 +124,20 @@ standalone, and pays for it in wall-clock time.
 6. `A8_FunctionApps.cs` is the dedicated Function App chapter: when to use in-process vs local Docker vs deployed remote, plus liveness, route discovery, explicit request shaping, and default-route selection.
 7. `A9_PersistentHostedFixture.cs` is the dedicated persistent-hosting chapter: one hosted container stack, many fresh run environments, and run-local config layering on top of a reused persistent slice.
 
-Read `TestFramework.Showroom.Azure/A0_ConfigurationPatterns.cs` first if you want the shortest runnable explanation of why `ConfigInstance` and `ConfigStore<T>` can appear in the same Azure sample without representing two competing setup models.
+Read `TestFramework.Showroom.Azure/A0_ConfigurationPatterns.cs` first if you want the shortest runnable explanation of how a resource is addressed: declared once by name, and asked for from the run.
 
 ### Azure Configuration Pattern
 
-For almost all showroom scenarios, keep one ownership rule in mind:
-
-- `ConfigInstance` is the setup entry point.
-- module-specific typed stores such as Azure's `ConfigStore<T>` live inside the provider that `ConfigInstance` builds.
-
-That means the normal learning path is:
+For almost all showroom scenarios, keep one ownership rule in mind: there is one place to say where a resource is, and one place to ask.
 
 1. create or load a `ConfigInstance`
-2. apply Azure helpers such as `LoadDockerAzureConfig()`
+2. apply Azure helpers such as `LoadDockerAzureConfig()`, which say which sections this package reads
 3. build the provider for `SetupRun(...)`
-4. let advanced services resolve typed stores from DI only when they need named resource records at runtime
+4. ask the run for a record when a step needs one: `context.Configured<SqlDatabaseConfig>("MainSql")`
 
-If you want the side-by-side comparison between the simple path and the advanced mixed path, read [Documentation/ConfigurationPatterns.md](./Documentation/ConfigurationPatterns.md) before diving into `A5_SqlServer.cs` or `A6_IntegratedAzure.cs`.
+`Configured<T>` does not tell you whether a person wrote the address down or a container decided it while starting, which is what lets the same timeline run against a deployed resource and a containerized one.
+
+Read [Documentation/ConfigurationPatterns.md](./Documentation/ConfigurationPatterns.md) before diving into `A5_SqlServer.cs` or `A6_IntegratedAzure.cs` — including the note on why a `DbContext` is registered by handing over its construction rather than with `AddDbContext`.
 
 ### Function App Path Guide
 
@@ -179,7 +176,7 @@ The examples now exercise the same fluent topology path that the container packa
 ### Azure Troubleshooting
 
 - If Blob, Table, Cosmos, SQL, or Service Bus examples *skip* with "Requires Docker Desktop or another reachable Windows Docker named pipe.", the daemon is not answering. The gate also sets `DOCKER_HOST` from whichever Docker Desktop named pipe exists, so a machine that has Docker running usually needs nothing else.
-- If `A6_IntegratedAzure` fails during setup, verify that the Function App definition bindings and showroom config store identifiers still line up exactly.
+- If `A6_IntegratedAzure` fails during setup, verify that the Function App definition bindings and the configured identifiers still line up exactly.
 - If Service Bus waits time out, inspect the correlation IDs in the example and confirm that the function emits replies on the expected queue/topic.
 - If SQL-backed samples fail, make sure migrations or schema initialization from the container-backed environment have completed before re-running.
 

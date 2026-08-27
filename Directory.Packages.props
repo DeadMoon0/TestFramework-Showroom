@@ -58,7 +58,7 @@
 		<PackageVersion Include="TestFramework.Simple" Version="0.3.0" />
 		<PackageVersion Include="TestFramework.UI.Browser" Version="0.2.0" />
 		<PackageVersion Include="TestFramework.UI.Web" Version="0.2.0" />
-		<PackageVersion Include="TestFramework.Web" Version="0.4.0" />
+		<PackageVersion Include="TestFramework.Web" Version="0.5.0" />
 	</ItemGroup>
 
 	<ItemGroup Label="Test host">

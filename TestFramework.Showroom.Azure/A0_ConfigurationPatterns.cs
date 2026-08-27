@@ -1,3 +1,5 @@
+﻿using TestFramework.Azure;
+using TestFramework.Core.Environment.Graph;
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure.Configuration;
@@ -11,18 +13,21 @@ using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.Azure;
 
-//doc: One setup root. Several honest helpers.
+//doc: One place to say it. One place to ask.
 //doc:
-//doc: `ConfigInstance` and `ConfigStore<T>` kept showing up together, which is the sort of thing that makes
-//doc: people ask whether the framework has two setup models. It does not. It has one model and a few
-//doc: specialists that know where to stand:
+//doc: 1. `ConfigInstance` owns setup - the file, the overrides, the services.
+//doc: 2. `LoadAzureConfig()` says which sections this package reads and what each one describes.
+//doc: 3. A step asks the run: `context.Configured<SqlDatabaseConfig>("MainSql")`.
 //doc:
-//doc: 1. `ConfigInstance` owns setup.
-//doc: 2. Azure loads typed stores into the provider `ConfigInstance` builds.
-//doc: 3. Advanced code asks for a typed store only when it actually needs one.
+//doc: This chapter used to open by explaining why `ConfigInstance` and a typed `ConfigStore<T>` both showed
+//doc: up in Azure samples without being two competing setup models. The honest answer turned out to be that
+//doc: the store should not have been there: it could only hold what somebody wrote down before anything
+//doc: started, so a step reading it got a placeholder for every address a container decides when it starts.
+//doc: The stores are gone, and asking the run replaced them everywhere.
 //doc:
-//doc: Short version: one root model, one provider, several specialised helpers. Less mythology, more
-//doc: plumbing.
+//doc: What that buys is the thing this chapter is really about: the same timeline runs against a deployed
+//doc: resource and a containerized one, and nothing in it says which. The address is looked up by name, and
+//doc: whoever supplied it - a file, or an emulator that started ninety seconds ago - answers.
 //doc:
 //doc: Everything the cloud chapters run against - storage, Cosmos, SQL, several Service Bus definitions and
 //doc: a Function App - is declared once in `AzureShowroom.cs`, and `AzureShowroom.CreateEnvironment()` is
@@ -37,8 +42,7 @@ namespace TestFramework.Showroom.Azure;
 //doc: While you are in that panel, notice the stage before the Main Stage. Environment components are
 //doc: created in a preparatory stage and torn down in the cleanup stage, both without you writing either.
 
-//doc: The default path, and the one to copy: build config, build provider, run timeline. No typed-store
-//doc: spelunking required.
+//doc: The default path, and the one to copy: build config, build provider, run timeline.
 //doc:
 //doc: The one detail worth imitating is the `await using`. `BuildServiceProvider()` hands back the concrete
 //doc: `ServiceProvider` rather than an `IServiceProvider`, and that is not an accident - the provider owns
@@ -82,13 +86,17 @@ public class ConfigurationPatterns_DefaultPath(ITestOutputHelper outputHelper)
 }
 
 //doc: The advanced path is the same path with one extra move at the end. It still starts with a
-//doc: `ConfigInstance` - here the shared one from chapter A5, which adds an EF `DbContext` on top of the
-//doc: standard Azure config - and the difference is only that afterwards the test resolves a typed store
-//doc: from the provider and reads a value out of it.
+//doc: `ConfigInstance` - here the shared one from chapter A5 - and the difference is only that afterwards
+//doc: the test asks the finished run what it was actually using.
 //doc:
-//doc: `ConfigStore<SqlDatabaseConfig>.GetConfig("MainSql")` is how config is addressed everywhere in the
-//doc: Azure package: by type, then by identifier. That is the same `MainSql` the timeline's artifact names,
-//doc: which is the whole point of identifiers - one name, resolved by whoever needs it.
+//doc: `run.Values` is how a configured resource is addressed: by kind, then by identifier. That is the same
+//doc: `MainSql` the timeline's artifact names, which is the whole point of identifiers - one name, resolved
+//doc: by whoever needs it.
+//doc:
+//doc: Ask the *run*, not the service provider. A provider can only ever hand back what somebody wrote down
+//doc: before anything started, and half of what a run knows is decided later - a container binds a port when
+//doc: it starts, and no configuration file can hold that. Asking the run gets whichever of the two is true
+//doc: here, and a timeline written this way does not change when the database moves into a container.
 //doc:
 //doc: This run touches SQL, so `MainSql` is the resource it drags into the light. The rest of the declared
 //doc: facility stays declared.
@@ -128,11 +136,11 @@ public class ConfigurationPatterns_AdvancedMixedPath(ITestOutputHelper outputHel
 
         run.EnsureRanToCompletion();
 
-        SqlDatabaseConfig sql = provider
-            .GetRequiredService<ConfigStore<SqlDatabaseConfig>>()
-            .GetConfig("MainSql");
+        string databaseName = run.Values.Require(
+            ValueRef.For(AzureEnvironmentResourceKinds.Sql, "MainSql", AzureEnvironmentResourceKinds.DatabaseNameValue),
+            ResourceVantage.Host);
 
-        Assert.Equal("master", sql.DatabaseName);
+        Assert.Equal("master", databaseName);
         // Only the resources required by the run need to be materialized.
         // This sample touches SQL, so MainSql is the one we drag into the light.
     }

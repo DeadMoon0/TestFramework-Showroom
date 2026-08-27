@@ -1,30 +1,20 @@
 # Configuration Patterns
 
-This note explains the two configuration shapes that appear in the Showroom and how they relate.
+There is one place to say where a resource is, and one place to ask.
 
-The short version is:
+- `ConfigInstance` is the setup path: the file, the overrides, the services.
+- `context.Configured<T>("identifier")` is how a step reads a configured resource.
 
-- `ConfigInstance` is the normal setup path for timeline runs.
-- typed stores such as Azure's `ConfigStore<T>` are advanced runtime lookup services that live inside the provider built by `ConfigInstance`.
+Nothing else reads configuration, and that is the whole point of this note.
 
-They are not competing root models.
-
-## Pattern 1: Default Consumer Path
-
-Use this when you want to:
-
-- load JSON settings
-- apply a few overrides
-- register ordinary services
-- build the `IServiceProvider` used by `SetupRun(...)`
-
-Example:
+## Saying it
 
 ```csharp
 using TestFramework.Config;
 
 ConfigInstance config = ConfigInstance
     .FromJsonFile("local.testSettings.json")
+    .LoadAzureConfig()
     .Build();
 
 TimelineRun run = await timeline
@@ -32,42 +22,67 @@ TimelineRun run = await timeline
     .RunAsync();
 ```
 
-This is the default path. Most users should learn this first.
+`LoadAzureConfig()` does not read the file. It says which sections this package understands and what each one
+describes, and the run reads them when it composes its resources — once, before the first step. A malformed
+entry fails the run there, with the package's own message, rather than at the moment some step happens to
+touch it.
 
-## Pattern 2: Advanced Mixed Path
-
-Use this when a richer module needs named resource records at runtime.
-
-In the Azure showroom, SQL-backed examples use `ConfigStore<SqlDatabaseConfig>` so EF and SQL artifact helpers can resolve a named SQL resource such as `MainSql`.
-
-That still does not replace `ConfigInstance`.
-
-Example shape:
+## Asking for it
 
 ```csharp
-internal static ConfigInstance BuildConfig() =>
-    ConfigInstance.Create()
-        .LoadDockerAzureConfig()
-        .AddService((services, _) =>
-        {
-            services.AddDbContext<MyDbContext>((serviceProvider, opts) =>
-                opts.UseSqlServer(
-                    serviceProvider
-                        .GetRequiredService<ConfigStore<SqlDatabaseConfig>>()
-                        .GetConfig("MainSql")
-                        .ConnectionString));
-        })
-        .Build();
+public override Task<MyResult?> Execute(RunContext context)
+{
+    SqlDatabaseConfig sql = context.Configured<SqlDatabaseConfig>("MainSql");
+    ...
+}
 ```
 
-Read that flow like this:
+The identifier is the same `MainSql` the timeline's artifacts name. One name, resolved by whoever needs it.
 
-1. `ConfigInstance` still owns the setup pipeline.
-2. Azure config helpers populate typed stores inside DI.
-3. advanced services resolve named records from those stores at runtime.
+**`Configured<T>` deliberately does not tell you where the answer came from.** An address someone wrote in a
+file and an address a container decided when it started arrive the same way. That is what lets one timeline
+run against a deployed database and a containerized one without changing a line.
 
-## Which One Should I Pick?
+For a value rather than a whole record — and for the finished run rather than a step — `run.Values` answers
+the same question:
 
-- You are writing a normal test and only need configuration plus service registration: use `ConfigInstance`.
-- You are following an advanced Azure or SQL sample and see `ConfigStore<T>`: keep using `ConfigInstance` for setup and treat the store as a module-owned runtime dependency.
-- If both appear in one sample, that is still one setup model, not two.
+```csharp
+string databaseName = run.Values.Require(
+    ValueRef.For(AzureEnvironmentResourceKinds.Sql, "MainSql", AzureEnvironmentResourceKinds.DatabaseNameValue),
+    ResourceVantage.Host);
+```
+
+## A database context
+
+The one case worth spelling out, because the obvious shape does not work:
+
+```csharp
+services.AddSqlArtifactContexts(registry =>
+    registry.AddDefault<MyDbContext>(options => new MyDbContext(options)));
+```
+
+You register **how to construct** your context and are handed options that already point at the database this
+run is using. It reads back-to-front from ordinary EF registration on purpose: the framework owns the address
+and you own everything else.
+
+`AddDbContext` cannot do this. It takes the connection string when the registration is built, from a service
+provider, with no run in sight — so a containerized database could only ever be reached by writing its address
+back into somebody's configuration after the container started.
+
+## If you are coming from `ConfigStore<T>`
+
+Earlier versions registered a typed store per record — `ConfigStore<SqlDatabaseConfig>` in Azure,
+`WebConfigStore<ApiConfig>` in Web — and had you resolve it from the service provider. Both are gone.
+
+```csharp
+// before
+var sql = provider.GetRequiredService<ConfigStore<SqlDatabaseConfig>>().GetConfig("MainSql");
+
+// now
+var sql = context.Configured<SqlDatabaseConfig>("MainSql");
+```
+
+A store could only hold what somebody wrote down before anything started, so a step reading one got a
+placeholder for every address a container decides at startup. This note used to explain why `ConfigInstance`
+and `ConfigStore<T>` were not two competing setup models; the honest answer turned out to be that the second
+one should not have existed.

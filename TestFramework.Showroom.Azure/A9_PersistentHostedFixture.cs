@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System.Collections.Generic;
+using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
 using TestFramework.Azure.Configuration;
 using TestFramework.Azure.Configuration.SpecificConfigs;
@@ -84,7 +85,9 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
     }
 
     //doc: Test two is the one that makes the feature usable. A baseline run, then a run that overrides only
-    //doc: its own view of the config: `GetEnv(builder => …)` layers a run-local `ConfigStore` on top.
+    //doc: its own view of the config: `GetEnv(builder => …)` layers one run-local configuration key on top.
+    //doc: One key, not a whole entry - everything else, including the address Azurite published when it
+    //doc: started, is inherited.
     //doc:
     //doc: The two assertions afterwards are the whole point, side by side. The baseline sees
     //doc: `PersistentTable`, the override run sees `RunLocalTable` - *and* both still share the same network
@@ -105,18 +108,7 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
         TimelineRun overrideRun = await InspectStorageTimeline
             .SetupRun(output)
             .SetEnv(fixture.GetEnv(builder =>
-            {
-                builder.AddService(services =>
-                {
-                    services.AddSingleton(ConfigStore<StorageAccountConfig>.Create("PersistentStorage", new StorageAccountConfig
-                    {
-                        ConnectionString = "UseDevelopmentStorage=true",
-                        BlobContainerName = "persistent-blob",
-                        QueueContainerName = null,
-                        TableContainerName = "RunLocalTable",
-                    }));
-                });
-            }))
+                builder.OverrideConfig("StorageAccount:PersistentStorage:TableContainerName", "RunLocalTable")))
             .RunAsync();
 
         baselineRun.EnsureRanToCompletion();
@@ -153,7 +145,7 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
 
         public override Task<InspectStorageConfigResult?> Execute(RunContext context)
         {
-            StorageAccountConfig config = ((ConfigStore<StorageAccountConfig>)context.Services.GetService(typeof(ConfigStore<StorageAccountConfig>))!).GetConfig("PersistentStorage");
+            StorageAccountConfig config = context.Configured<StorageAccountConfig>("PersistentStorage");
             return Task.FromResult<InspectStorageConfigResult?>(new(config.TableContainerName ?? throw new InvalidOperationException("PersistentStorage table name was not configured.")));
         }
 
@@ -267,15 +259,11 @@ public sealed class PersistentHostedFixtureState : IDockerAzureHostedFixtureStat
     public ConfigInstance CreatePersistentConfig()
         => ConfigInstance.Create()
             .LoadDockerAzureConfig()
-            .AddService(services =>
+            .OverrideConfig(new Dictionary<string, string?>
             {
-                services.AddSingleton(ConfigStore<StorageAccountConfig>.Create("PersistentStorage", new StorageAccountConfig
-                {
-                    ConnectionString = "UseDevelopmentStorage=true",
-                    BlobContainerName = "persistent-blob",
-                    QueueContainerName = null,
-                    TableContainerName = "PersistentTable",
-                }));
+                ["StorageAccount:PersistentStorage:ConnectionString"] = "UseDevelopmentStorage=true",
+                ["StorageAccount:PersistentStorage:BlobContainerName"] = "persistent-blob",
+                ["StorageAccount:PersistentStorage:TableContainerName"] = "PersistentTable",
             })
             .Build();
 }

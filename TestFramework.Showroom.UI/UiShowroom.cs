@@ -1,9 +1,11 @@
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Config;
 using TestFramework.Container.Web;
 using TestFramework.Container.Web.Sites;
 using TestFramework.UI.Browser.Configuration;
+using TestFramework.UI.Browser.Extensions;
+using TestFramework.UI.Browser.Runtime;
 using TestFramework.UI.Web;
 using TestFramework.Web.Extensions;
 using TestFramework.Web.Site;
@@ -56,7 +58,11 @@ internal static class UiShowroom
             //   address among them. An empty shelf is still a shelf.
             .AddService((services, _) =>
             {
-                services.AddSingleton(new UiConfigStore([new("storefront", BrowserEntry())]));
+                services.AddUiBrowser(apps => apps.Add("storefront", BrowserEntry()));
+                // ^ One call declares the application AND registers what drives it - the failure
+                //   observer among them. There is deliberately no way to do only the first: a
+                //   configured application with nothing watching it is a chapter that fails with an
+                //   empty evidence folder.
                 services.AddUiWebBridge();
                 // ^ The bridge is what lets a browser identifier be answered by
                 //   the site store. Without it the entry above would need a
@@ -69,13 +75,14 @@ internal static class UiShowroom
 
     private static WebAppConfig BrowserEntry()
     {
-        // The gate guarantees the variable is set by the time any chapter runs.
-        string requested = UiShowroomGate.RequestedBrowser!.ToLowerInvariant();
+        // Whatever the gate found on this machine - Playwright's own chromium, or an installed Edge. The
+        // gate has already skipped the chapter if there was nothing.
+        UiAvailableBrowser browser = UiShowroomGate.Browser!;
 
         return new WebAppConfig
         {
-            Browser = requested is "firefox" ? "firefox" : requested is "webkit" or "safari" ? "webkit" : "chromium",
-            Channel = requested is "msedge" or "edge" ? "msedge" : requested is "chrome" ? "chrome" : null,
+            Browser = browser.Browser,
+            Channel = browser.Channel,
             Headless = true,
             Device = "Desktop 1080p",
         };

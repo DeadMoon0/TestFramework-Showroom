@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
@@ -80,13 +80,15 @@ public class ShowroomDbContext(DbContextOptions<ShowroomDbContext> options) : Db
 }
 
 //doc: The setup helper is the whole SQL-specific wiring, in one place, so the chapters can talk about
-//doc: behaviour instead of connection-string archaeology. Three moves, and each is a decision:
+//doc: behaviour instead of connection-string archaeology. Two moves, and each is a decision:
 //doc:
-//doc: - `AddDbContext` builds the context from config rather than from a literal - the connection string
-//doc:   comes out of `ConfigStore<SqlDatabaseConfig>` under the identifier `MainSql`, which is the same name
-//doc:   the timelines use.
 //doc: - `AddSqlArtifactContexts` is what lets `AddSqlArtifact` work at all: it tells the framework which
-//doc:   context to reach for when it has to insert, read or delete a row.
+//doc:   context to reach for when it has to insert, read or delete a row. You register *how to build* your
+//doc:   context and are handed options already pointing at the database this run is using - back-to-front
+//doc:   from ordinary EF registration, because the framework owns the address and you own the rest. There is
+//doc:   no `AddDbContext` here and there cannot be: it takes its connection string when the registration is
+//doc:   built, with no run in sight, so a containerized database could only be reached by writing the
+//doc:   address back into somebody's configuration after the container started.
 //doc: - `ApplyMigrationsOnFirstUse()` does what it says, and with no migrations in this sample it falls back
 //doc:   to `EnsureCreated`. After that the process reuses the initialised schema like a respectable
 //doc:   freeloader.
@@ -103,14 +105,16 @@ internal static class ShowroomSqlSetup
     internal static ConfigInstance BuildConfig() =>
         ConfigInstance.Create()
         .LoadDockerAzureConfig()
-        .AddService((services, _) =>
+        .AddService(services =>
         {
-            services.AddDbContext<ShowroomDbContext>((serviceProvider, opts) =>
-                opts.UseSqlServer(serviceProvider.GetRequiredService<ConfigStore<SqlDatabaseConfig>>().GetConfig("MainSql").ConnectionString));
-
+            // No AddDbContext, and nothing resolving a connection string here. A context registered that way
+            // takes its address when the registration is built - from a service provider, with no run in
+            // sight - so a containerized database could only be reached by writing its address back into
+            // somebody's configuration. Handing over the options instead removes that problem rather than
+            // hiding it: what arrives already points at the database this run is using.
             services.AddSqlArtifactContexts(reg =>
             {
-                reg.AddDefault<ShowroomDbContext>();
+                reg.AddDefault<ShowroomDbContext>(opts => new ShowroomDbContext(opts));
                 reg.ApplyMigrationsOnFirstUse();
                 // ^ With no migrations in this sample, first use falls back to EnsureCreated.
                 //   After that, the process reuses the initialized schema like a respectable freeloader.

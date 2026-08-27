@@ -1,3 +1,5 @@
+﻿using TestFramework.UI.Browser;
+using TestFramework.UI.Browser.Runtime;
 using Xunit;
 
 namespace TestFramework.Showroom.UI;
@@ -8,9 +10,15 @@ namespace TestFramework.Showroom.UI;
 /// </summary>
 /// <remarks>
 /// <para>
-/// This lane needs two things at once: a Docker daemon to host the storefront, and a browser opted in
-/// through <c>TESTFRAMEWORK_UI_BROWSER</c> to drive it. Either one missing is a skip with its reason,
-/// never a failure - a fresh clone goes green on a bare <c>dotnet test</c>.
+/// This lane needs two things at once: a Docker daemon to host the storefront, and a browser to drive it.
+/// Either one missing is a skip with its reason, never a failure - a fresh clone goes green on a bare
+/// <c>dotnet test</c>.
+/// </para>
+/// <para>
+/// The browser is <em>found</em>, not asked for. This gate used to skip unless
+/// <c>TESTFRAMEWORK_UI_BROWSER</c> named one, which meant the chapters sat out on every machine that had
+/// Edge installed and had simply never been told - the common case. The variable still overrides the
+/// choice; it no longer decides whether the lane runs at all.
 /// </para>
 /// <para>
 /// The Docker probe is copied from the web lane's gate, named-pipe repair included. That is the third
@@ -23,19 +31,35 @@ internal static class UiShowroomGate
     private const string DockerHostEnvironmentVariable = "DOCKER_HOST";
     private const string BrowserEnvironmentVariable = "TESTFRAMEWORK_UI_BROWSER";
 
-    /// <summary>The browser the run asked for, for example <c>msedge</c> or <c>chromium</c>.</summary>
-    public static string? RequestedBrowser => Environment.GetEnvironmentVariable(BrowserEnvironmentVariable);
+    private static readonly Lazy<UiAvailableBrowser?> Available = new Lazy<UiAvailableBrowser?>(Choose);
+
+    /// <summary>
+    /// The browser these chapters will drive, or null when this machine has none.
+    /// </summary>
+    /// <remarks>
+    /// Resolved once per process, and the single answer both the gate and the configuration read - deriving
+    /// it twice is how the skip reason and the browser actually launched could disagree.
+    /// </remarks>
+    public static UiAvailableBrowser? Browser => Available.Value;
 
     public static bool TryEnable(out string reason)
     {
-        if (string.IsNullOrWhiteSpace(RequestedBrowser))
+        if (Browser is null)
         {
-            reason = $"Requires a browser, opted in through {BrowserEnvironmentVariable} (for example 'msedge').";
+            reason = Environment.GetEnvironmentVariable(BrowserEnvironmentVariable) is { Length: > 0 } requested
+                ? $"{BrowserEnvironmentVariable} asks for '{requested}', which is not installed on this machine."
+                : "Requires a browser. Install Edge or Chrome, or run 'playwright install chromium' once.";
+
             return false;
         }
 
         return TryEnableDockerHost(out reason);
     }
+
+    private static UiAvailableBrowser? Choose()
+        => Environment.GetEnvironmentVariable(BrowserEnvironmentVariable) is { Length: > 0 } requested
+            ? BrowserExt.Tooling.FindAvailableBrowser(requested)
+            : BrowserExt.Tooling.FindAvailableBrowser();
 
     private static bool TryEnableDockerHost(out string reason)
     {

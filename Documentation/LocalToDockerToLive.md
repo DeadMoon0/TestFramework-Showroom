@@ -184,5 +184,5 @@ makes container tests feel slow and live tests feel flaky.
 ## Related reading
 
 - [`Documentation/StartHere.md`](./StartHere.md) — the guided path through the showroom
-- [`Documentation/ConfigurationPatterns.md`](./ConfigurationPatterns.md) — `ConfigInstance` versus `ConfigStore<T>`
+- [`Documentation/ConfigurationPatterns.md`](./ConfigurationPatterns.md) — saying where a resource is, and asking the run for it
 - [`Documentation/Arc42.md`](./Arc42.md) — the architecture overview

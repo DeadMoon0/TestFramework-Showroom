@@ -30,7 +30,7 @@ Use it when you want to learn the framework in sequence before reading the xUnit
 
 ## Azure Chapter Map
 
-- `A0_ConfigurationPatterns.cs`: side-by-side runnable explanation of the default `ConfigInstance` path and the advanced `ConfigInstance + ConfigStore<T>` path
+- `A0_ConfigurationPatterns.cs`: runnable explanation of how a resource is addressed - declared once by name with `ConfigInstance`, asked for from the run
 - `A1` to `A5`: focused Azure building blocks
 - `A6_IntegratedAzure.cs`: capstone multi-service flow
 - `A7_ComponentComposition.cs`: container-backed composition model
