@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
@@ -16,7 +16,6 @@
 		<PackageReference Include="TestFramework.Container.Web" />
 		<PackageReference Include="TestFramework.Core" />
 		<PackageReference Include="TestFramework.UI.Browser" />
-		<PackageReference Include="TestFramework.UI.Web" />
 		<PackageReference Include="TestFramework.Web" />
 		<PackageReference Include="xunit" />
 		<PackageReference Include="xunit.runner.visualstudio" />

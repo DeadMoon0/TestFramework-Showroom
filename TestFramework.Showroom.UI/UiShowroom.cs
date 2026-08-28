@@ -6,7 +6,6 @@ using TestFramework.Container.Web.Sites;
 using TestFramework.UI.Browser.Configuration;
 using TestFramework.UI.Browser.Extensions;
 using TestFramework.UI.Browser.Runtime;
-using TestFramework.UI.Web;
 using TestFramework.Web.Extensions;
 using TestFramework.Web.Site;
 
@@ -63,10 +62,12 @@ internal static class UiShowroom
                 //   observer among them. There is deliberately no way to do only the first: a
                 //   configured application with nothing watching it is a chapter that fails with an
                 //   empty evidence folder.
-                services.AddUiWebBridge();
-                // ^ The bridge is what lets a browser identifier be answered by
-                //   the site store. Without it the entry above would need a
-                //   BaseUrl, and a BaseUrl is exactly what we refuse to know.
+                //
+                //   Nothing else is registered, and nothing bridges the application to the site:
+                //   both are called "storefront", so the browser step asks the run where
+                //   "storefront" is and the environment that started the site has already published
+                //   it. A BaseUrl is exactly what we refuse to know - and now no registration is
+                //   needed to avoid knowing it.
             })
             .Build();
 
