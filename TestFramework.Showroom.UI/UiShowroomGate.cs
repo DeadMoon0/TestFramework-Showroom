@@ -1,4 +1,7 @@
-﻿using TestFramework.UI.Browser;
+﻿using System;
+using System.IO;
+using TestFramework.Container;
+using TestFramework.UI.Browser;
 using TestFramework.UI.Browser.Runtime;
 using Xunit;
 
@@ -21,9 +24,9 @@ namespace TestFramework.Showroom.UI;
 /// choice; it no longer decides whether the lane runs at all.
 /// </para>
 /// <para>
-/// The Docker probe is copied from the web lane's gate, named-pipe repair included. That is the third
-/// copy in this repository, which is the standing argument for shipping the gate as a small
-/// <c>TestFramework.Xunit</c> package.
+/// The Docker probe belongs to <c>TestFramework.Container</c> - <c>ContainerDockerHost</c> is public and
+/// knows both pipes Docker Desktop uses. This file used to carry its own copy of it, which read as
+/// duplication worth extracting somewhere; what was duplicated was already shipped, one dependency away.
 /// </para>
 /// </remarks>
 internal static class UiShowroomGate
@@ -63,54 +66,29 @@ internal static class UiShowroomGate
 
     private static bool TryEnableDockerHost(out string reason)
     {
+        // Repairs the run rather than only judging it: a machine with Docker running but no DOCKER_HOST
+        // set would otherwise be skipped with the daemon right there.
+        ContainerDockerHost.EnsureConfigured();
+
         if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(DockerHostEnvironmentVariable)))
         {
             reason = string.Empty;
+
             return true;
         }
 
-        if (OperatingSystem.IsWindows())
-        {
-            foreach (string candidate in new[]
-                     {
-                         "npipe://./pipe/docker_engine",
-                         "npipe://./pipe/dockerDesktopLinuxEngine",
-                     })
-            {
-                if (!NamedPipeExists(candidate))
-                {
-                    continue;
-                }
-
-                Environment.SetEnvironmentVariable(DockerHostEnvironmentVariable, candidate);
-                reason = string.Empty;
-                return true;
-            }
-
-            reason = "Requires Docker Desktop or another reachable Windows Docker named pipe.";
-            return false;
-        }
-
-        if (File.Exists("/var/run/docker.sock"))
+        if (!OperatingSystem.IsWindows() && File.Exists("/var/run/docker.sock"))
         {
             reason = string.Empty;
+
             return true;
         }
 
-        reason = "Requires a reachable Docker host or local Docker socket.";
+        reason = OperatingSystem.IsWindows()
+            ? "Requires Docker Desktop or another reachable Windows Docker named pipe."
+            : "Requires a reachable Docker host or local Docker socket.";
+
         return false;
-    }
-
-    private static bool NamedPipeExists(string dockerHost)
-    {
-        const string prefix = "npipe://./pipe/";
-        if (!dockerHost.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        string pipeName = dockerHost[prefix.Length..];
-        return File.Exists($@"\\.\pipe\{pipeName}");
     }
 }
 
