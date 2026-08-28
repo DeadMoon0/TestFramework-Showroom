@@ -1,4 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http;
 using FunctionApp;
@@ -29,7 +29,8 @@ namespace TestFramework.Showroom.Azure;
 //doc: a motivational budget.
 //doc:
 //doc: Three ways to select an endpoint appear below, in decreasing order of cleverness:
-//doc: `SelectEndpointWithMethod<T>(nameof(T.Method))` reads the route off the function method,
+//doc: `SelectEndpointWithMethod<T>(nameof(T.Method))` reads the route off the function method - and takes a
+//doc: verb as a second argument when the trigger declares more than one, which it refuses to guess between,
 //doc: `SelectFunction("Name", method)` uses the default `api/{functionName}` convention, and between them
 //doc: sits explicit request shaping with headers and a body. Prefer the first: the fewer magic strings you
 //doc: hand-maintain, the fewer chances you have to confidently call the wrong thing and defend it in chat.
@@ -130,7 +131,7 @@ public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
         .Trigger(
             AzureExt.Trigger.FunctionApp
                 .Http("ShowroomFunction")
-                .SelectEndpointWithMethod<HttpTests>(nameof(HttpTests.Run))
+                .SelectEndpointWithMethod<HttpTests>(nameof(HttpTests.Run), HttpMethod.Get)
                 .Call())
             .WithTimeOut(TimeSpan.FromMinutes(1))
             .Name("function-call")
