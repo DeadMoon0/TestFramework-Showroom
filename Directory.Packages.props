@@ -38,7 +38,7 @@
 		from them. And the numbers here are the numbers that will be published, so when the chain is
 		released this file needs no edit: nothing in it is a placeholder. Release order, when someone
 		decides to release, is dependency order: Core, Simple, Config, LocalIO, Azure, Web, Container,
-		Container.Azure, Container.Web, then the UI trio.
+		Container.Azure, Container.Web, then UI.Browser.
 	-->
 
 	<PropertyGroup>
