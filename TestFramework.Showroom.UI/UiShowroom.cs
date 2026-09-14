@@ -50,18 +50,19 @@ internal static class UiShowroom
     // the container, under the site's own identifier - which is why the entry and
     // the site share their name, and why nothing here will go stale.
 
-    internal static ConfigInstance BuildConfig() =>
+    internal static ConfigInstance BuildConfig(UiWidgetCapture capture = UiWidgetCapture.OnFailure) =>
         ConfigInstance.Create()
             .LoadWebConfig()
             // ^ Registers the stores the environment publishes into, the site's
             //   address among them. An empty shelf is still a shelf.
             .AddService((services, _) =>
             {
-                services.AddUiBrowser(apps => apps.Add("storefront", BrowserEntry()));
-                // ^ One call declares the application AND registers what drives it - the failure
-                //   observer among them. There is deliberately no way to do only the first: a
-                //   configured application with nothing watching it is a chapter that fails with an
-                //   empty evidence folder.
+                services.AddUiBrowser(apps => apps.Add("storefront", BrowserEntry(capture)));
+                // ^ One call declares the application AND registers what drives it: the observer
+                //   that gathers evidence when a step fails, and the capture source that answers a
+                //   paused run asking to see the page. There is deliberately no way to do only the
+                //   first - a configured application with nothing watching it is a chapter that
+                //   fails with nothing to look at.
                 //
                 //   Nothing else is registered, and nothing bridges the application to the site:
                 //   both are called "storefront", so the browser step asks the run where
@@ -74,7 +75,7 @@ internal static class UiShowroom
     internal static DockerWebEnvironment CreateEnvironment()
         => new DockerWebEnvironment().Include<StorefrontSiteDefinition>();
 
-    private static WebAppConfig BrowserEntry()
+    private static WebAppConfig BrowserEntry(UiWidgetCapture capture)
     {
         // Whatever the gate found on this machine - Playwright's own chromium, or an installed Edge. The
         // gate has already skipped the chapter if there was nothing.
@@ -86,6 +87,9 @@ internal static class UiShowroom
             Channel = browser.Channel,
             Headless = true,
             Device = "Desktop 1080p",
+            WidgetCapture = capture,
+            // ^ How much of what the browser saw the run keeps. Defaulted here so U1 and U2 stay on
+            //   OnFailure - the cheap default - and U3 can ask for the whole strip.
         };
     }
 

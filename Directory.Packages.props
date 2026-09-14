@@ -20,18 +20,20 @@
 		exists only there is the normal way one package consumes another's work in progress. What must
 		not happen is the reverse: publishing to nuget.org in order to make a pin here resolve.
 
-		So this list is a statement of where the chain currently is, not a defect to go and fix:
+		So this list is a statement of where the chain currently is, not a defect to go and fix. As of
+		2026-09-10, with the 0.4.0 wave published, only two pins are ahead of the public feed:
 
-		  Core            0.4.0 pinned, local feed  (0.3.0 is the newest released)
-		  Config          0.3.0 pinned, local feed  (0.2.1 released)
-		  Simple          0.3.0 pinned, local feed  (0.2.1 released)
-		  Azure           0.4.0 pinned, local feed  (0.3.0 released)
-		  LocalIO         0.4.0 pinned, local feed  (0.3.0 released)
-		  Container       0.4.0 pinned, local feed  (0.3.0 released)
-		  Container.Azure 0.4.0 pinned, local feed  (0.3.0 released)
-		  Container.Web   0.4.0 pinned, local feed  (0.3.0 released)
-		  UI.Browser      0.1.0 pinned, local feed  (nothing released yet)
-		  Web             0.4.0 pinned, released    (the one already on the public feed)
+		  Core            0.5.0 pinned, local feed  (0.4.0 is the newest released)
+		  UI.Browser      0.2.0 pinned, local feed  (0.1.0 released)
+
+		  Config          0.3.0 pinned, released
+		  Simple          0.3.0 pinned, released
+		  Azure           0.4.0 pinned, released
+		  LocalIO         0.4.0 pinned, released
+		  Container       0.4.0 pinned, released
+		  Container.Azure 0.4.0 pinned, released
+		  Container.Web   0.4.0 pinned, released
+		  Web             0.5.0 pinned, released
 
 		Two consequences worth knowing rather than discovering. A clone of this repository on its own
 		does not restore while a pin is local-only - it needs the sibling repositories and the feed built
@@ -52,10 +54,10 @@
 		<PackageVersion Include="TestFramework.Container" Version="0.4.0" />
 		<PackageVersion Include="TestFramework.Container.Azure" Version="0.4.0" />
 		<PackageVersion Include="TestFramework.Container.Web" Version="0.4.0" />
-		<PackageVersion Include="TestFramework.Core" Version="0.4.0" />
+		<PackageVersion Include="TestFramework.Core" Version="0.5.0" />
 		<PackageVersion Include="TestFramework.LocalIO" Version="0.4.0" />
 		<PackageVersion Include="TestFramework.Simple" Version="0.3.0" />
-		<PackageVersion Include="TestFramework.UI.Browser" Version="0.1.0" />
+		<PackageVersion Include="TestFramework.UI.Browser" Version="0.2.0" />
 		<PackageVersion Include="TestFramework.Web" Version="0.5.0" />
 	</ItemGroup>
 
