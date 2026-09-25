@@ -1,5 +1,6 @@
 ﻿using TestFramework.Core.Artifacts;
 using TestFramework.Core.Environment;
+using TestFramework.Core.Environment.Graph;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Timelines;
@@ -120,17 +121,23 @@ public class PersistentEnvironmentContextSample(ITestOutputHelper output)
             => [ShowroomPersistentEnvironment.SharedComponentId];
     }
 
-    //doc: The environment declares both components in one shape, and `MapResourceKind` is how a step's
-    //doc: stated requirement finds the component that satisfies it. Persistence is a policy choice about a
-    //doc: component, not a separate environment type with its own parade.
+    //doc: The environment declares both components in one shape. It also declares the one resource it
+    //doc: offers - `showroom.worker` named `worker` - and `MapDeclaredResources` is how a step's stated
+    //doc: requirement for it finds the component that satisfies it. The declaration is not ceremony: before
+    //doc: the first step, the engine checks every requirement against what the run declares, so a step asking
+    //doc: for a worker nobody offers is refused by name instead of failing halfway through. Persistence is a
+    //doc: policy choice about a component, not a separate environment type with its own parade.
     //doc:
     //doc: `IPersistentEnvironmentStateSink` is the seam that makes reuse possible: a fresh environment
     //doc: instance is built per run, and the context injects the already-created state back into it. Reuse
     //doc: without mystery, which is a rare pleasure.
 
-    private sealed class ShowroomPersistentEnvironment : EnvironmentProviderBase, IPersistentEnvironmentStateSink
+    private sealed class ShowroomPersistentEnvironment : EnvironmentProviderBase, IPersistentEnvironmentStateSink, IResourceNodeSource
     {
+        private static readonly ResourceKind WorkerKind = ResourceKind.Named("showroom.worker").Build();
+
         private readonly Dictionary<EnvComponentIdentifier, object?> _persistentStates = [];
+        private readonly WorkerDeclaration _declaration = new();
 
         public static readonly EnvComponentIdentifier SharedComponentId = "shared-root";
         public static readonly EnvComponentIdentifier WorkerComponentId = "worker";
@@ -142,8 +149,14 @@ public class PersistentEnvironmentContextSample(ITestOutputHelper output)
             // environment type with its own parade.
             AddComponent(new SharedRootComponent(tracker));
             AddComponent(new WorkerComponent(tracker));
-            MapResourceKind("showroom.worker", WorkerComponentId);
+            MapDeclaredResources(WorkerKind.Name, WorkerComponentId);
         }
+
+        // What this environment offers, as resources on the run's list. A step's requirement
+        // has to name one of these, or the run is refused before it starts.
+        public string SourceName => "showroom persistent environment";
+
+        public IReadOnlyList<ResourceNode> Nodes => _declaration.Nodes;
 
         // The persistent context injects already-created runtime state back into
         // fresh environment instances through this sink. Reuse without mystery. A rare pleasure.
@@ -162,6 +175,14 @@ public class PersistentEnvironmentContextSample(ITestOutputHelper output)
                 environment = proxy.InnerEnvironment;
 
             return (ShowroomPersistentEnvironment)environment;
+        }
+
+        private sealed class WorkerDeclaration : DeclaredNodeSource
+        {
+            public override string SourceName => "showroom persistent environment";
+
+            protected override IEnumerable<DeclaredResource> Declarations
+                => [new DeclaredResource(WorkerKind, "worker", new Dictionary<ValueKey, string>(), SourceName)];
         }
     }
 
