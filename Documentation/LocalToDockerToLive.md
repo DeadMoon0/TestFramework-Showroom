@@ -77,9 +77,9 @@ The diff from stage 1 is the point of this document:
 
 ```diff
   TimelineRun run = await _timeline
-      .SetupRun(config.BuildServiceProvider(), outputHelper)
+      .SetupRun(RunServices.Owned(config.BuildServiceProvider()), outputHelper.WriteLine)
 -     // stage 1: nothing is started; the function is called in-process
-+     .SetEnv(DockerAzureEnvironment.For<ShowroomFunctionAppDefinition>())
++     .SetEnv(AzureShowroom.CreateEnvironment())
       .RunAsync();
 ```
 

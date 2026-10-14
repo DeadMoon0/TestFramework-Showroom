@@ -8,7 +8,8 @@ Use it when you want to learn the framework in sequence before reading the xUnit
 1. Read the root [README](../README.md) for the ecosystem overview.
 2. Open `TestFramework.Showroom.Basic/01_MinimalTimeline.cs` to see the smallest complete timeline.
 3. Continue through the Basic chapter in order so each concept builds on the previous one.
-4. Move to the Azure chapter only after the Core flow feels natural.
+4. Move to the Web, UI or Azure chapter only after the Core flow feels natural. Each is independent of the
+   others; pick the one closest to the system you test.
 
 ## Basic Chapter Map
 
@@ -27,6 +28,23 @@ Use it when you want to learn the framework in sequence before reading the xUnit
 - `13_Parallel.cs`: mergeable prepare work, explicit barriers, and setup serialization
 - `14_ArtifactLifecycle.cs`: artifact lifecycle as a consumer contract: declare, populate, discover, assert
 - `15_ErrorPaths.cs`: timeout exhaustion, discovery mismatches, and reading formatted recovery output
+- `16_InteractiveTriggers.cs`: a trigger that opens a real message box and waits for the person watching
+
+## Web Chapter Map
+
+- `WebShowroom.cs`: the facility - one database, one stub, one application, declared once
+- `W1_RestApi.cs`: requests as steps, responses as results
+- `W2_SqlServer.cs`: rows as artifacts, statements as steps
+- `W3_SchemaFromModels.cs`: tables generated from the model map, without Docker
+- `W4_Stubs.cs`: asserting what the application sent outwards
+- `W5_ContainerLane.cs`: all four sources of truth in one run
+
+## UI Chapter Map
+
+- `UiShowroom.cs`: the facility - one site and one browser entry, neither with an address
+- `U1_Storefront.cs`: a browser shops in the words a customer sees
+- `U2_ShopFloor.cs`: interactions a weaker tool fakes
+- `U3_Evidence.cs`: screenshots and step widgets the run keeps
 
 ## Azure Chapter Map
 

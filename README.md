@@ -11,11 +11,14 @@ If you want a documentation-first walkthrough before opening the test projects, 
 
 ## Learning Path
 
-Treat Showroom as the teaching surface, not as the proof harness.
+The Showroom has four lanes, each a test project you can run on its own:
 
-- Start here when you want isolated, runnable examples that teach one concept at a time.
-- Move to ConsumerScenarios when you want proof that a real user journey still works once those concepts are combined.
-- Use [Documentation/LocalToDockerToLive.md](./Documentation/LocalToDockerToLive.md) when your real question is how the same scenario evolves across environments rather than how one API works in isolation.
+- `TestFramework.Showroom.Basic` teaches Core one concept at a time and needs nothing but the .NET SDK.
+- `TestFramework.Showroom.Web` covers REST APIs, SQL Server and stubbed dependencies in containers.
+- `TestFramework.Showroom.UI` drives a real browser against a site a container hosts.
+- `TestFramework.Showroom.Azure` covers Blob, Table, Cosmos, SQL, Service Bus and Function Apps in containers.
+
+Start with Basic. Use [Documentation/LocalToDockerToLive.md](./Documentation/LocalToDockerToLive.md) when your real question is how the same scenario evolves across environments rather than how one API works in isolation.
 
 ## Quickstart
 
@@ -44,7 +47,9 @@ Start with these files in order:
 - `TestFramework.Showroom.Basic/15_ErrorPaths.cs`
 - `TestFramework.Showroom.Basic/16_InteractiveTriggers.cs`
 
-Then continue with the web lane in `TestFramework.Showroom.Web/` (see [Web Example Setup](#web-example-setup)) or the cloud lane in `TestFramework.Showroom.Azure/`.
+Then continue with the web lane in `TestFramework.Showroom.Web/` (see [Web Example Setup](#web-example-setup)), the
+browser lane in `TestFramework.Showroom.UI/` (see [UI Example Setup](#ui-example-setup)) or the cloud lane in
+`TestFramework.Showroom.Azure/` (see [Azure Example Setup](#azure-example-setup)).
 
 ## Retry Coverage
 
@@ -111,18 +116,43 @@ full-facility module starts three containers. A production suite would share one
 a collection, as the Azure wing does; the showroom keeps every module standalone so it can be read
 standalone, and pays for it in wall-clock time.
 
+## UI Example Setup
+
+`TestFramework.Showroom.UI` drives a real browser against `Web/StorefrontSite`, a static site a
+web-server container hosts for the run.
+
+1. Run the suite. There is nothing to configure: the site's address is published at run time under
+   its identifier, and the browser steps resolve it from there.
+2. The lane needs a Docker daemon and a browser. Either one missing is a skip with its reason. The
+   browser is found, not asked for: an installed Edge or Chrome is enough, and
+   `playwright install chromium` provides one where neither is. `TESTFRAMEWORK_UI_BROWSER` overrides
+   the choice.
+
+```bash
+dotnet test TestFramework.Showroom.UI/TestFramework.Showroom.UI.csproj --configuration Release
+```
+
+Read the modules in order:
+
+- `TestFramework.Showroom.UI/UiShowroom.cs` — the facility: one site, one browser entry, and no address in either
+- `TestFramework.Showroom.UI/U1_Storefront.cs` — a browser walks in and shops, in the words a customer sees
+- `TestFramework.Showroom.UI/U2_ShopFloor.cs` — interactions a weaker tool fakes: hover, typing, drag and drop, page state, cookies
+- `TestFramework.Showroom.UI/U3_Evidence.cs` — what the run keeps to look at: screenshots and step widgets
+
 ## Azure Example Setup
 
 `TestFramework.Showroom.Azure` runs against the container-backed Azure environment by default.
 
 1. Docker is not a precondition to *run* this lane: every chapter needs a daemon and every chapter
    skips itself with a reason when none answers. Start Docker Desktop when you want them to execute.
-2. Create `TestFramework.Showroom.Azure/local.testSettings.json` from the placeholder shape in [example.local.testsettings.json](https://github.com/DeadMoon0/TestFramework-Container/blob/main/TestFramework.Container.Azure/example.local.testsettings.json) and fill in your own local or test-only values. Do not commit populated secrets.
-3. Run the Azure showroom tests. Blob, Table, Cosmos, SQL, and Service Bus samples use `DockerAzureEnvironment` from `TestFramework.Container`.
-4. The integrated Function App sample in `A6_IntegratedAzure.cs` now runs through the same container-backed Function App path as the normal Container.Azure smoke suite.
-5. `A7_ComponentComposition.cs` demonstrates the new container composition model directly: shared dependencies, contract-selected providers, and exclusive dependency failures.
-6. `A8_FunctionApps.cs` is the dedicated Function App chapter: when to use in-process vs local Docker vs deployed remote, plus liveness, route discovery, explicit request shaping, and default-route selection.
-7. `A9_PersistentHostedFixture.cs` is the dedicated persistent-hosting chapter: one hosted container stack, many fresh run environments, and run-local config layering on top of a reused persistent slice.
+2. Run the Azure showroom tests. There is no settings file to fill in: every chapter loads its
+   configuration with `LoadDockerAzureConfig()`, and the containers publish every address at run time.
+   Blob, Table, Cosmos, SQL and Service Bus samples use `DockerAzureEnvironment` from
+   `TestFramework.Container.Azure`.
+3. The integrated Function App sample in `A6_IntegratedAzure.cs` now runs through the same container-backed Function App path as the normal Container.Azure smoke suite.
+4. `A7_ComponentComposition.cs` demonstrates the new container composition model directly: shared dependencies, contract-selected providers, and exclusive dependency failures.
+5. `A8_FunctionApps.cs` is the dedicated Function App chapter: when to use in-process vs local Docker vs deployed remote, plus liveness, route discovery, explicit request shaping, and default-route selection.
+6. `A9_PersistentHostedFixture.cs` is the dedicated persistent-hosting chapter: one hosted container stack, many fresh run environments, and run-local config layering on top of a reused persistent slice.
 
 Read `TestFramework.Showroom.Azure/A0_ConfigurationPatterns.cs` first if you want the shortest runnable explanation of how a resource is addressed: declared once by name, and asked for from the run.
 
@@ -197,19 +227,11 @@ It currently includes:
 - `TestFramework.Showroom.Basic/15_ErrorPaths.cs` for timeout, discovery mismatch, and formatted recovery output in the normal test path
 - `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs` for the low-level Core persistent environment primitive without Docker or config wrappers
 - `TestFramework.Showroom.Web` for the web lane: REST APIs, SQL Server, stubbed dependencies, and the container environment behind them
+- `TestFramework.Showroom.UI` for the browser lane: a container-hosted site, a real browser, and the evidence a run keeps
 - `TestFramework.Showroom.Azure` for Azure-oriented scenarios built on the Azure extension package
 - `A7_ComponentComposition.cs` for the definition-graph composition rules behind the container-backed Azure environment
 - `A8_FunctionApps.cs` for dedicated remote Function App usage patterns
 - `A9_PersistentHostedFixture.cs` for xUnit-hosted persistent environment reuse
-
-## How Showroom And ConsumerScenarios Differ
-
-Showroom and ConsumerScenarios are both intentional, but they do different jobs.
-
-- Showroom teaches isolated patterns and small narrative chapters.
-- ConsumerScenarios validates composed user journeys and catches friction between modules.
-- Showroom is where a new reader should learn first.
-- ConsumerScenarios is where the same reader should look next when asking "does this still hold up in a realistic workflow?"
 
 ## What You Can Do With It
 
@@ -234,6 +256,9 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 
 - [TestFramework-Core](https://github.com/DeadMoon0/TestFramework-Core) for the main engine used by nearly every sample
 - [TestFramework-Azure](https://github.com/DeadMoon0/TestFramework-Azure) for the Azure-specific extension demonstrated by the Azure showroom samples
+- [TestFramework-Web](https://github.com/DeadMoon0/TestFramework-Web) for the REST, SQL Server and stub steps the web lane uses
+- [TestFramework-UI](https://github.com/DeadMoon0/TestFramework-UI) for the browser steps the UI lane uses
+- [TestFramework-Container](https://github.com/DeadMoon0/TestFramework-Container) for the container environments behind the Web, UI and Azure lanes
 - [TestFramework-LocalIO](https://github.com/DeadMoon0/TestFramework-LocalIO) for local file and command-based scenarios that can complement the basic examples
 
 ## Where To Start
@@ -245,6 +270,8 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 - Read `15_ErrorPaths.cs` when you want to see how failure and recovery guidance show up in executable tests instead of only in docs
 - Follow with `13_Parallel.cs` when you want to see how the scheduler groups Prepare work, honors `.DoNotParallelize()`, and still serializes setup for artifact types that require it
 - Use `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs` when you want the Core-only persistent environment reuse primitive before moving to hosted/container wrappers
+- Move to `TestFramework.Showroom.Web/W1_RestApi.cs` through `W5_ContainerLane.cs` for APIs, SQL Server and stubs
+- Move to `TestFramework.Showroom.UI/U1_Storefront.cs` through `U3_Evidence.cs` for browser tests
 - Move to `TestFramework.Showroom.Azure/A1_BlobStorage.cs` through `A6_IntegratedAzure.cs` when you want cloud-backed scenarios
 - Start with `TestFramework.Showroom.Azure/A0_ConfigurationPatterns.cs` if the config ownership model is the main thing you want to understand before the service-specific Azure chapters
 - Follow with `TestFramework.Showroom.Azure/A7_ComponentComposition.cs` when you want the container composition semantics behind multi-Function-App stacks
@@ -258,5 +285,7 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 - Local to Docker to live migration: [Documentation/LocalToDockerToLive.md](./Documentation/LocalToDockerToLive.md)
 - Guided onboarding: [Documentation/StartHere.md](./Documentation/StartHere.md)
 - Basic examples: [TestFramework.Showroom.Basic](./TestFramework.Showroom.Basic)
+- Web examples: [TestFramework.Showroom.Web](./TestFramework.Showroom.Web)
+- UI examples: [TestFramework.Showroom.UI](./TestFramework.Showroom.UI)
 - Azure examples: [TestFramework.Showroom.Azure](./TestFramework.Showroom.Azure)
 - Local Azure Functions support app: [Azure/FunctionApp](./Azure/FunctionApp)

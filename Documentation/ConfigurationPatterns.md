@@ -18,9 +18,12 @@ ConfigInstance config = ConfigInstance
     .Build();
 
 TimelineRun run = await timeline
-    .SetupRun(config.BuildServiceProvider(), outputHelper)
+    .SetupRun(RunServices.Owned(config.BuildServiceProvider()), outputHelper.WriteLine)
     .RunAsync();
 ```
+
+`RunServices.Owned` hands the provider to the run, which disposes it when the run ends - asynchronously,
+which the Azure package's client cache requires. A provider passed without it stays yours to dispose.
 
 `LoadAzureConfig()` does not read the file. It says which sections this package understands and what each one
 describes, and the run reads them when it composes its resources — once, before the first step. A malformed
