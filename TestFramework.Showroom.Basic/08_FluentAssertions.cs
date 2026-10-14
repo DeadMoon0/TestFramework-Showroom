@@ -34,7 +34,7 @@ public class RunAssertions_Basic(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Assert_StepCompleted()
     {
-        var run = await this._timeline.SetupRun(outputHelper).RunAsync();
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine).RunAsync();
         run.EnsureRanToCompletion();
 
         run.Step("ping").Should().HaveCompleted();
@@ -47,7 +47,7 @@ public class RunAssertions_Basic(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Assert_StepCompleted_AndChained()
     {
-        var run = await this._timeline.SetupRun(outputHelper).RunAsync();
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine).RunAsync();
         run.EnsureRanToCompletion();
 
         run.Step("ping").Should()
@@ -77,7 +77,7 @@ public class RunAssertions_ForEach(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Assert_AllIterationsCompleted()
     {
-        var run = await this._timeline.SetupRun(outputHelper).RunAsync();
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine).RunAsync();
         run.EnsureRanToCompletion();
 
         run.Steps("greet").Should().AllHaveCompleted();
@@ -102,7 +102,7 @@ public class RunAssertions_Scope(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Assert_AllAtOnce()
     {
-        var run = await this._timeline.SetupRun(outputHelper).RunAsync();
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine).RunAsync();
         run.EnsureRanToCompletion();
 
         using (run.AssertionScope())

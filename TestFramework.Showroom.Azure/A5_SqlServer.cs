@@ -149,7 +149,7 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddSqlArtifact(
                 "product",     // artifact name
@@ -201,7 +201,7 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddSqlArtifact(
                 "invoiceLine",
@@ -259,7 +259,7 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddSqlArtifact("prodTools1", "MainSql",
                 new ShowroomProduct { Sku = "INST-001", Name = "Precision Gauge",     Price = 149m, Category = "Instruments" },

@@ -48,7 +48,7 @@ public class BlobStorage_BasicUpload(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddBlobArtifact(
                 "blob",                                    // artifact name — used later to assert against
@@ -89,7 +89,7 @@ public class BlobStorage_WithMetadata(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddBlobArtifact(
                 "blob",

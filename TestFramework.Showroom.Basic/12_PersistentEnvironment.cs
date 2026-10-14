@@ -68,11 +68,11 @@ public class PersistentEnvironmentContextSample(ITestOutputHelper output)
         {
             // Same timeline, same persistent context, two separate runs. If the
             // primitive works, the shared root survives and the worker does not. Very Darwinian. Very efficient.
-            TimelineRun firstRun = await timeline.SetupRun(output)
+            TimelineRun firstRun = await timeline.SetupRun(output.WriteLine)
                 .SetEnv(persistent.CreateEnvironment())
                 .RunAsync();
 
-            TimelineRun secondRun = await timeline.SetupRun(output)
+            TimelineRun secondRun = await timeline.SetupRun(output.WriteLine)
                 .SetEnv(persistent.CreateEnvironment())
                 .RunAsync();
 
@@ -182,7 +182,7 @@ public class PersistentEnvironmentContextSample(ITestOutputHelper output)
             public override string SourceName => "showroom persistent environment";
 
             protected override IEnumerable<DeclaredResource> Declarations
-                => [new DeclaredResource(WorkerKind, "worker", new Dictionary<ValueKey, string>(), SourceName)];
+                => [new DeclaredResource { Kind = WorkerKind, Identifier = "worker", Values = new Dictionary<ValueKey, string>(), DeclaredBy = SourceName }];
         }
     }
 

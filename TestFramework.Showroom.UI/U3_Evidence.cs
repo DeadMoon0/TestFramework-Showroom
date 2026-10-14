@@ -54,7 +54,7 @@ public class U3_Evidence(ITestOutputHelper output)
         //doc: could silently discard it would make the verb a lie.
 
         TimelineRun run = await _timeline
-            .SetupRun(UiShowroom.BuildConfig(UiWidgetCapture.EveryAction).BuildServiceProvider(), output)
+            .SetupRun(RunServices.Owned(UiShowroom.BuildConfig(UiWidgetCapture.EveryAction).BuildServiceProvider()), output.WriteLine)
             .SetEnv(UiShowroom.CreateEnvironment())
             .RunAsync();
 

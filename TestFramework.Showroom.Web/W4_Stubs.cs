@@ -63,7 +63,7 @@ public class Stub_TheCallIsObservable(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = WebShowroom.BuildConfig().BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(WebShowroom.CreateEnvironment())
             .RunAsync();
 
@@ -120,7 +120,7 @@ public class Stub_UnmatchedCallsAreTheInterestingOnes(ITestOutputHelper outputHe
         await using ServiceProvider provider = WebShowroom.BuildConfig().BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(WebShowroom.CreateEnvironment())
             .RunAsync();
 
@@ -149,7 +149,7 @@ public class Stub_UnmatchedCallsAreTheInterestingOnes(ITestOutputHelper outputHe
 public class Stub_DeclarationsAreData(ITestOutputHelper outputHelper)
 {
     private static readonly Timeline _timeline = Timeline.Create()
-        .Trigger(WebExt.Stub.Calls("pricing", HttpMethod.Get, "/api/health"))
+        .Trigger(WebExt.Stub.Calls("pricing").WithMethod(HttpMethod.Get).WithPath("/api/health"))
             .Name("health-calls")
         .Build();
 
@@ -163,7 +163,7 @@ public class Stub_DeclarationsAreData(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = WebShowroom.BuildConfig().BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(WebShowroom.CreateEnvironment())
             .RunAsync();
 

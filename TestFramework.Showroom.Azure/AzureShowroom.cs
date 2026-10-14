@@ -39,7 +39,7 @@ internal static class AzureShowroom
         protected override string? ContainerName => "BaseContainer";
     }
 
-    private sealed class MainSqlDefinition : DockerSqlDefinition
+    private sealed class MainSqlDefinition : DockerAzureSqlDefinition
     {
         public override SqlDatabaseIdentifier Identifier => "MainSql";
 
@@ -121,7 +121,7 @@ internal static class AzureShowroom
         protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
-                .UseStorage<MainStorageDefinition>(tableNameSettingName: "StorageTableName")
+                .UseStorage<MainStorageDefinition>()
                 .UseCosmos<MainDbDefinition>()
                 .UseServiceBusTrigger<ShowroomIntegrationBusDefinition>(d => d.Submission)
                 .UseServiceBusReply<ShowroomIntegrationBusDefinition>(d => d.Reply);

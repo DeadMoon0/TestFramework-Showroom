@@ -61,7 +61,7 @@ public class ArtifactLifecycle_DeclareThenPopulate(ITestOutputHelper outputHelpe
     {
         string artifactPath = ArtifactLifecycleSamplePaths.UniqueFile("showroom-lifecycle-declare");
 
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddFileArtifact("declaredFile", artifactPath, "declared then populated")
             .RunAsync();
 
@@ -87,7 +87,7 @@ public class ArtifactLifecycle_RegisterThenAssert(ITestOutputHelper outputHelper
         string artifactPath = ArtifactLifecycleSamplePaths.UniqueFile("showroom-lifecycle-register");
         string artifactFileName = Path.GetFileName(artifactPath);
 
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("cmdCreate", ArtifactLifecycleSamplePaths.AppendLine("registered at runtime", artifactFileName))
             .AddVariable("cwd", ArtifactLifecycleSamplePaths.BuildOutput)
             .AddVariable("artifactPath", artifactPath)
@@ -120,7 +120,7 @@ public class ArtifactLifecycle_FindThenAssert(ITestOutputHelper outputHelper)
         File.WriteAllText(Path.Combine(folder, "alpha.txt"), "alpha");
         File.WriteAllText(Path.Combine(folder, "beta.txt"), "beta");
 
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("folder", folder)
             .RunAsync();
 

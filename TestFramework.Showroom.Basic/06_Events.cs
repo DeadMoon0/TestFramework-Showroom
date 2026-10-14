@@ -61,7 +61,7 @@ public class Events(ITestOutputHelper outputHelper)
         string artifactPath = EventSamplePaths.UniqueFile("showroom-events");
         string artifactFileName = Path.GetFileName(artifactPath);
 
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("cmdCreate", $"{EventSamplePaths.Sleep(5)} && {EventSamplePaths.AppendLine("Hello from the new Artifact", artifactFileName)}")
             //                                            ^ Delay on purpose so the
             //                                              wait has real work to do and does not start feeling ornamental.

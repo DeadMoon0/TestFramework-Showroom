@@ -64,15 +64,15 @@ public class Sql_SeededRowIsAnArtifact(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = WebShowroom.BuildConfig().BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(WebShowroom.CreateDatabaseOnlyEnvironment())
             .AddArtifact(
                 "seeded",
-                WebExt.Artifact.Sql.Row<ShowroomOrder>("orders-db", Var.Const("1")),
-                new SqlRowArtifactData<ShowroomOrder>(new ShowroomOrder { Id = 1, Name = "Seeded Order", Quantity = 7, Total = 12.34m }))
-            //   ^ Key values are supplied in the order the model declared them.
-            //     Supply them in a different order and the database will explain the
-            //     mistake at length, in its own time, and in its own dialect.
+                WebExt.Artifact.Sql.Row<ShowroomOrder>("orders-db"),
+                new SqlRowArtifactData<ShowroomOrder>(new ShowroomOrder { Name = "Seeded Order", Quantity = 7, Total = 12.34m }))
+            //   ^ No key. The database numbers this row itself, so setup inserts it and
+            //     reads the number back, and teardown deletes exactly that row. Give it an
+            //     Id and setup refuses: the row inserted would not be the row addressed.
             .RunAsync();
 
         run.EnsureRanToCompletion();
@@ -122,7 +122,7 @@ public class Sql_RegisterArtifactAdoptsAnExistingRow(ITestOutputHelper outputHel
         await using ServiceProvider provider = WebShowroom.BuildConfig().BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(WebShowroom.CreateDatabaseOnlyEnvironment())
             .RunAsync();
 
@@ -170,14 +170,14 @@ public class Sql_FinderObservesWithoutOwning(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = WebShowroom.BuildConfig().BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(WebShowroom.CreateDatabaseOnlyEnvironment())
             .AddArtifact("first",
-                WebExt.Artifact.Sql.Row<ShowroomOrder>("orders-db", Var.Const("1")),
-                new SqlRowArtifactData<ShowroomOrder>(new ShowroomOrder { Id = 1, Name = "Bulk Order", Quantity = 25, Total = 250m }))
+                WebExt.Artifact.Sql.Row<ShowroomOrder>("orders-db"),
+                new SqlRowArtifactData<ShowroomOrder>(new ShowroomOrder { Name = "Bulk Order", Quantity = 25, Total = 250m }))
             .AddArtifact("second",
-                WebExt.Artifact.Sql.Row<ShowroomOrder>("orders-db", Var.Const("2")),
-                new SqlRowArtifactData<ShowroomOrder>(new ShowroomOrder { Id = 2, Name = "Small Order", Quantity = 2, Total = 20m }))
+                WebExt.Artifact.Sql.Row<ShowroomOrder>("orders-db"),
+                new SqlRowArtifactData<ShowroomOrder>(new ShowroomOrder { Name = "Small Order", Quantity = 2, Total = 20m }))
             //   ^ Seeded for contrast. The predicate excludes it; teardown does not,
             //     because the test seeded it and therefore owns it.
             .RunAsync();
@@ -203,11 +203,11 @@ public class Sql_StatementsAndObservations(ITestOutputHelper outputHelper)
         .Trigger(
             WebExt.Sql.Execute("orders-db", "UPDATE [Orders] SET [Quantity] = @quantity WHERE [Id] = @id")
                 .WithParameter("quantity", Var.Const(99))
-                .WithParameter("id", Var.Const(1)))
+                .WithParameter("id", Var.Ref<int>("targetId")))
             .Name("update")
         .Trigger(
             WebExt.Sql.Scalar<int>("orders-db", "SELECT [Quantity] FROM [Orders] WHERE [Id] = @id")
-                .WithParameter("id", Var.Const(1)))
+                .WithParameter("id", Var.Ref<int>("targetId")))
             .Name("read-back")
         .Build();
 
@@ -221,11 +221,12 @@ public class Sql_StatementsAndObservations(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = WebShowroom.BuildConfig().BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(WebShowroom.CreateDatabaseOnlyEnvironment())
             .AddArtifact("target",
-                WebExt.Artifact.Sql.Row<ShowroomOrder>("orders-db", Var.Const("1")),
-                new SqlRowArtifactData<ShowroomOrder>(new ShowroomOrder { Id = 1, Name = "Amendable Order", Quantity = 1, Total = 10m }))
+                WebExt.Artifact.Sql.Row<ShowroomOrder>("orders-db").KeyTo(x => x.Id, "targetId"),
+                new SqlRowArtifactData<ShowroomOrder>(new ShowroomOrder { Name = "Amendable Order", Quantity = 1, Total = 10m }))
+            //   ^ KeyTo hands the number the database assigned to the statements that need it.
             .RunAsync();
 
         run.EnsureRanToCompletion();

@@ -56,7 +56,7 @@ public class Parallel_SetVariablePrepareLayers(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        TimelineRun run = await _timeline.SetupRun(outputHelper).RunAsync();
+        TimelineRun run = await _timeline.SetupRun(outputHelper.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         run.Variable<string>("greeting").Should().Exist().And().Be("Good morning");
@@ -91,7 +91,7 @@ public class Parallel_DoNotParallelizeBarrier(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        TimelineRun run = await _timeline.SetupRun(outputHelper).RunAsync();
+        TimelineRun run = await _timeline.SetupRun(outputHelper.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         run.Variable<string>("intro").Should().Exist().And().Be("Facility memo:");
@@ -125,7 +125,7 @@ public class Parallel_SetupArtifacts(ITestOutputHelper outputHelper)
         string alphaPath = ParallelSamplePaths.UniqueFile("showroom-parallel-alpha");
         string betaPath = ParallelSamplePaths.UniqueFile("showroom-parallel-beta");
 
-        TimelineRun run = await _timeline.SetupRun(outputHelper)
+        TimelineRun run = await _timeline.SetupRun(outputHelper.WriteLine)
             .AddFileArtifact("alpha", alphaPath, "alpha ready")
             .AddFileArtifact("beta", betaPath, "beta ready")
             .RunAsync();

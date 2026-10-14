@@ -40,7 +40,7 @@ public class ControlFlow_Conditional(ITestOutputHelper outputHelper)
     [Fact]
     public async Task RunA()
     {
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("doPathA", true) // Setup-time values are immutable inputs by definition. Paperwork has spoken.
             .AddVariable("doPathB", false)
             .RunAsync();
@@ -54,7 +54,7 @@ public class ControlFlow_Conditional(ITestOutputHelper outputHelper)
     [Fact]
     public async Task RunB()
     {
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("doPathA", false)
             .AddVariable("doPathB", true)
             .RunAsync();
@@ -82,7 +82,7 @@ public class ControlFlow_ForEach(ITestOutputHelper outputHelper)
     [Fact]
     public async Task RunA()
     {
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable<string[]>("messages", ["First", "Second", "Last"])
             .RunAsync();
         run.EnsureRanToCompletion();

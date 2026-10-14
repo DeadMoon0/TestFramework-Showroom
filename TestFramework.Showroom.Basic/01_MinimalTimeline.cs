@@ -30,7 +30,7 @@ public class MinimalTimeline(ITestOutputHelper output)
     {
         // Build once, run once, verify completion. Every larger example is just
         // this skeleton wearing more equipment and making bigger promises.
-        var run = await this._timeline.SetupRun(output).RunAsync();
+        var run = await this._timeline.SetupRun(output.WriteLine).RunAsync();
         run.EnsureRanToCompletion();
     }
 

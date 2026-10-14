@@ -50,7 +50,7 @@ public class ErrorPaths_TimeoutExhaustion(ITestOutputHelper outputHelper)
     {
         string missingPath = Path.Combine(Path.GetTempPath(), $"showroom-timeout-{Guid.NewGuid():N}.txt");
 
-        TimelineRun run = await this._timeline.SetupRun(outputHelper)
+        TimelineRun run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("missingPath", missingPath)
             .RunAsync();
 
@@ -92,7 +92,7 @@ public class ErrorPaths_DiscoveryCountMismatch(ITestOutputHelper outputHelper)
 
         try
         {
-            TimelineRun run = await this._timeline.SetupRun(outputHelper)
+            TimelineRun run = await this._timeline.SetupRun(outputHelper.WriteLine)
                 .AddVariable("folder", folder)
                 .RunAsync();
 
@@ -126,7 +126,7 @@ public class ErrorPaths_MissingInputDiagnosis(ITestOutputHelper outputHelper)
     public async Task Run_ShowsFormattedRecoveryGuidance()
     {
         IOContractViolationException exception = await Assert.ThrowsAsync<IOContractViolationException>(() =>
-            this._timeline.SetupRun(outputHelper).RunAsync());
+            this._timeline.SetupRun(outputHelper.WriteLine).RunAsync());
 
         string formatted = exception.ToString();
 

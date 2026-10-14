@@ -28,7 +28,7 @@ public class Variables(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("cmdCommand", "Hello from Test via Var")
             .RunAsync();
         run.EnsureRanToCompletion();
@@ -52,7 +52,7 @@ public class Variables_Assert(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("cmdCommand", "echo Hello from Test via Var")
             .RunAsync();
         run.EnsureRanToCompletion();
@@ -76,7 +76,7 @@ public class Variables_Transforms(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("cmdCommand", "Hello from Test via Var")
             .RunAsync();
         run.EnsureRanToCompletion();
@@ -101,7 +101,7 @@ public class Variables_DoNotParallelize(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("cmdCommand", "Hello — I run alone!")
             .RunAsync();
         run.EnsureRanToCompletion();

@@ -69,7 +69,7 @@ public class TableStorage_BasicUpsert(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddTableEntityArtifact(
                 "tableRow",               // artifact name
@@ -136,7 +136,7 @@ public class TableStorage_QueryFinder(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddTableEntityArtifact("row1", "MainStorage", "MainTable",
                 new ShowroomTableEntity { PartitionKey = "showroom-query", RowKey = "r1", Payload = "Alpha", Priority = 10 })

@@ -66,7 +66,7 @@ public class Container_TheWholeLane(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = WebShowroom.BuildConfig().BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(WebShowroom.CreateEnvironment())
             .RunAsync();
 
@@ -119,7 +119,7 @@ public class Container_ThePlanIsOnTheRecord(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = WebShowroom.BuildConfig().BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(WebShowroom.CreateEnvironment())
             .RunAsync();
 
@@ -176,7 +176,7 @@ public class Container_WhatSurvivesBetweenRuns(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = WebShowroom.BuildConfig().BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(WebShowroom.CreateDatabaseOnlyEnvironment())
             .RunAsync();
 

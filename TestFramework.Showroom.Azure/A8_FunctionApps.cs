@@ -65,7 +65,7 @@ internal sealed class ShowroomFunctionAppDefinition : DockerFunctionAppDefinitio
     protected override void Configure(DockerFunctionAppBuilder builder)
     {
         builder
-            .UseStorage<ShowroomStorageDefinition>(tableNameSettingName: "StorageTableName")
+            .UseStorage<ShowroomStorageDefinition>()
             .UseCosmos<ShowroomCosmosDefinition>()
                 .UseServiceBusTrigger<ShowroomBusDefinition>(d => d.Submission)
                 .UseServiceBusReply<ShowroomBusDefinition>(d => d.Reply);
@@ -149,7 +149,7 @@ public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = config.BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(DockerAzureEnvironment.For<ShowroomFunctionAppDefinition>())
             .RunAsync();
 
@@ -198,7 +198,7 @@ public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = config.BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(DockerAzureEnvironment.For<ShowroomFunctionAppDefinition>())
             .RunAsync();
 
@@ -248,7 +248,7 @@ public class FunctionApps_DefaultFunctionRoute(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = config.BuildServiceProvider();
 
         TimelineRun run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(DockerAzureEnvironment.For<ShowroomFunctionAppDefinition>())
             .RunAsync();
 

@@ -68,8 +68,8 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
     {
         // Two runs. Same fixture. No excuses. If the persistent slice works,
         // both runs should point at the same underlying hosted runtime state instead of reenacting Groundhog Day with containers.
-        TimelineRun firstRun = await InspectStorageTimeline.SetupRun(output).SetEnv(fixture.GetEnv()).RunAsync();
-        TimelineRun secondRun = await InspectStorageTimeline.SetupRun(output).SetEnv(fixture.GetEnv()).RunAsync();
+        TimelineRun firstRun = await InspectStorageTimeline.SetupRun(output.WriteLine).SetEnv(fixture.GetEnv()).RunAsync();
+        TimelineRun secondRun = await InspectStorageTimeline.SetupRun(output.WriteLine).SetEnv(fixture.GetEnv()).RunAsync();
 
         firstRun.EnsureRanToCompletion();
         secondRun.EnsureRanToCompletion();
@@ -104,9 +104,9 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
         // Baseline first, then a run that changes only its local view of the
         // config. The storage stack should stay alive while the logical config
         // surface bends to the needs of that specific run and nobody has to reboot their hopes.
-        TimelineRun baselineRun = await InspectStorageTimeline.SetupRun(output).SetEnv(fixture.GetEnv()).RunAsync();
+        TimelineRun baselineRun = await InspectStorageTimeline.SetupRun(output.WriteLine).SetEnv(fixture.GetEnv()).RunAsync();
         TimelineRun overrideRun = await InspectStorageTimeline
-            .SetupRun(output)
+            .SetupRun(output.WriteLine)
             .SetEnv(fixture.GetEnv(builder =>
                 builder.OverrideConfig("StorageAccount:PersistentStorage:TableContainerName", "RunLocalTable")))
             .RunAsync();

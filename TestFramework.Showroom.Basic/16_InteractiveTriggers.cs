@@ -32,7 +32,7 @@ public class InteractiveTriggers(ITestOutputHelper output)
             .Trigger(SimpleExt.Trigger.MessageBox("Hello from Test", "Showroom"))
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(output).RunAsync();
+        TimelineRun run = await timeline.SetupRun(output.WriteLine).RunAsync();
         run.EnsureRanToCompletion();
     }
 }

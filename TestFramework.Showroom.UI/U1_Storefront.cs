@@ -66,7 +66,7 @@ public class U1_Storefront(ITestOutputHelper output)
     public async Task Run()
     {
         TimelineRun run = await _timeline
-            .SetupRun(UiShowroom.BuildConfig().BuildServiceProvider(), output)
+            .SetupRun(RunServices.Owned(UiShowroom.BuildConfig().BuildServiceProvider()), output.WriteLine)
             .SetEnv(UiShowroom.CreateEnvironment())
             .RunAsync();
 

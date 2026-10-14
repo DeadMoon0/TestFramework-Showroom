@@ -74,7 +74,7 @@ public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddCosmosItemArtifact(
                 "cosmosDoc",    // artifact name — ties everything together
@@ -134,7 +134,7 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddCosmosItemArtifact("candidate1", "MainDb",
                 new CosmosShowroomItem { Id = "q-001", PartitionKey = "showroom-query", Name = "High Achiever A", Score = 99 })

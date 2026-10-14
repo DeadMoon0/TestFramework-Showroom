@@ -183,10 +183,9 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         //   preparing and starts making demands of the system.
 
         .WaitForEvent(
-            AzureExt.Event.ServiceBus.MessageReceived(
-                "ProcessingReply",
-                correlationId: Var.Ref<string>("ingestionReplyCorrelationId"),
-                completeMessage: true))
+            AzureExt.Event.ServiceBus.MessageReceived("ProcessingReply")
+                .WithCorrelationId(Var.Ref<string>("ingestionReplyCorrelationId"))
+                .CompleteMessage(true))
             .WithTimeOut(TimeSpan.FromSeconds(20))
         // ^ Wait for the acknowledgement. Not because waiting is fun. Because if
         //   ingestion has not finished, the next query is just guessing.
@@ -214,10 +213,9 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         //   Cosmos profile produced earlier and convert that into a Table result.
 
         .WaitForEvent(
-            AzureExt.Event.ServiceBus.MessageReceived(
-                "ProcessingReply",
-                correlationId: Var.Ref<string>("analysisReplyCorrelationId"),
-                completeMessage: true))
+            AzureExt.Event.ServiceBus.MessageReceived("ProcessingReply")
+                .WithCorrelationId(Var.Ref<string>("analysisReplyCorrelationId"))
+                .CompleteMessage(true))
             .WithTimeOut(TimeSpan.FromSeconds(20))
         // ^ Wait again, because a distributed workflow does not become complete
         //   just because an HTTP request returned looking proud of itself.
@@ -263,7 +261,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
 
             // ── Step 1: Seed artifacts ────────────────────────────────────────

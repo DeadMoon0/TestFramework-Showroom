@@ -34,7 +34,7 @@ public class IOContracts_StepDeclaredIO(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("cmdCommand", "echo hello")   // Supply the declared input and the plan becomes valid. Amazing what standards can do.
             .RunAsync();
         run.EnsureRanToCompletion();
@@ -57,7 +57,7 @@ public class IOContracts_DoNotParallelize(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("cmdCommand", "echo exclusive")
             .RunAsync();
         run.EnsureRanToCompletion();
@@ -84,7 +84,7 @@ public class IOContracts_MissingInputDiagnosis(ITestOutputHelper outputHelper)
     public async Task Run_ShowsMissingVariableNameInValidationFailure()
     {
         IOContractViolationException exception = await Assert.ThrowsAsync<IOContractViolationException>(() =>
-            this._timeline.SetupRun(outputHelper).RunAsync());
+            this._timeline.SetupRun(outputHelper.WriteLine).RunAsync());
 
         Assert.Contains("cmdCommand", exception.Message);
     }

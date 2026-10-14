@@ -71,7 +71,7 @@ public class ConfigurationPatterns_DefaultPath(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = config.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddBlobArtifact(
                 "blob",
@@ -119,7 +119,7 @@ public class ConfigurationPatterns_AdvancedMixedPath(ITestOutputHelper outputHel
         await using ServiceProvider provider = config.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddSqlArtifact(
                 "product",

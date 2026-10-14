@@ -20,7 +20,7 @@ public class DebugOutput(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var run = await this._timeline.SetupRun(outputHelper).RunAsync();
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine).RunAsync();
         run.EnsureRanToCompletion();
     }
 

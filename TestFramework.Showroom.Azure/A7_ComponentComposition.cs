@@ -96,10 +96,9 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
                 .Call())
             .WithTimeOut(TimeSpan.FromMinutes(2))
         .WaitForEvent(
-            AzureExt.Event.ServiceBus.MessageReceived(
-                "ReplyBus",
-                correlationId: Var.Const("a7-contract-reply"),
-                completeMessage: true))
+            AzureExt.Event.ServiceBus.MessageReceived("ReplyBus")
+                .WithCorrelationId(Var.Const("a7-contract-reply"))
+                .CompleteMessage(true))
             .WithTimeOut(TimeSpan.FromSeconds(30))
         .CaptureArtifactVersion("contractResult")
         .Build();
@@ -116,8 +115,8 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     //doc: actually used: two function app identifiers, but exactly **one** storage, **one** Cosmos and
     //doc: **one** bus.
     //doc:
-    //doc: That is the whole claim, and `environment.UsedStorageIdentifiers` is how the framework lets you
-    //doc: make it. Sharing by name is not a coincidence you hope for; it is an outcome you can assert.
+    //doc: That is the whole claim, and the environment the run used - `run.Environment`, a copy made for this
+    //doc: run, not the one passed to `SetEnv` - is how the framework lets you make it. Sharing by name is not a coincidence you hope for; it is an outcome you can assert.
     //doc:
     //doc: The two apps are otherwise identical except for a `WithAppSetting("FunctionRole", …)` - which is the
     //doc: honest way to say "same image, different job".
@@ -138,7 +137,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
             .Include<AnalysisFunctionAppDefinition>();
 
         TimelineRun run = await SharedDependenciesTimeline
-            .SetupRun(serviceProvider, outputHelper)
+            .SetupRun(serviceProvider, outputHelper.WriteLine)
             .SetEnv(environment)
             .AddCosmosItemArtifact("ingestDoc", "SharedCosmos", new CandidateProfile
             {
@@ -173,13 +172,14 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         Assert.True(run.EnvironmentContext.Contains(DockerAzureEnvironment.CosmosDbComponentId));
         Assert.True(run.EnvironmentContext.Contains(DockerAzureEnvironment.ServiceBusComponentId));
 
-        Assert.Equal(2, environment.UsedFunctionAppIdentifiers.Count);
-        Assert.Contains("Ingest", environment.UsedFunctionAppIdentifiers);
-        Assert.Contains("Analyse", environment.UsedFunctionAppIdentifiers);
+        DockerAzureEnvironment used = Assert.IsType<DockerAzureEnvironment>(run.Environment);
+        Assert.Equal(2, used.UsedFunctionAppIdentifiers.Count);
+        Assert.Contains("Ingest", used.UsedFunctionAppIdentifiers);
+        Assert.Contains("Analyse", used.UsedFunctionAppIdentifiers);
 
-        Assert.Equal(["SharedStorage"], environment.UsedStorageIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
-        Assert.Equal(["SharedCosmos"], environment.UsedCosmosIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
-        Assert.Equal(["SharedBus"], environment.UsedServiceBusIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
+        Assert.Equal(["SharedStorage"], used.UsedStorageIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
+        Assert.Equal(["SharedCosmos"], used.UsedCosmosIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
+        Assert.Equal(["SharedBus"], used.UsedServiceBusIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
 
         AnalysisResult ingestResult = run.ArtifactStore.GetTableEntityArtifact<AnalysisResult>("ingestResult").Last.Entity;
         AnalysisResult analyseResult = run.ArtifactStore.GetTableEntityArtifact<AnalysisResult>("analyseResult").Last.Entity;
@@ -220,7 +220,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
             .Include<ContractConsumerFunctionAppDefinition>();
 
         TimelineRun run = await ContractSelectionTimeline
-            .SetupRun(serviceProvider, outputHelper)
+            .SetupRun(serviceProvider, outputHelper.WriteLine)
             .SetEnv(environment)
             .AddCosmosItemArtifact("contractDoc", "SharedCosmos", new CandidateProfile
             {
@@ -241,9 +241,10 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         Assert.True(run.EnvironmentContext.Contains(DockerAzureEnvironment.FunctionAppComponentId));
         Assert.True(run.EnvironmentContext.Contains(DockerAzureEnvironment.ServiceBusComponentId));
 
-        Assert.Equal(["ContractConsumer"], environment.UsedFunctionAppIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
-        Assert.Equal(["ReplyBus", "SharedBus"], environment.UsedServiceBusIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
-        Assert.DoesNotContain("AuditBus", environment.UsedServiceBusIdentifiers);
+        DockerAzureEnvironment used = Assert.IsType<DockerAzureEnvironment>(run.Environment);
+        Assert.Equal(["ContractConsumer"], used.UsedFunctionAppIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
+        Assert.Equal(["ReplyBus", "SharedBus"], used.UsedServiceBusIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
+        Assert.DoesNotContain("AuditBus", used.UsedServiceBusIdentifiers);
 
         AnalysisResult contractResult = run.ArtifactStore.GetTableEntityArtifact<AnalysisResult>("contractResult").Last.Entity;
         Assert.Equal("analysed", contractResult.Status);
@@ -281,7 +282,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
             .Include<ExclusiveFunctionAppDefinitionB>();
 
         TimelineRun run = await ExclusiveDependenciesTimeline
-            .SetupRun(serviceProvider, outputHelper)
+            .SetupRun(serviceProvider, outputHelper.WriteLine)
             .SetEnv(environment)
             .RunAsync();
 
@@ -354,7 +355,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
-                .UseStorage<SharedStorageDefinition>(tableNameSettingName: "StorageTableName")
+                .UseStorage<SharedStorageDefinition>()
                 .UseCosmos<SharedCosmosDefinition>()
                 .UseServiceBusTrigger<SharedBusDefinition>(d => d.Submission)
                 .UseServiceBusReply<SharedBusDefinition>(d => d.Reply)
@@ -371,7 +372,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
-                .UseStorage<SharedStorageDefinition>(tableNameSettingName: "StorageTableName")
+                .UseStorage<SharedStorageDefinition>()
                 .UseCosmos<SharedCosmosDefinition>()
                 .UseServiceBusTrigger<SharedBusDefinition>(d => d.Submission)
                 .UseServiceBusReply<SharedBusDefinition>(d => d.Reply)
@@ -394,11 +395,13 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
 
         protected override void ConfigureContracts(DockerAzureContractBuilder contracts)
         {
-            contracts.Provide(new ServiceBusEndpointContract(
-                ContractKey: "reply",
-                ServiceBusIdentifier: Identifier,
-                EndpointKind: ServiceBusEndpointKind.Topic,
-                EntityName: "sbt-int-out"));
+            contracts.Provide(new ServiceBusEndpointContract
+            {
+                ContractKey = "reply",
+                ServiceBusIdentifier = Identifier,
+                EndpointKind = ServiceBusEndpointKind.Topic,
+                EntityName = "sbt-int-out",
+            });
         }
     }
 
@@ -410,11 +413,13 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
 
         protected override void ConfigureContracts(DockerAzureContractBuilder contracts)
         {
-            contracts.Provide(new ServiceBusEndpointContract(
-                ContractKey: "audit",
-                ServiceBusIdentifier: Identifier,
-                EndpointKind: ServiceBusEndpointKind.Queue,
-                EntityName: "audit-trail"));
+            contracts.Provide(new ServiceBusEndpointContract
+            {
+                ContractKey = "audit",
+                ServiceBusIdentifier = Identifier,
+                EndpointKind = ServiceBusEndpointKind.Queue,
+                EntityName = "audit-trail",
+            });
         }
     }
 
@@ -427,7 +432,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
-                .UseStorage<SharedStorageDefinition>(tableNameSettingName: "StorageTableName")
+                .UseStorage<SharedStorageDefinition>()
                 .UseCosmos<SharedCosmosDefinition>()
                 .UseServiceBusTrigger<SharedBusDefinition>(d => d.Submission)
                 .UseServiceBusReply<ReplyBusDefinition>(d => d.Reply);
@@ -435,11 +440,13 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
 
         protected override void ConfigureContracts(DockerAzureContractBuilder contracts)
         {
-            contracts.Require(new ServiceBusEndpointContract(
-                ContractKey: "reply",
-                ServiceBusIdentifier: "ReplyBus",
-                EndpointKind: ServiceBusEndpointKind.Topic,
-                EntityName: "sbt-int-out"));
+            contracts.Require(new ServiceBusEndpointContract
+            {
+                ContractKey = "reply",
+                ServiceBusIdentifier = "ReplyBus",
+                EndpointKind = ServiceBusEndpointKind.Topic,
+                EntityName = "sbt-int-out",
+            });
         }
     }
 

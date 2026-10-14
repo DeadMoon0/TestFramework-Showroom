@@ -48,7 +48,7 @@ public class Retry_Basic(ITestOutputHelper outputHelper)
                 .WithRetry(3, CalcDelays.Fixed(TimeSpan.Zero))
             .Build();
 
-        TimelineRun run = await timeline.SetupRun(outputHelper).RunAsync();
+        TimelineRun run = await timeline.SetupRun(outputHelper.WriteLine).RunAsync();
 
         run.EnsureRanToCompletion();
         Assert.Equal(2, _probe.Attempts);

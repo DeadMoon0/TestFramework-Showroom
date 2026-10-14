@@ -65,7 +65,7 @@ public class Artifacts_Setup(ITestOutputHelper outputHelper)
     {
         string artifactPath = ArtifactSamplePaths.UniqueFile("showroom-basic-msg");
 
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("cmdCommand", "Hello from an Artifact")
             .AddFileArtifact("msgFile", artifactPath, "Hello from an Artifact") // Real artifact data enters the run here. Actual file. No interpretive dance.
             .RunAsync();
@@ -96,7 +96,7 @@ public class Artifacts_Register(ITestOutputHelper outputHelper)
         string artifactPath = ArtifactSamplePaths.UniqueFile("showroom-basic-register");
         string artifactFileName = Path.GetFileName(artifactPath);
 
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("cmdCreate", ArtifactSamplePaths.AppendLine("Hello from the new Artifact", artifactFileName))
             .AddVariable("cmdShow", "Hello from the new Artifact")
             .AddVariable("cwd", ArtifactSamplePaths.BuildOutput)
@@ -126,7 +126,7 @@ public class Artifacts_Assert(ITestOutputHelper outputHelper)
         string artifactPath = ArtifactSamplePaths.UniqueFile("showroom-basic-assert");
         string artifactFileName = Path.GetFileName(artifactPath);
 
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("cmdCreate", ArtifactSamplePaths.AppendLine("Hello from the new Artifact", artifactFileName))
             .AddVariable("cwd", ArtifactSamplePaths.BuildOutput)
             .AddVariable("artifactPath", artifactPath)
@@ -162,7 +162,7 @@ public class Artifacts_Versions(ITestOutputHelper outputHelper)
         string artifactPath = ArtifactSamplePaths.UniqueFile("showroom-basic-version");
         string artifactFileName = Path.GetFileName(artifactPath);
 
-        var run = await this._timeline.SetupRun(outputHelper)
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine)
             .AddVariable("cmdAppend", ArtifactSamplePaths.AppendLine("Some Log", artifactFileName))
             .AddVariable("cwd", ArtifactSamplePaths.BuildOutput)
             .AddVariable("artifactPath", artifactPath)

@@ -26,7 +26,7 @@ public class StepValidations(ITestOutputHelper outputHelper)
     [Fact]
     public async Task Run()
     {
-        var run = await this._timeline.SetupRun(outputHelper).RunAsync();
+        var run = await this._timeline.SetupRun(outputHelper.WriteLine).RunAsync();
         run.EnsureRanToCompletion(); // First verify the run completed, then interrogate the individual steps like a professional nuisance.
 
         run.Step("hello").Should().HaveCompleted();

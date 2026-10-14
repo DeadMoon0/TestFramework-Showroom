@@ -41,7 +41,9 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(AzureExt.Trigger.ServiceBus.Send("MainSBTopic", new ServiceBusMessage("Live transmission. Please stand by.") { CorrelationId = CorrelationId }))
         //  ^ Send with a known correlation ID so the wait can demand the exact message later instead of adopting a stranger.
-        .WaitForEvent(AzureExt.Event.ServiceBus.MessageReceived("MainSBTopic", correlationId: CorrelationId, completeMessage: true))
+        .WaitForEvent(AzureExt.Event.ServiceBus.MessageReceived("MainSBTopic")
+                .WithCorrelationId(CorrelationId)
+                .CompleteMessage(true))
             .GetMessage("out")
             // complete = acknowledge and remove the message once observed. Clean hands. Fewer ghosts.
             .WithTimeOut(TimeSpan.FromSeconds(10))
@@ -60,7 +62,7 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .RunAsync();
 
@@ -84,7 +86,9 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(AzureExt.Trigger.ServiceBus.Send("MainSBQueue", new ServiceBusMessage("Queue delivery. Clean and direct.") { CorrelationId = CorrelationId }))
-        .WaitForEvent(AzureExt.Event.ServiceBus.MessageReceived("MainSBQueue", correlationId: CorrelationId, completeMessage: true))
+        .WaitForEvent(AzureExt.Event.ServiceBus.MessageReceived("MainSBQueue")
+                .WithCorrelationId(CorrelationId)
+                .CompleteMessage(true))
             .GetMessage("out")
             .WithTimeOut(TimeSpan.FromSeconds(10))
         .Build();
@@ -101,7 +105,7 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .RunAsync();
 
@@ -130,7 +134,9 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(AzureExt.Trigger.ServiceBus.Send("MainSBTopic", Var.Ref<ServiceBusMessage>("outboundMessage")))
         //    ^ The timeline references a runtime value here because the message is supplied per run, not discovered in a dream.
-        .WaitForEvent(AzureExt.Event.ServiceBus.MessageReceived("MainSBTopic", correlationId: CorrelationId, completeMessage: true))
+        .WaitForEvent(AzureExt.Event.ServiceBus.MessageReceived("MainSBTopic")
+                .WithCorrelationId(CorrelationId)
+                .CompleteMessage(true))
             .GetMessage("out")
             .WithTimeOut(TimeSpan.FromSeconds(10))
         .Build();
@@ -147,7 +153,7 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
         await using ServiceProvider provider = configSub.BuildServiceProvider();
 
         var run = await _timeline
-            .SetupRun(provider, outputHelper)
+            .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
             .AddVariable("outboundMessage", new ServiceBusMessage("Payload assembled at runtime. It is what it is.")
             {
