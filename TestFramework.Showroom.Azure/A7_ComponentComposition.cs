@@ -67,14 +67,14 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
                 .SelectEndpointWithMethod<AnalysisProcessor>(nameof(AnalysisProcessor.Run))
                 .WithBody(Var.Ref<string>("ingestRequest"))
                 .Call())
-            .WithTimeOut(TimeSpan.FromMinutes(2))
+            .WithTimeout(TimeSpan.FromMinutes(2))
         .Trigger(
             AzureExt.Trigger.FunctionApp
                 .Http("Analyse")
                 .SelectEndpointWithMethod<AnalysisProcessor>(nameof(AnalysisProcessor.Run))
                 .WithBody(Var.Ref<string>("analyseRequest"))
                 .Call())
-            .WithTimeOut(TimeSpan.FromMinutes(2))
+            .WithTimeout(TimeSpan.FromMinutes(2))
         .CaptureArtifactVersion("ingestResult")
         .CaptureArtifactVersion("analyseResult")
         .Build();
@@ -94,20 +94,20 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
                 .SelectEndpointWithMethod<AnalysisProcessor>(nameof(AnalysisProcessor.Run))
                 .WithBody(Var.Ref<string>("contractRequest"))
                 .Call())
-            .WithTimeOut(TimeSpan.FromMinutes(2))
+            .WithTimeout(TimeSpan.FromMinutes(2))
         .WaitForEvent(
             AzureExt.Event.ServiceBus.MessageReceived("ReplyBus")
                 .WithCorrelationId(Var.Const("a7-contract-reply"))
                 .CompleteMessage(true))
-            .WithTimeOut(TimeSpan.FromSeconds(30))
+            .WithTimeout(TimeSpan.FromSeconds(30))
         .CaptureArtifactVersion("contractResult")
         .Build();
 
     private static readonly Timeline ExclusiveDependenciesTimeline = Timeline.Create()
         .Trigger(AzureExt.Trigger.IsLive.FunctionApp("ExclusiveA"))
-            .WithTimeOut(TimeSpan.FromMinutes(2))
+            .WithTimeout(TimeSpan.FromMinutes(2))
         .Trigger(AzureExt.Trigger.IsLive.FunctionApp("ExclusiveB"))
-            .WithTimeOut(TimeSpan.FromMinutes(2))
+            .WithTimeout(TimeSpan.FromMinutes(2))
         .Build();
 
     //doc: Outcome one. Two function apps, `Ingest` and `Analyse`, each declaring the same storage, Cosmos and

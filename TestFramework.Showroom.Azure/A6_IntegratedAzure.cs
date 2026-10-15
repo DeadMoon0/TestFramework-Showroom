@@ -186,7 +186,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
             AzureExt.Event.ServiceBus.MessageReceived("ProcessingReply")
                 .WithCorrelationId(Var.Ref<string>("ingestionReplyCorrelationId"))
                 .CompleteMessage(true))
-            .WithTimeOut(TimeSpan.FromSeconds(20))
+            .WithTimeout(TimeSpan.FromSeconds(20))
         // ^ Wait for the acknowledgement. Not because waiting is fun. Because if
         //   ingestion has not finished, the next query is just guessing.
 
@@ -216,7 +216,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
             AzureExt.Event.ServiceBus.MessageReceived("ProcessingReply")
                 .WithCorrelationId(Var.Ref<string>("analysisReplyCorrelationId"))
                 .CompleteMessage(true))
-            .WithTimeOut(TimeSpan.FromSeconds(20))
+            .WithTimeout(TimeSpan.FromSeconds(20))
         // ^ Wait again, because a distributed workflow does not become complete
         //   just because an HTTP request returned looking proud of itself.
 

@@ -57,9 +57,9 @@ public class U1_Storefront(ITestOutputHelper output)
             .Expect("2 items in cart")
             .Click("Checkout")
             .Expect("Order placed"))
-            .Name("shopping")
+            .Label("shopping")
         .Trigger(BrowserExt.Page("storefront").CompareStructure(Target.Section("Catalogue"), Catalogue))
-            .Name("catalogue-shape")
+            .Label("catalogue-shape")
         .Build();
 
     [UiDockerFact]

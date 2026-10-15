@@ -24,7 +24,7 @@ public class RunAssertions_Basic(ITestOutputHelper outputHelper)
 {
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(SimpleExt.Trigger.Message("Is anyone out there?"))
-            .Name("ping")
+            .Label("ping")
         .Build();
 
     //doc: `run.Step("ping").Should().HaveCompleted()` - readable on success, specific on failure. That is
@@ -69,7 +69,7 @@ public class RunAssertions_ForEach(ITestOutputHelper outputHelper)
         .ForEach(["Alice", "Bob", "Charlie"], "item", loop =>
         {
             loop.Trigger(SimpleExt.Trigger.Message(Var.Ref<string>("item")))
-                .Name("greet");
+                .Label("greet");
             // ^ Same label, many instances. That is what makes grouped assertions work and your file remain shorter than a legal warning.
         })
         .Build();
@@ -96,7 +96,7 @@ public class RunAssertions_Scope(ITestOutputHelper outputHelper)
 {
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(SimpleExt.Trigger.Message("Are we good?"))
-            .Name("check")
+            .Label("check")
         .Build();
 
     [Fact]

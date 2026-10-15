@@ -32,7 +32,7 @@ public class U3_Evidence(ITestOutputHelper output)
             .Click("Checkout")
             .Expect("Order placed")
             .Screenshot("order-placed"))
-            .Name("shopping")
+            .Label("shopping")
         .Build();
 
     [UiDockerFact]

@@ -20,7 +20,7 @@ public class StepValidations(ITestOutputHelper outputHelper)
 {
     private readonly Timeline _timeline = Timeline.Create()
         .Trigger(SimpleExt.Trigger.Message("Hello from Test"))
-            .Name("hello")
+            .Label("hello")
         .Build();
 
     [Fact]

@@ -34,7 +34,7 @@ public class RestApi_Liveness(ITestOutputHelper outputHelper)
 {
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(WebExt.Api.IsLive("orders", ApiAlivenessLevel.Healthy))
-            .Name("live")
+            .Label("live")
         .Build();
 
     [DockerFact]
@@ -81,9 +81,9 @@ public class RestApi_PostAndRead(ITestOutputHelper outputHelper)
                 .Post("api/orders")
                 .WithJsonBody(Var.Const(new { name = "Calibration Order", quantity = 3 }))
                 .Call())
-            .Name("create")
+            .Label("create")
         .Trigger(WebExt.Api.Http("orders").Get("api/orders").Call())
-            .Name("list")
+            .Label("list")
         .Build();
 
     [DockerFact]
@@ -128,7 +128,7 @@ public class RestApi_UnsuccessfulStatusIsAResult(ITestOutputHelper outputHelper)
                 .Post("api/orders")
                 .WithJsonBody(Var.Const(new { name = "", quantity = 1 }))
                 .Call())
-            .Name("rejected")
+            .Label("rejected")
         .Build();
 
     [DockerFact]

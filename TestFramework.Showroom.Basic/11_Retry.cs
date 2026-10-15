@@ -44,7 +44,7 @@ public class Retry_Basic(ITestOutputHelper outputHelper)
         // its own merits like a very smug safety mechanism.
         Timeline timeline = Timeline.Create()
             .Trigger(new EventuallySuccessfulStep(_probe))
-                .Name("transient")
+                .Label("transient")
                 .WithRetry(3, CalcDelays.Fixed(TimeSpan.Zero))
             .Build();
 

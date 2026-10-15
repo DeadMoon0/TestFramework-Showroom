@@ -41,16 +41,16 @@ public class Stub_TheCallIsObservable(ITestOutputHelper outputHelper)
                 .Post("api/orders")
                 .WithJsonBody(Var.Const(new { name = "Priced Order", quantity = 4 }))
                 .Call())
-            .Name("create")
+            .Label("create")
         .WaitForEvent(WebExt.Stub.Called("pricing", HttpMethod.Post, "/api/quotes"))
-            .WithTimeOut(TimeSpan.FromSeconds(30))
-            .Name("quoted")
+            .WithTimeout(TimeSpan.FromSeconds(30))
+            .Label("quoted")
         //   ^ Waiting is done by polling the stub's own log, never by the stub
         //     calling back into this process. A container cannot reach into the
         //     machine that started it, and any design that needs it to will work
         //     beautifully on one laptop and nowhere else.
         .Trigger(WebExt.Stub.Calls("pricing"))
-            .Name("everything")
+            .Label("everything")
         .Build();
 
     [DockerFact]
@@ -97,7 +97,7 @@ public class Stub_UnmatchedCallsAreTheInterestingOnes(ITestOutputHelper outputHe
 {
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(WebExt.Stub.Reset("pricing"))
-            .Name("clean")
+            .Label("clean")
         //   ^ Clear the log first, so what follows is about this run and not about
         //     the accumulated history of everything that came before it.
         .Trigger(
@@ -105,9 +105,9 @@ public class Stub_UnmatchedCallsAreTheInterestingOnes(ITestOutputHelper outputHe
                 .Post("api/orders")
                 .WithJsonBody(Var.Const(new { name = "Well Behaved Order", quantity = 1 }))
                 .Call())
-            .Name("create")
+            .Label("create")
         .Trigger(WebExt.Stub.Calls("pricing"))
-            .Name("audit")
+            .Label("audit")
         .Build();
 
     [DockerFact]
@@ -150,7 +150,7 @@ public class Stub_DeclarationsAreData(ITestOutputHelper outputHelper)
 {
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(WebExt.Stub.Calls("pricing").WithMethod(HttpMethod.Get).WithPath("/api/health"))
-            .Name("health-calls")
+            .Label("health-calls")
         .Build();
 
     [DockerFact]

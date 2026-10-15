@@ -48,9 +48,9 @@ public class Parallel_SetVariablePrepareLayers(ITestOutputHelper outputHelper)
 {
     private readonly Timeline _timeline = Timeline.Create()
         .SetVariable("greeting", Var.Const("Good morning"))
-            .Name("set greeting")
+            .Label("set greeting")
         .SetVariable("subject", Var.Const("test subject"))
-            .Name("set subject")
+            .Label("set subject")
         .Build();
 
     [Fact]
@@ -80,12 +80,12 @@ public class Parallel_DoNotParallelizeBarrier(ITestOutputHelper outputHelper)
 {
     private readonly Timeline _timeline = Timeline.Create()
         .SetVariable("intro", Var.Const("Facility memo:"))
-            .Name("set intro")
+            .Label("set intro")
         .SetVariable("exclusive", Var.Const("Do not stand near the unstable science."))
-            .Name("exclusive bulletin")
+            .Label("exclusive bulletin")
             .DoNotParallelize()
         .SetVariable("outro", Var.Const("You are now fully briefed."))
-            .Name("set outro")
+            .Label("set outro")
         .Build();
 
     [Fact]
@@ -114,9 +114,9 @@ public class Parallel_SetupArtifacts(ITestOutputHelper outputHelper)
 {
     private readonly Timeline _timeline = Timeline.Create()
         .SetupArtifact("alpha")
-            .Name("setup alpha")
+            .Label("setup alpha")
         .SetupArtifact("beta")
-            .Name("setup beta")
+            .Label("setup beta")
         .Build();
 
     [Fact]

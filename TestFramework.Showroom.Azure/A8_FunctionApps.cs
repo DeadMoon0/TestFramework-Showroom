@@ -126,15 +126,15 @@ public class FunctionApps_RouteDiscovery(ITestOutputHelper outputHelper)
 
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(AzureExt.Trigger.IsLive.FunctionApp("ShowroomFunction", AlivenessLevel.Reachable))
-            .WithTimeOut(TimeSpan.FromMinutes(1))
-            .Name("function-live")
+            .WithTimeout(TimeSpan.FromMinutes(1))
+            .Label("function-live")
         .Trigger(
             AzureExt.Trigger.FunctionApp
                 .Http("ShowroomFunction")
                 .SelectEndpointWithMethod<HttpTests>(nameof(HttpTests.Run), HttpMethod.Get)
                 .Call())
-            .WithTimeOut(TimeSpan.FromMinutes(1))
-            .Name("function-call")
+            .WithTimeout(TimeSpan.FromMinutes(1))
+            .Label("function-call")
         .Build();
 
     [DockerFact]
@@ -182,8 +182,8 @@ public class FunctionApps_ExplicitHttpShaping(ITestOutputHelper outputHelper)
                 .WithHeader(Var.Const("x-test"), Var.Const("showroom"))
                 .WithBody(Var.Const("payload=calibrated"))
                 .Call())
-            .WithTimeOut(TimeSpan.FromMinutes(1))
-            .Name("function-echo")
+            .WithTimeout(TimeSpan.FromMinutes(1))
+            .Label("function-echo")
         .Build();
 
     [DockerFact]
@@ -232,8 +232,8 @@ public class FunctionApps_DefaultFunctionRoute(ITestOutputHelper outputHelper)
                 .SelectFunction("HttpEchoTest", HttpMethod.Post)
                 .WithBody(Var.Const("payload=default-route"))
                 .Call())
-            .WithTimeOut(TimeSpan.FromMinutes(1))
-            .Name("function-default-route")
+            .WithTimeout(TimeSpan.FromMinutes(1))
+            .Label("function-default-route")
         .Build();
 
     [DockerFact]

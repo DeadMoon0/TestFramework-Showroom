@@ -41,10 +41,10 @@ public class Container_TheWholeLane(ITestOutputHelper outputHelper)
                 .Post("api/orders")
                 .WithJsonBody(Var.Const(new { name = "Complete Order", quantity = 6 }))
                 .Call())
-            .Name("create")
+            .Label("create")
         .WaitForEvent(WebExt.Stub.Called("pricing", HttpMethod.Post, "/api/quotes"))
-            .WithTimeOut(TimeSpan.FromSeconds(30))
-            .Name("quoted")
+            .WithTimeout(TimeSpan.FromSeconds(30))
+            .Label("quoted")
         .FindArtifact(
             "written",
             WebExt.ArtifactFinder.Sql.Where<ShowroomOrder>("orders-db", "Name = @name")
@@ -53,7 +53,7 @@ public class Container_TheWholeLane(ITestOutputHelper outputHelper)
         //   ^ The application wrote this row, so the test reads it and leaves it. Without
         //     MarkReadonly() teardown would delete it, which is the default everywhere.
         .Trigger(WebExt.Stub.Calls("pricing"))
-            .Name("audit")
+            .Label("audit")
         .Build();
 
     [DockerFact]
@@ -106,7 +106,7 @@ public class Container_ThePlanIsOnTheRecord(ITestOutputHelper outputHelper)
 {
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(WebExt.Api.IsLive("orders"))
-            .Name("live")
+            .Label("live")
         .Build();
 
     [DockerFact]
@@ -163,7 +163,7 @@ public class Container_WhatSurvivesBetweenRuns(ITestOutputHelper outputHelper)
 {
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(WebExt.Sql.Scalar<int>("orders-db", "SELECT COUNT(1) FROM [Orders]"))
-            .Name("count")
+            .Label("count")
         .Build();
 
     [DockerFact]

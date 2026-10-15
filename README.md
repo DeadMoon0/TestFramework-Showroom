@@ -246,7 +246,7 @@ With this solution you can:
 
 Some concepts appear in Showroom only lightly because their main contract belongs to `TestFramework.Core`:
 
-- modifier semantics such as `.WithRetry(...)`, `.WithTimeOut(...)`, and explicit `.DoNotParallelize()` barriers
+- modifier semantics such as `.WithRetry(...)`, `.WithTimeout(...)`, and explicit `.DoNotParallelize()` barriers
 - assertion composition and step-result inspection patterns
 - extension-author concerns such as custom step, event, and artifact base types
 

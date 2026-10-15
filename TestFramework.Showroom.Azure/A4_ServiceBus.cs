@@ -30,7 +30,7 @@ namespace TestFramework.Showroom.Azure;
 //doc: Three modifiers on that wait, each pulling its weight. `correlationId:` is what makes the wait specific.
 //doc: `completeMessage: true` acknowledges and removes the message once it has been observed - clean hands,
 //doc: fewer ghosts. `GetMessage("out")` binds the received message into a variable, which is how it becomes
-//doc: assertable afterwards. And `WithTimeOut(10s)` replaces the ten-minute default with something a
+//doc: assertable afterwards. And `WithTimeout(10s)` replaces the ten-minute default with something a
 //doc: messaging test deserves: if nothing matching arrives in time, the run fails with a specific timeout and
 //doc: no sympathy.
 
@@ -46,7 +46,7 @@ public class ServiceBus_SendAndReceive(ITestOutputHelper outputHelper)
                 .CompleteMessage(true))
             .GetMessage("out")
             // complete = acknowledge and remove the message once observed. Clean hands. Fewer ghosts.
-            .WithTimeOut(TimeSpan.FromSeconds(10))
+            .WithTimeout(TimeSpan.FromSeconds(10))
         //  ^ If nothing matching arrives in time, the run fails with a specific timeout and no sympathy.
         .Build();
 
@@ -90,7 +90,7 @@ public class ServiceBus_QueueSendAndReceive(ITestOutputHelper outputHelper)
                 .WithCorrelationId(CorrelationId)
                 .CompleteMessage(true))
             .GetMessage("out")
-            .WithTimeOut(TimeSpan.FromSeconds(10))
+            .WithTimeout(TimeSpan.FromSeconds(10))
         .Build();
 
     [DockerFact]
@@ -138,7 +138,7 @@ public class ServiceBus_SendWithVariable(ITestOutputHelper outputHelper)
                 .WithCorrelationId(CorrelationId)
                 .CompleteMessage(true))
             .GetMessage("out")
-            .WithTimeOut(TimeSpan.FromSeconds(10))
+            .WithTimeout(TimeSpan.FromSeconds(10))
         .Build();
 
     [DockerFact]

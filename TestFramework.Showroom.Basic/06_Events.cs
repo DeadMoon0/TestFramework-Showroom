@@ -12,7 +12,7 @@ namespace TestFramework.Showroom.Basic;
 //doc:
 //doc: You name the condition the world must satisfy. The framework does the waiting, reports the target it
 //doc: actually resolved, and gives up on a deadline instead of hanging forever - every step carries a
-//doc: timeout, ten minutes if nobody says otherwise, and `WithTimeOut(...)` is how you say otherwise.
+//doc: timeout, ten minutes if nobody says otherwise, and `WithTimeout(...)` is how you say otherwise.
 //doc: Chapter 15 shows what the failure looks like when the condition never comes true.
 
 //doc: The platform shim again, and this time it earned a footnote. Waiting for a file that is written by a

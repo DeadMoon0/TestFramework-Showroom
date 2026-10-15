@@ -41,11 +41,11 @@ public class U2_ShopFloor(ITestOutputHelper output)
             .ExpectNot("3 in stock")
 
             .Type("Search products", "rope"))
-            .Name("browsing")
+            .Label("browsing")
 
         // The shelf thins out as a count, waited on rather than asserted once.
         .WaitForEvent(BrowserExt.Events.CountIs("storefront", Target.Css("shop-product:not([hidden])"), 1))
-            .WithTimeOut(TimeSpan.FromSeconds(10)).Name("filtered")
+            .WithTimeout(TimeSpan.FromSeconds(10)).Label("filtered")
 
         // Pressed, moved, released - the search is cleared first so the shelf is whole again.
         .Trigger(BrowserExt.Session("storefront")
@@ -55,16 +55,16 @@ public class U2_ShopFloor(ITestOutputHelper output)
             .Expect("1 item in cart")
             .Click("Checkout now")
             .Read(Value.Cookie("storefront-visited"), "visited"))
-            .Name("shopping")
+            .Label("shopping")
 
         .WaitForEvent(BrowserExt.Events.AttributeEquals("storefront", Target.Section("Cart"), "data-state", "confirmed"))
-            .WithTimeOut(TimeSpan.FromSeconds(10)).Name("confirmed")
+            .WithTimeout(TimeSpan.FromSeconds(10)).Label("confirmed")
 
         // First-party scrolling, pinned by geometry: InViewport can only pass if the page really moved.
-        .Trigger(BrowserExt.Session("storefront").ScrollToBottom()).Name("to-the-end")
+        .Trigger(BrowserExt.Session("storefront").ScrollToBottom()).Label("to-the-end")
         .Trigger(BrowserExt.Page("storefront").CheckLayout(ExpectedLayout
             .InViewport(Target.TestId("provenance-end"))))
-            .Name("record-visible")
+            .Label("record-visible")
         .Build();
 
     [UiDockerFact]

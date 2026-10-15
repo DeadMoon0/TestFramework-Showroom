@@ -51,7 +51,7 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
     // multiple runs, and can each run still negotiate its own config without filing forms in triplicate?
     private static readonly Timeline InspectStorageTimeline = Timeline.Create()
         .Trigger(new InspectStorageConfigStep())
-            .Name("inspect-storage-config")
+            .Label("inspect-storage-config")
         .Build();
 
     //doc: Test one: two runs, same fixture, no excuses. `fixture.GetEnv()` hands out an environment per run,

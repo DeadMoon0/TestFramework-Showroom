@@ -41,8 +41,8 @@ public class ErrorPaths_TimeoutExhaustion(ITestOutputHelper outputHelper)
 {
     private readonly Timeline _timeline = Timeline.Create()
         .WaitForEvent(LocalIOExt.Events.FileExists(Var.Ref<string>("missingPath")))
-            .WithTimeOut(TimeSpan.FromMilliseconds(150))
-            .Name("wait-for-never")
+            .WithTimeout(TimeSpan.FromMilliseconds(150))
+            .Label("wait-for-never")
         .Build();
 
     [Fact]
