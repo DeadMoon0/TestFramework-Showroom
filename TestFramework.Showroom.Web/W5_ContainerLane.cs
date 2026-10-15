@@ -48,7 +48,7 @@ public class Container_TheWholeLane(ITestOutputHelper outputHelper)
         .FindArtifact(
             "written",
             WebExt.ArtifactFinder.Sql.Where<ShowroomOrder>("orders-db", "Name = @name")
-                .WithParameter("name", Var.Const("Complete Order")))
+                .WithParameter("name", "Complete Order"))
             .MarkReadonly()
         //   ^ The application wrote this row, so the test reads it and leaves it. Without
         //     MarkReadonly() teardown would delete it, which is the default everywhere.

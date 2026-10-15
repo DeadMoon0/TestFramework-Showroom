@@ -75,7 +75,7 @@ public class RestApi_Liveness(ITestOutputHelper outputHelper)
 public class RestApi_PostAndRead(ITestOutputHelper outputHelper)
 {
     private static readonly Timeline _timeline = Timeline.Create()
-        .SetVariable("orderName", Var.Const("Calibration Order"))
+        .SetVariable("orderName", "Calibration Order")
         .Trigger(
             WebExt.Api.Http("orders")
                 .Post("api/orders")

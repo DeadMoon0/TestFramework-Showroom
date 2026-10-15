@@ -47,9 +47,9 @@ file static class ParallelSamplePaths
 public class Parallel_SetVariablePrepareLayers(ITestOutputHelper outputHelper)
 {
     private readonly Timeline _timeline = Timeline.Create()
-        .SetVariable("greeting", Var.Const("Good morning"))
+        .SetVariable("greeting", "Good morning")
             .Label("set greeting")
-        .SetVariable("subject", Var.Const("test subject"))
+        .SetVariable("subject", "test subject")
             .Label("set subject")
         .Build();
 
@@ -79,12 +79,12 @@ public class Parallel_SetVariablePrepareLayers(ITestOutputHelper outputHelper)
 public class Parallel_DoNotParallelizeBarrier(ITestOutputHelper outputHelper)
 {
     private readonly Timeline _timeline = Timeline.Create()
-        .SetVariable("intro", Var.Const("Facility memo:"))
+        .SetVariable("intro", "Facility memo:")
             .Label("set intro")
-        .SetVariable("exclusive", Var.Const("Do not stand near the unstable science."))
+        .SetVariable("exclusive", "Do not stand near the unstable science.")
             .Label("exclusive bulletin")
             .DoNotParallelize()
-        .SetVariable("outro", Var.Const("You are now fully briefed."))
+        .SetVariable("outro", "You are now fully briefed.")
             .Label("set outro")
         .Build();
 

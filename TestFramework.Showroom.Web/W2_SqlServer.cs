@@ -101,9 +101,9 @@ public class Sql_RegisterArtifactAdoptsAnExistingRow(ITestOutputHelper outputHel
     private static readonly Timeline _timeline = Timeline.Create()
         .Trigger(
             WebExt.Sql.Execute("orders-db", "INSERT INTO [Orders] ([Name], [Quantity], [Total]) VALUES (@name, @quantity, @total)")
-                .WithParameter("name", Var.Const("Adopted Order"))
-                .WithParameter("quantity", Var.Const(3))
-                .WithParameter("total", Var.Const(30m)))
+                .WithParameter("name", "Adopted Order")
+                .WithParameter("quantity", 3)
+                .WithParameter("total", 30m))
             .Label("insert")
         //   ^ Stands in for the application writing the row. In a real suite this is
         //     an HTTP call, and the row appears without the test ever touching SQL.
@@ -154,7 +154,7 @@ public class Sql_FinderObservesWithoutOwning(ITestOutputHelper outputHelper)
         .FindArtifact(
             "bulk",
             WebExt.ArtifactFinder.Sql.Where<ShowroomOrder>("orders-db", "Quantity >= @minimum")
-                .WithParameter("minimum", Var.Const(10)))
+                .WithParameter("minimum", 10))
             .MarkReadonly()
         //   ^ Parameters are variable-backed. Nothing is concatenated into the
         //     statement, which closes an entire genre of afternoon.
@@ -202,12 +202,12 @@ public class Sql_StatementsAndObservations(ITestOutputHelper outputHelper)
         .SetupArtifact("target")
         .Trigger(
             WebExt.Sql.Execute("orders-db", "UPDATE [Orders] SET [Quantity] = @quantity WHERE [Id] = @id")
-                .WithParameter("quantity", Var.Const(99))
-                .WithParameter("id", Var.Ref<int>("targetId")))
+                .WithParameter("quantity", 99)
+                .WithParameterFrom("id", Var.Ref<int>("targetId")))
             .Label("update")
         .Trigger(
             WebExt.Sql.Scalar<int>("orders-db", "SELECT [Quantity] FROM [Orders] WHERE [Id] = @id")
-                .WithParameter("id", Var.Ref<int>("targetId")))
+                .WithParameterFrom("id", Var.Ref<int>("targetId")))
             .Label("read-back")
         .Build();
 
