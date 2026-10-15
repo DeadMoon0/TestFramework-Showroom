@@ -1,0 +1,43 @@
+name: Restore Smoke
+
+# The Showroom is what a stranger clones first, so it must restore from nuget.org alone - no local feed, no
+# sibling repository. Locally the NuGet.config above the repositories adds the development feed, so a local
+# restore always succeeds; this is the one place that proves the public feed is enough. While the pins name a
+# wave that is not published yet, this is red, and it should be: that is what a stranger would hit.
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Write a nuget.org-only configuration
+        run: |
+          cat > "$RUNNER_TEMP/nuget.org.config" <<'XML'
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
+            </packageSources>
+          </configuration>
+          XML
+
+      - name: Restore from nuget.org alone
+        run: dotnet restore TestFramework.Showroom.slnx --configfile "$RUNNER_TEMP/nuget.org.config" --force

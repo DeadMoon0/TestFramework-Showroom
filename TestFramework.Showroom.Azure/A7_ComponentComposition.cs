@@ -1,18 +1,21 @@
-using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 using FunctionApp;
+using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
 using TestFramework.Azure.Configuration.SpecificConfigs;
 using TestFramework.Azure.Extensions;
 using TestFramework.Azure.Identifier;
-using TestFramework.Container.Azure;
-using TestFramework.Container.Sources;
 using TestFramework.Config;
-using TestFramework.Core.Exceptions;
+using TestFramework.Container.Azure;
+using TestFramework.Container.Azure.Contracts;
+using TestFramework.Container.Sources;
 using TestFramework.Core.Environment;
+using TestFramework.Core.Exceptions;
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Variables;
 using Xunit.Abstractions;
-using TestFramework.Container.Azure.Contracts;
 namespace TestFramework.Showroom.Azure;
 
 //doc: Several apps. One dependency graph. No delusions.

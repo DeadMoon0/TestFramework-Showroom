@@ -1,0 +1,15 @@
+<Project>
+
+  <!--
+    The family's compiler contract, for every project here: the chapters a stranger copies from, and the two
+    applications they test. The Showroom used to have none - implicit usings on and warnings allowed - so it
+    demonstrated a project shape the packages it teaches had already ruled out.
+  -->
+  <PropertyGroup>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+</Project>

@@ -1,4 +1,5 @@
-﻿using TestFramework.Core.Timelines;
+﻿using System.Threading.Tasks;
+using TestFramework.Core.Timelines;
 using TestFramework.Showroom.UI;
 using TestFramework.UI.Browser;
 using TestFramework.UI.Browser.Structure;

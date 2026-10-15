@@ -1,4 +1,6 @@
-﻿using TestFramework.Core.Artifacts;
+﻿using System;
+using System.Threading.Tasks;
+using TestFramework.Core.Artifacts;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;
 using TestFramework.Core.Timelines;

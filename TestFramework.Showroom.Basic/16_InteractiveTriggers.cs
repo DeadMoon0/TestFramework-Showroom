@@ -1,4 +1,5 @@
 using System.Runtime.Versioning;
+using System.Threading.Tasks;
 using TestFramework.Core.Timelines;
 using TestFramework.Simple;
 using Xunit.Abstractions;

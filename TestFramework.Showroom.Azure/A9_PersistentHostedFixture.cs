@@ -1,12 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
 using TestFramework.Azure.Configuration;
 using TestFramework.Azure.Configuration.SpecificConfigs;
 using TestFramework.Azure.Extensions;
 using TestFramework.Azure.Identifier;
-using TestFramework.Container.Azure;
 using TestFramework.Config;
+using TestFramework.Container.Azure;
 using TestFramework.Core.Environment;
 using TestFramework.Core.Steps;
 using TestFramework.Core.Steps.Options;

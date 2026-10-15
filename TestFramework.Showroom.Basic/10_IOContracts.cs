@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using TestFramework.Core.Exceptions;
 using TestFramework.Core.Timelines;
 using TestFramework.Core.Timelines.Assertions;

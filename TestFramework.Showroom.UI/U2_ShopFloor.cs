@@ -1,4 +1,6 @@
-﻿using TestFramework.Core.Timelines;
+﻿using System;
+using System.Threading.Tasks;
+using TestFramework.Core.Timelines;
 using TestFramework.UI.Browser;
 using TestFramework.UI.Browser.Layouting;
 using TestFramework.UI.Browser.Reading;

@@ -1,7 +1,9 @@
-using Microsoft.Azure.Functions.Worker;
+using System;
+using System.Net.Http;
 using Azure.Data.Tables;
 using Azure.Messaging.ServiceBus;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

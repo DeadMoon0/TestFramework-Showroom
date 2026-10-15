@@ -1,12 +1,14 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using FunctionApp;
+using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
+using TestFramework.Azure.Extensions;
 using TestFramework.Azure.FunctionApp.Results;
 using TestFramework.Azure.Identifier;
 using TestFramework.Azure.Runtime;
-using TestFramework.Azure.Extensions;
 using TestFramework.Config;
 using TestFramework.Container.Azure;
 using TestFramework.Container.Sources;

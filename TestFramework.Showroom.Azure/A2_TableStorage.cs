@@ -1,6 +1,8 @@
-using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Threading.Tasks;
 using Azure;
 using Azure.Data.Tables;
+using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
 using TestFramework.Azure.Extensions;
 using TestFramework.Config;
