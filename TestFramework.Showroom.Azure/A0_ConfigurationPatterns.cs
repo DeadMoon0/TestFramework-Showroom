@@ -139,7 +139,7 @@ public class ConfigurationPatterns_AdvancedMixedPath(ITestOutputHelper outputHel
         run.EnsureRanToCompletion();
 
         string databaseName = run.Values.Require(
-            ValueRef.For(AzureEnvironmentResourceKinds.Sql, "MainSql", AzureEnvironmentResourceKinds.DatabaseNameValue),
+            ValueRef.For(AzureResourceKinds.Sql, "MainSql", AzureResourceKinds.DatabaseNameValue),
             ResourceVantage.Host);
 
         Assert.Equal("master", databaseName);

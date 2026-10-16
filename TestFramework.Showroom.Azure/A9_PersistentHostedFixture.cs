@@ -143,7 +143,7 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
         public override bool DoesReturn => true;
 
         public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore)
-            => [new(AzureEnvironmentResourceKinds.Storage, "PersistentStorage")];
+            => [new(AzureResourceKinds.Storage, "PersistentStorage")];
 
         public override Task<InspectStorageConfigResult?> Execute(RunContext context)
         {
@@ -248,7 +248,7 @@ public sealed class PersistentHostedFixtureState : IDockerAzureHostedFixtureStat
     // That keeps the sample focused on one reusable component chain instead of a full family reunion.
     public IReadOnlyList<EnvironmentRequirement> PersistentRequirements =>
     [
-        new(AzureEnvironmentResourceKinds.Storage, "PersistentStorage"),
+        new(AzureResourceKinds.Storage, "PersistentStorage"),
     ];
 
     // Full environment shape. The fixture decides what stays alive longer.
