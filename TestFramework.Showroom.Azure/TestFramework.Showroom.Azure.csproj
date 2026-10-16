@@ -16,6 +16,7 @@
 		<PackageReference Include="coverlet.collector" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" />
 		<PackageReference Include="TestFramework.Azure" />
+		<PackageReference Include="TestFramework.Azure.Functions" />
 		<PackageReference Include="TestFramework.Config" />
 		<PackageReference Include="TestFramework.Container.Azure" />
 		<PackageReference Include="TestFramework.Core" />
@@ -24,7 +25,7 @@
 	</ItemGroup>
 
 	<!-- Unlike the Web lane, which reaches its API only by path: the Cosmos container is declared from the
-	     application's model type (DockerCosmosDefinition<CandidateProfile>), and that type lives here. -->
+	     application's model type (DockerCosmosDbDefinition<CandidateProfile>), and that type lives here. -->
 	<ItemGroup>
 		<ProjectReference Include="..\Azure\FunctionApp\FunctionApp.csproj" />
 	</ItemGroup>

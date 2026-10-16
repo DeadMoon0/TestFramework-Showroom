@@ -123,7 +123,7 @@ public class ConfigurationPatterns_AdvancedMixedPath(ITestOutputHelper outputHel
         var run = await _timeline
             .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
-            .AddSqlArtifact(
+            .AddSqlDatabaseArtifact(
                 "product",
                 "MainSql",
                 new ShowroomProduct
@@ -139,7 +139,7 @@ public class ConfigurationPatterns_AdvancedMixedPath(ITestOutputHelper outputHel
         run.EnsureRanToCompletion();
 
         string databaseName = run.Values.Require(
-            ValueRef.For(AzureResourceKinds.Sql, "MainSql", AzureResourceKinds.DatabaseNameValue),
+            ValueRef.For(AzureResourceKinds.SqlDatabase, "MainSql", AzureResourceKinds.DatabaseNameValue),
             ResourceVantage.Host);
 
         Assert.Equal("master", databaseName);

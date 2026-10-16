@@ -51,7 +51,7 @@ the same question:
 
 ```csharp
 string databaseName = run.Values.Require(
-    ValueRef.For(AzureResourceKinds.Sql, "MainSql", AzureResourceKinds.DatabaseNameValue),
+    ValueRef.For(AzureResourceKinds.SqlDatabase, "MainSql", AzureResourceKinds.DatabaseNameValue),
     ResourceVantage.Host);
 ```
 

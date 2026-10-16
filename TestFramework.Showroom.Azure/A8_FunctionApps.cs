@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
 using TestFramework.Azure.Extensions;
 using TestFramework.Azure.FunctionApp.Results;
+using TestFramework.Azure.Functions;
 using TestFramework.Azure.Identifier;
 using TestFramework.Azure.Runtime;
 using TestFramework.Config;
@@ -67,25 +68,25 @@ internal sealed class ShowroomFunctionAppDefinition : DockerFunctionAppDefinitio
     protected override void Configure(DockerFunctionAppBuilder builder)
     {
         builder
-            .UseStorage<ShowroomStorageDefinition>()
-            .UseCosmos<ShowroomCosmosDefinition>()
+            .UseStorageAccount<ShowroomStorageDefinition>()
+            .UseCosmosDb<ShowroomCosmosDefinition>()
                 .UseServiceBusTrigger<ShowroomBusDefinition>(d => d.Submission)
                 .UseServiceBusReply<ShowroomBusDefinition>(d => d.Reply);
     }
 }
 
-internal sealed class ShowroomStorageDefinition : DockerStorageDefinition
+internal sealed class ShowroomStorageDefinition : DockerStorageAccountDefinition
 {
     public override StorageAccountIdentifier Identifier => "MainStorage";
 
     protected override string? BlobContainerName => "showroom-blob";
-    protected override string? QueueContainerName => "showroom-queue";
-    protected override string? TableContainerName => "MainTable";
+    protected override string? QueueName => "showroom-queue";
+    protected override string? TableName => "MainTable";
 }
 
-internal sealed class ShowroomCosmosDefinition : DockerCosmosDefinition<CandidateProfile>
+internal sealed class ShowroomCosmosDefinition : DockerCosmosDbDefinition<CandidateProfile>
 {
-    public override CosmosContainerIdentifier Identifier => "MainDb";
+    public override CosmosDbIdentifier Identifier => "MainDb";
 
     protected override string? DatabaseName => "BaseDB";
     protected override string? ContainerName => "BaseContainer";

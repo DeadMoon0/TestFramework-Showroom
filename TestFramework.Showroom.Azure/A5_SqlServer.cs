@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
 using TestFramework.Azure.Configuration;
 using TestFramework.Azure.Configuration.SpecificConfigs;
-using TestFramework.Azure.DB.SqlServer;
+using TestFramework.Azure.DB.SqlDatabase;
 using TestFramework.Azure.Extensions;
 using TestFramework.Config;
 using TestFramework.Container.Azure;
@@ -84,7 +84,7 @@ public class ShowroomDbContext(DbContextOptions<ShowroomDbContext> options) : Db
 //doc: The setup helper is the whole SQL-specific wiring, in one place, so the chapters can talk about
 //doc: behaviour instead of connection-string archaeology. Two moves, and each is a decision:
 //doc:
-//doc: - `AddSqlArtifactContexts` is what lets `AddSqlArtifact` work at all: it tells the framework which
+//doc: - `AddSqlArtifactContexts` is what lets `AddSqlDatabaseArtifact` work at all: it tells the framework which
 //doc:   context to reach for when it has to insert, read or delete a row. You register *how to build* your
 //doc:   context and are handed options already pointing at the database this run is using - back-to-front
 //doc:   from ordinary EF registration, because the framework owns the address and you own the rest. There is
@@ -125,7 +125,7 @@ internal static class ShowroomSqlSetup
             .Build();
 }
 
-//doc: One row, one key. `AddSqlArtifact` takes the entity and then its key values, and the artifact behaves
+//doc: One row, one key. `AddSqlDatabaseArtifact` takes the entity and then its key values, and the artifact behaves
 //doc: like every other: created on setup, read back for assertions, removed on teardown.
 //doc:
 //doc: `Row(row => row.Name)` is the SQL flavour of the select-then-assert shape - the same idea as
@@ -153,7 +153,7 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
         var run = await _timeline
             .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
-            .AddSqlArtifact(
+            .AddSqlDatabaseArtifact(
                 "product",     // artifact name
                 "MainSql",     // shared Azure showroom SQL identifier
                 new ShowroomProduct { Sku = "SHOW-001", Name = "Calibration Widget", Price = 9.99m, Category = "Tools" },
@@ -162,13 +162,13 @@ public class SqlServer_BasicUpsert(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        run.SqlArtifact<ShowroomProduct>("product").Should().Exist();
+        run.SqlDatabaseArtifact<ShowroomProduct>("product").Should().Exist();
 
-        run.SqlArtifact<ShowroomProduct>("product")
+        run.SqlDatabaseArtifact<ShowroomProduct>("product")
             .Row(row => row.Name)
             .Should().Be("Calibration Widget");
 
-        run.SqlArtifact<ShowroomProduct>("product")
+        run.SqlDatabaseArtifact<ShowroomProduct>("product")
             .Row(row => row.Price)
             .Should().Be(9.99m);
         // ^ Row inserted, values verified, no mystery left in the outcome. A rare and beautiful state.
@@ -205,7 +205,7 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
         var run = await _timeline
             .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
-            .AddSqlArtifact(
+            .AddSqlDatabaseArtifact(
                 "invoiceLine",
                 "MainSql",
                 new ShowroomInvoiceLine { InvoiceId = "INV-2026-001", LineNumber = 1, Sku = "SHOW-001", Quantity = 5 },
@@ -215,9 +215,9 @@ public class SqlServer_CompositePrimaryKey(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        run.SqlArtifact<ShowroomInvoiceLine>("invoiceLine").Should().Exist();
+        run.SqlDatabaseArtifact<ShowroomInvoiceLine>("invoiceLine").Should().Exist();
 
-        run.SqlArtifact<ShowroomInvoiceLine>("invoiceLine")
+        run.SqlDatabaseArtifact<ShowroomInvoiceLine>("invoiceLine")
             .Row(row => row.Quantity)
             .Should().Be(5);
     }
@@ -243,7 +243,7 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
         .SetupArtifact("prodOther")
         .FindArtifacts(
             "toolsProducts",  // Matching rows come back as toolsProducts_0, toolsProducts_1, and so on. Predictable names. Wild concept.
-            AzureExt.ArtifactFinder.DB.SqlQuery<ShowroomProduct>(
+            AzureExt.ArtifactFinder.DB.SqlDatabaseQuery<ShowroomProduct>(
                 "MainSql",
                 q => q.Where(p => p.Category == "Instruments")))
         // ^ Only the instrument rows come back as found artifacts. The snack remains judged and excluded.
@@ -263,13 +263,13 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
         var run = await _timeline
             .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
-            .AddSqlArtifact("prodTools1", "MainSql",
+            .AddSqlDatabaseArtifact("prodTools1", "MainSql",
                 new ShowroomProduct { Sku = "INST-001", Name = "Precision Gauge",     Price = 149m, Category = "Instruments" },
                 Var.Const("INST-001"))
-            .AddSqlArtifact("prodTools2", "MainSql",
+            .AddSqlDatabaseArtifact("prodTools2", "MainSql",
                 new ShowroomProduct { Sku = "INST-002", Name = "Thermal Probe",       Price = 229m, Category = "Instruments" },
                 Var.Const("INST-002"))
-            .AddSqlArtifact("prodOther", "MainSql",
+            .AddSqlDatabaseArtifact("prodOther", "MainSql",
                 new ShowroomProduct { Sku = "SNCK-001", Name = "Vending Machine Snack", Price = 1.25m, Category = "Refreshments" },
                 //                                                                                      ^ Seeded for contrast. Query ignores it. Cleanup does not. Justice comes for all rows.
                 Var.Const("SNCK-001"))
@@ -277,10 +277,10 @@ public class SqlServer_QueryFinder(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        run.SqlArtifact<ShowroomProduct>("toolsProducts_0").Should().Exist();
-        run.SqlArtifact<ShowroomProduct>("toolsProducts_1").Should().Exist();
+        run.SqlDatabaseArtifact<ShowroomProduct>("toolsProducts_0").Should().Exist();
+        run.SqlDatabaseArtifact<ShowroomProduct>("toolsProducts_1").Should().Exist();
 
-        run.SqlArtifact<ShowroomProduct>("toolsProducts_0")
+        run.SqlDatabaseArtifact<ShowroomProduct>("toolsProducts_0")
             .Row(row => row.Category)
             .Should().Be("Instruments");
         // ^ Matching category confirmed. Query semantics did their job and nobody had to count indexes manually.

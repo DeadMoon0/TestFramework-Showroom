@@ -14,8 +14,9 @@ using Newtonsoft.Json;
 using TestFramework.Azure;
 using TestFramework.Azure.Configuration;
 using TestFramework.Azure.Configuration.SpecificConfigs;
-using TestFramework.Azure.DB.SqlServer;
+using TestFramework.Azure.DB.SqlDatabase;
 using TestFramework.Azure.Extensions;
+using TestFramework.Azure.Functions;
 using TestFramework.Config;
 using TestFramework.Container.Azure;
 using TestFramework.Core.Timelines;
@@ -195,7 +196,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
 
         .FindArtifacts(
             "sample",
-            AzureExt.ArtifactFinder.DB.CosmosQuery<CandidateProfile>(
+            AzureExt.ArtifactFinder.DB.CosmosDbQuery<CandidateProfile>(
                 "MainDb",
                 Var.Ref<string>("tableRowKey").Transform(key =>
                     new QueryDefinition(
@@ -277,7 +278,7 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
                 new Dictionary<string, string> { ["sample_id"] = runId })
             // ^ Seed the batch manifest. Small payload, important signal.
 
-            .AddSqlArtifact(
+            .AddSqlDatabaseArtifact(
                 "workOrder",
                 "MainSql",
                 new LabWorkOrder { RunId = runId, Stage = "lab", Status = "pending" },
@@ -330,23 +331,23 @@ public class LabOrchestration_CapabilityTour(ITestOutputHelper outputHelper)
             .Should().Be(runId);
 
         // Cosmos says ingestion actually registered the profile.
-        run.CosmosArtifact<CandidateProfile>("sample_0").Should().Exist();
-        run.CosmosArtifact<CandidateProfile>("sample_0")
+        run.CosmosDbArtifact<CandidateProfile>("sample_0").Should().Exist();
+        run.CosmosDbArtifact<CandidateProfile>("sample_0")
             .Item(item => item.RunId)
             .Should().Be(runId);
-        run.CosmosArtifact<CandidateProfile>("sample_0")
+        run.CosmosDbArtifact<CandidateProfile>("sample_0")
             .Item(item => item.Stage)
             .Should().Be("ingested");
-        run.CosmosArtifact<CandidateProfile>("sample_0")
+        run.CosmosDbArtifact<CandidateProfile>("sample_0")
             .Item(item => item.Status)
             .Should().Be("registered");
 
         // SQL still holds the work order we started with.
-        run.SqlArtifact<LabWorkOrder>("workOrder").Should().Exist();
-        run.SqlArtifact<LabWorkOrder>("workOrder")
+        run.SqlDatabaseArtifact<LabWorkOrder>("workOrder").Should().Exist();
+        run.SqlDatabaseArtifact<LabWorkOrder>("workOrder")
             .Row(row => row.Stage)
             .Should().Be("lab");
-        run.SqlArtifact<LabWorkOrder>("workOrder")
+        run.SqlDatabaseArtifact<LabWorkOrder>("workOrder")
             .Row(row => row.Status)
             .Should().Be("pending");
 

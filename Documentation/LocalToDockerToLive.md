@@ -46,7 +46,10 @@ Two of its functions carry the story:
 
 Nothing is started. The function class is instantiated in the test process and invoked directly
 through `AzureExt.Trigger.FunctionApp.InProcessHttp<TFunction>(...)`, which hands your lambda the
-function instance and a proxy carrying the `HttpRequest`.
+function instance and a proxy carrying the `HttpRequest`. That trigger comes with the
+`TestFramework.Azure.Functions` package (`using TestFramework.Azure.Functions;`), which runs a
+function in-process and selects endpoints from its `[Function]` and `[HttpTrigger]` attributes; the
+remote triggers stay in `TestFramework.Azure`.
 
 **What it proves**
 

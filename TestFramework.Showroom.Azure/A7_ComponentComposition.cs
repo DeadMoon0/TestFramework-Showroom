@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using TestFramework.Azure;
 using TestFramework.Azure.Configuration.SpecificConfigs;
 using TestFramework.Azure.Extensions;
+using TestFramework.Azure.Functions;
 using TestFramework.Azure.Identifier;
 using TestFramework.Config;
 using TestFramework.Container.Azure;
@@ -142,7 +143,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         TimelineRun run = await SharedDependenciesTimeline
             .SetupRun(serviceProvider, outputHelper.WriteLine)
             .SetEnv(environment)
-            .AddCosmosItemArtifact("ingestDoc", "SharedCosmos", new CandidateProfile
+            .AddCosmosDbItemArtifact("ingestDoc", "SharedCosmos", new CandidateProfile
             {
                 Id = "sample-ingest",
                 PartitionKey = "samples",
@@ -150,7 +151,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
                 Stage = "ingested",
                 Status = "registered",
             })
-            .AddCosmosItemArtifact("analyseDoc", "SharedCosmos", new CandidateProfile
+            .AddCosmosDbItemArtifact("analyseDoc", "SharedCosmos", new CandidateProfile
             {
                 Id = "sample-analyse",
                 PartitionKey = "samples",
@@ -180,8 +181,8 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         Assert.Contains("Ingest", used.UsedFunctionAppIdentifiers);
         Assert.Contains("Analyse", used.UsedFunctionAppIdentifiers);
 
-        Assert.Equal(["SharedStorage"], used.UsedStorageIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
-        Assert.Equal(["SharedCosmos"], used.UsedCosmosIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
+        Assert.Equal(["SharedStorage"], used.UsedStorageAccountIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
+        Assert.Equal(["SharedCosmos"], used.UsedCosmosDbIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
         Assert.Equal(["SharedBus"], used.UsedServiceBusIdentifiers.OrderBy(x => x, StringComparer.Ordinal));
 
         AnalysisResult ingestResult = run.ArtifactStore.GetTableEntityArtifact<AnalysisResult>("ingestResult").Last.Entity;
@@ -225,7 +226,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         TimelineRun run = await ContractSelectionTimeline
             .SetupRun(serviceProvider, outputHelper.WriteLine)
             .SetEnv(environment)
-            .AddCosmosItemArtifact("contractDoc", "SharedCosmos", new CandidateProfile
+            .AddCosmosDbItemArtifact("contractDoc", "SharedCosmos", new CandidateProfile
             {
                 Id = "sample-contract",
                 PartitionKey = "samples",
@@ -302,7 +303,7 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     //doc: or each other's runtime state.
     //doc:
     //doc: - The three shared definitions (`SharedStorage`, `SharedCosmos`, `SharedBus`) are named once and
-    //doc:   referenced by both apps through `UseStorage<…>`, `UseCosmos<…>`, `UseServiceBusTrigger<…>`. That
+    //doc:   referenced by both apps through `UseStorageAccount<…>`, `UseCosmosDb<…>`, `UseServiceBusTrigger<…>`. That
     //doc:   reference by *type* is what makes sharing by name possible.
     //doc: - `ReplyBusDefinition` and `AuditBusDefinition` each `Provide` a contract; `ContractConsumer…`
     //doc:   `Require`s one. Provide and require are the two halves, and they meet on the contract key.
@@ -314,18 +315,18 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
     //doc: - And the topology helper at the bottom declares the queues and topics the emulator must actually
     //doc:   have. A bus identifier is a name; the entities behind it still have to exist.
 
-    private sealed class SharedStorageDefinition : DockerStorageDefinition
+    private sealed class SharedStorageDefinition : DockerStorageAccountDefinition
     {
         public override StorageAccountIdentifier Identifier => "SharedStorage";
 
         protected override string? BlobContainerName => "showroom-blob";
-        protected override string? QueueContainerName => "showroom-queue";
-        protected override string? TableContainerName => "MainTable";
+        protected override string? QueueName => "showroom-queue";
+        protected override string? TableName => "MainTable";
     }
 
-    private sealed class SharedCosmosDefinition : DockerCosmosDefinition<CandidateProfile>
+    private sealed class SharedCosmosDefinition : DockerCosmosDbDefinition<CandidateProfile>
     {
-        public override CosmosContainerIdentifier Identifier => "SharedCosmos";
+        public override CosmosDbIdentifier Identifier => "SharedCosmos";
 
         protected override string? DatabaseName => "BaseDB";
         protected override string? ContainerName => "BaseContainer";
@@ -358,8 +359,8 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
-                .UseStorage<SharedStorageDefinition>()
-                .UseCosmos<SharedCosmosDefinition>()
+                .UseStorageAccount<SharedStorageDefinition>()
+                .UseCosmosDb<SharedCosmosDefinition>()
                 .UseServiceBusTrigger<SharedBusDefinition>(d => d.Submission)
                 .UseServiceBusReply<SharedBusDefinition>(d => d.Reply)
                 .WithAppSetting("FunctionRole", "Ingestion");
@@ -375,8 +376,8 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
-                .UseStorage<SharedStorageDefinition>()
-                .UseCosmos<SharedCosmosDefinition>()
+                .UseStorageAccount<SharedStorageDefinition>()
+                .UseCosmosDb<SharedCosmosDefinition>()
                 .UseServiceBusTrigger<SharedBusDefinition>(d => d.Submission)
                 .UseServiceBusReply<SharedBusDefinition>(d => d.Reply)
                 .WithAppSetting("FunctionRole", "Analysis");
@@ -435,8 +436,8 @@ public class ComponentComposition_SharedDependenciesAndContracts(ITestOutputHelp
         protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
-                .UseStorage<SharedStorageDefinition>()
-                .UseCosmos<SharedCosmosDefinition>()
+                .UseStorageAccount<SharedStorageDefinition>()
+                .UseCosmosDb<SharedCosmosDefinition>()
                 .UseServiceBusTrigger<SharedBusDefinition>(d => d.Submission)
                 .UseServiceBusReply<ReplyBusDefinition>(d => d.Reply);
         }

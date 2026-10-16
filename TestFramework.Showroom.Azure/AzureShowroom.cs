@@ -22,24 +22,24 @@ namespace TestFramework.Showroom.Azure;
 
 internal static class AzureShowroom
 {
-    private sealed class MainStorageDefinition : DockerStorageDefinition
+    private sealed class MainStorageDefinition : DockerStorageAccountDefinition
     {
         public override StorageAccountIdentifier Identifier => "MainStorage";
 
         protected override string? BlobContainerName => "showroom-blob";
-        protected override string? QueueContainerName => "showroom-queue";
-        protected override string? TableContainerName => "MainTable";
+        protected override string? QueueName => "showroom-queue";
+        protected override string? TableName => "MainTable";
     }
 
-    private sealed class MainDbDefinition : DockerCosmosDefinition<CandidateProfile>
+    private sealed class MainDbDefinition : DockerCosmosDbDefinition<CandidateProfile>
     {
-        public override CosmosContainerIdentifier Identifier => "MainDb";
+        public override CosmosDbIdentifier Identifier => "MainDb";
 
         protected override string? DatabaseName => "BaseDB";
         protected override string? ContainerName => "BaseContainer";
     }
 
-    private sealed class MainSqlDefinition : DockerAzureSqlDefinition
+    private sealed class MainSqlDefinition : DockerSqlDatabaseDefinition
     {
         public override SqlDatabaseIdentifier Identifier => "MainSql";
 
@@ -121,8 +121,8 @@ internal static class AzureShowroom
         protected override void Configure(DockerFunctionAppBuilder builder)
         {
             builder
-                .UseStorage<MainStorageDefinition>()
-                .UseCosmos<MainDbDefinition>()
+                .UseStorageAccount<MainStorageDefinition>()
+                .UseCosmosDb<MainDbDefinition>()
                 .UseServiceBusTrigger<ShowroomIntegrationBusDefinition>(d => d.Submission)
                 .UseServiceBusReply<ShowroomIntegrationBusDefinition>(d => d.Reply);
         }

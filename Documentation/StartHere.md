@@ -60,7 +60,7 @@ Use it when you want to learn the framework in sequence before reading the xUnit
 
 Use the Function App examples in this order depending on where the app runs.
 
-1. In-process hostless logic checks: use `AzureExt.Trigger.FunctionApp.InProcessHttp(...)` in the Azure package tests or your own focused tests.
+1. In-process hostless logic checks: use `AzureExt.Trigger.FunctionApp.InProcessHttp(...)` in the Azure package tests or your own focused tests. It comes with the `TestFramework.Azure.Functions` package (`using TestFramework.Azure.Functions;`), next to `TestFramework.Azure`.
 2. Local Docker-backed host: use the showroom Azure chapter with `DockerAzureEnvironment`, especially `A8_FunctionApps.cs`.
 3. Deployed remote host: keep the same remote Function App trigger surface from `TestFramework.Azure`, but provide real `FunctionAppConfig` values instead of the Docker-backed environment.
 

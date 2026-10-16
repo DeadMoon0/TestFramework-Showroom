@@ -76,8 +76,8 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
         firstRun.EnsureRanToCompletion();
         secondRun.EnsureRanToCompletion();
 
-        Assert.Equal("PersistentTable", Assert.IsType<InspectStorageConfigResult>(firstRun.Step("inspect-storage-config").LastResult.Result).TableContainerName);
-        Assert.Equal("PersistentTable", Assert.IsType<InspectStorageConfigResult>(secondRun.Step("inspect-storage-config").LastResult.Result).TableContainerName);
+        Assert.Equal("PersistentTable", Assert.IsType<InspectStorageConfigResult>(firstRun.Step("inspect-storage-config").LastResult.Result).TableName);
+        Assert.Equal("PersistentTable", Assert.IsType<InspectStorageConfigResult>(secondRun.Step("inspect-storage-config").LastResult.Result).TableName);
         Assert.Same(
             firstRun.EnvironmentContext.GetState<object>(DockerAzureEnvironment.NetworkComponentId),
             secondRun.EnvironmentContext.GetState<object>(DockerAzureEnvironment.NetworkComponentId));
@@ -110,14 +110,14 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
         TimelineRun overrideRun = await InspectStorageTimeline
             .SetupRun(output.WriteLine)
             .SetEnv(fixture.GetEnv(builder =>
-                builder.OverrideConfig("StorageAccount:PersistentStorage:TableContainerName", "RunLocalTable")))
+                builder.OverrideConfig("StorageAccount:PersistentStorage:TableName", "RunLocalTable")))
             .RunAsync();
 
         baselineRun.EnsureRanToCompletion();
         overrideRun.EnsureRanToCompletion();
 
-        Assert.Equal("PersistentTable", Assert.IsType<InspectStorageConfigResult>(baselineRun.Step("inspect-storage-config").LastResult.Result).TableContainerName);
-        Assert.Equal("RunLocalTable", Assert.IsType<InspectStorageConfigResult>(overrideRun.Step("inspect-storage-config").LastResult.Result).TableContainerName);
+        Assert.Equal("PersistentTable", Assert.IsType<InspectStorageConfigResult>(baselineRun.Step("inspect-storage-config").LastResult.Result).TableName);
+        Assert.Equal("RunLocalTable", Assert.IsType<InspectStorageConfigResult>(overrideRun.Step("inspect-storage-config").LastResult.Result).TableName);
         Assert.Same(
             baselineRun.EnvironmentContext.GetState<object>(DockerAzureEnvironment.NetworkComponentId),
             overrideRun.EnvironmentContext.GetState<object>(DockerAzureEnvironment.NetworkComponentId));
@@ -143,12 +143,12 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
         public override bool DoesReturn => true;
 
         public IReadOnlyCollection<EnvironmentRequirement> GetEnvironmentRequirements(VariableStore variableStore)
-            => [new(AzureResourceKinds.Storage, "PersistentStorage")];
+            => [new(AzureResourceKinds.StorageAccount, "PersistentStorage")];
 
         public override Task<InspectStorageConfigResult?> Execute(RunContext context)
         {
             StorageAccountConfig config = context.Configured<StorageAccountConfig>("PersistentStorage");
-            return Task.FromResult<InspectStorageConfigResult?>(new(config.TableContainerName ?? throw new InvalidOperationException("PersistentStorage table name was not configured.")));
+            return Task.FromResult<InspectStorageConfigResult?>(new(config.TableName ?? throw new InvalidOperationException("PersistentStorage table name was not configured.")));
         }
 
         public override TestFramework.Core.Steps.Step<InspectStorageConfigResult> Clone() => new InspectStorageConfigStep().WithClonedOptions(this);
@@ -161,7 +161,7 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
             => new(this);
     }
 
-    private sealed record InspectStorageConfigResult(string TableContainerName) : StepResultContext;
+    private sealed record InspectStorageConfigResult(string TableName) : StepResultContext;
 
 }
 
@@ -171,14 +171,14 @@ public class PersistentHostedFixture_ReusesPersistentComponentsAcrossRuns(
 //doc: The definition is intentionally boring. That is the point: stable infrastructure should look inevitable,
 //doc: not dramatic. Drama is for logs.
 
-internal sealed class PersistentStorageDefinition : DockerStorageDefinition
+internal sealed class PersistentStorageDefinition : DockerStorageAccountDefinition
 {
     // The definition is intentionally boring. That is the point. Stable
     // infrastructure should look inevitable, not dramatic. Drama is for logs.
     public override StorageAccountIdentifier Identifier => "PersistentStorage";
 
     protected override string? BlobContainerName => "persistent-blob";
-    protected override string? TableContainerName => "PersistentTable";
+    protected override string? TableName => "PersistentTable";
 }
 
 [CollectionDefinition(CollectionName, DisableParallelization = true)]
@@ -248,7 +248,7 @@ public sealed class PersistentHostedFixtureState : IDockerAzureHostedFixtureStat
     // That keeps the sample focused on one reusable component chain instead of a full family reunion.
     public IReadOnlyList<EnvironmentRequirement> PersistentRequirements =>
     [
-        new(AzureResourceKinds.Storage, "PersistentStorage"),
+        new(AzureResourceKinds.StorageAccount, "PersistentStorage"),
     ];
 
     // Full environment shape. The fixture decides what stays alive longer.
@@ -265,7 +265,7 @@ public sealed class PersistentHostedFixtureState : IDockerAzureHostedFixtureStat
             {
                 ["StorageAccount:PersistentStorage:ConnectionString"] = "UseDevelopmentStorage=true",
                 ["StorageAccount:PersistentStorage:BlobContainerName"] = "persistent-blob",
-                ["StorageAccount:PersistentStorage:TableContainerName"] = "PersistentTable",
+                ["StorageAccount:PersistentStorage:TableName"] = "PersistentTable",
             })
             .Build();
 }

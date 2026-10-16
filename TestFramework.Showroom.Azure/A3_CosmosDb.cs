@@ -51,7 +51,7 @@ public record CosmosShowroomItem
 //doc: One document, upserted and verified. Setup owns the upsert, cleanup owns the delete, and the
 //doc: predictability is both the point and the sales pitch.
 //doc:
-//doc: `AddCosmosItemArtifact` needs no key arguments, unlike the SQL and Table equivalents: the document
+//doc: `AddCosmosDbItemArtifact` needs no key arguments, unlike the SQL and Table equivalents: the document
 //doc: carries its own `id` and partition key, so the reference reads them off the object it was given. The
 //doc: `MainDb` identifier resolves through config exactly like `MainStorage` did - it is the name under
 //doc: `CosmosDb:MainDb`, not a connection string in a test file.
@@ -77,7 +77,7 @@ public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
         var run = await _timeline
             .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
-            .AddCosmosItemArtifact(
+            .AddCosmosDbItemArtifact(
                 "cosmosDoc",    // artifact name — ties everything together
                 "MainDb",       // identifier found under CosmosDb:MainDb in settings
                 new CosmosShowroomItem
@@ -91,7 +91,7 @@ public class CosmosDb_BasicUpsert(ITestOutputHelper outputHelper)
 
         run.EnsureRanToCompletion();
 
-        run.CosmosArtifact<CosmosShowroomItem>("cosmosDoc").Should().Exist();
+        run.CosmosDbArtifact<CosmosShowroomItem>("cosmosDoc").Should().Exist();
         // ^ The run captured the inserted document. Now the test has something real to inspect instead of a motivational story.
     }
 }
@@ -118,7 +118,7 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
         // come back as tracked artifacts. Non-matches still get cleaned up because fairness is not the same as leniency.
         .FindArtifacts(
             "topScorers",
-            AzureExt.ArtifactFinder.DB.CosmosQuery<CosmosShowroomItem>(
+            AzureExt.ArtifactFinder.DB.CosmosDbQuery<CosmosShowroomItem>(
                 "MainDb",
                 new QueryDefinition("SELECT * FROM c WHERE c.score = 99 AND c.PartitionKey = 'showroom-query'")))
         .Build();
@@ -137,11 +137,11 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
         var run = await _timeline
             .SetupRun(provider, outputHelper.WriteLine)
             .SetEnv(AzureShowroom.CreateEnvironment())
-            .AddCosmosItemArtifact("candidate1", "MainDb",
+            .AddCosmosDbItemArtifact("candidate1", "MainDb",
                 new CosmosShowroomItem { Id = "q-001", PartitionKey = "showroom-query", Name = "High Achiever A", Score = 99 })
-            .AddCosmosItemArtifact("candidate2", "MainDb",
+            .AddCosmosDbItemArtifact("candidate2", "MainDb",
                 new CosmosShowroomItem { Id = "q-002", PartitionKey = "showroom-query", Name = "High Achiever B", Score = 99 })
-            .AddCosmosItemArtifact("candidate3", "MainDb",
+            .AddCosmosDbItemArtifact("candidate3", "MainDb",
                 new CosmosShowroomItem { Id = "q-003", PartitionKey = "showroom-query", Name = "Average Achiever", Score = 40 })
             //                                                                                                              ^ Not a matching score. Also not a cleanup exemption.
             .RunAsync();
@@ -149,8 +149,8 @@ public class CosmosDb_QueryFinder(ITestOutputHelper outputHelper)
         run.EnsureRanToCompletion();
 
         // Matching results are named deterministically for direct assertions and low blood pressure.
-        run.CosmosArtifact<CosmosShowroomItem>("topScorers_0").Should().Exist();
-        run.CosmosArtifact<CosmosShowroomItem>("topScorers_1").Should().Exist();
+        run.CosmosDbArtifact<CosmosShowroomItem>("topScorers_0").Should().Exist();
+        run.CosmosDbArtifact<CosmosShowroomItem>("topScorers_1").Should().Exist();
         // Candidate 3 does not appear because the query contract filtered it out. Brutal, but mathematically fair.
     }
 }
