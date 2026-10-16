@@ -1,10 +1,9 @@
 ﻿using System.Threading.Tasks;
 using TestFramework.Core.Timelines;
 using TestFramework.Showroom.UI;
-using TestFramework.UI.Browser;
 using TestFramework.UI.Browser.Structure;
 using TestFramework.UI.Browser.Targeting;
-using TestFramework.UI.Structure;
+using TestFramework.UI.Browser;
 using Xunit.Abstractions;
 
 namespace TestFramework.Showroom.UI;
