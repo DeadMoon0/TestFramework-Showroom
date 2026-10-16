@@ -27,6 +27,7 @@
 		  Config          0.4.0 pinned, local feed  (0.3.0 released)
 		  Simple          0.4.0 pinned, local feed  (0.3.0 released)
 		  LocalIO         0.5.0 pinned, local feed  (0.4.0 released)
+		  Mock            0.2.0 pinned, local feed  (0.1.0 released)
 		  Azure           0.5.0 pinned, local feed  (0.4.0 released)
 		  Web             0.6.0 pinned, local feed  (0.5.0 released)
 		  Container       0.5.0 pinned, local feed  (0.4.0 released)
@@ -39,7 +40,7 @@
 		from them. And the numbers here are the numbers that will be published, so when the chain is
 		released this file needs no edit: nothing in it is a placeholder. Release order, when someone
 		decides to release, is dependency order: Core, Simple, Config, Mock, LocalIO, Azure, Web, Container,
-		Container.Azure, Container.Web, then UI.Browser. Mock is not pinned here, but it pins Core.
+		Container.Azure, Container.Web, then UI.Browser.
 	-->
 
 	<PropertyGroup>
@@ -55,6 +56,7 @@
 		<PackageVersion Include="TestFramework.Container.Web" Version="0.6.0" />
 		<PackageVersion Include="TestFramework.Core" Version="0.7.0" />
 		<PackageVersion Include="TestFramework.LocalIO" Version="0.5.0" />
+		<PackageVersion Include="TestFramework.Mock" Version="0.2.0" />
 		<PackageVersion Include="TestFramework.Simple" Version="0.4.0" />
 		<PackageVersion Include="TestFramework.UI.Browser" Version="0.4.0" />
 		<PackageVersion Include="TestFramework.Web" Version="0.6.0" />

@@ -46,6 +46,7 @@ Start with these files in order:
 - `TestFramework.Showroom.Basic/14_ArtifactLifecycle.cs`
 - `TestFramework.Showroom.Basic/15_ErrorPaths.cs`
 - `TestFramework.Showroom.Basic/16_InteractiveTriggers.cs`
+- `TestFramework.Showroom.Basic/17_Mocking.cs`
 
 Then continue with the web lane in `TestFramework.Showroom.Web/` (see [Web Example Setup](#web-example-setup)), the
 browser lane in `TestFramework.Showroom.UI/` (see [UI Example Setup](#ui-example-setup)) or the cloud lane in
@@ -226,6 +227,7 @@ It currently includes:
 - `TestFramework.Showroom.Basic/14_ArtifactLifecycle.cs` for the explicit artifact lifecycle: declare, populate, discover, and assert
 - `TestFramework.Showroom.Basic/15_ErrorPaths.cs` for timeout, discovery mismatch, and formatted recovery output in the normal test path
 - `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs` for the low-level Core persistent environment primitive without Docker or config wrappers
+- `TestFramework.Showroom.Basic/17_Mocking.cs` for `TestFramework.Mock`: the system under test hosted in-process from its own composition, with one dependency replaced by a declared double
 - `TestFramework.Showroom.Web` for the web lane: REST APIs, SQL Server, stubbed dependencies, and the container environment behind them
 - `TestFramework.Showroom.UI` for the browser lane: a container-hosted site, a real browser, and the evidence a run keeps
 - `TestFramework.Showroom.Azure` for Azure-oriented scenarios built on the Azure extension package

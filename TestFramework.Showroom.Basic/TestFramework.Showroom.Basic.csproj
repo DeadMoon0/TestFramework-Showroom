@@ -13,6 +13,7 @@
     <PackageReference Include="TestFramework.Config" />
     <PackageReference Include="TestFramework.Core" />
     <PackageReference Include="TestFramework.LocalIO" />
+    <PackageReference Include="TestFramework.Mock" />
     <PackageReference Include="TestFramework.Simple" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />

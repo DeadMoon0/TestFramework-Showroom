@@ -29,6 +29,7 @@ Use it when you want to learn the framework in sequence before reading the xUnit
 - `14_ArtifactLifecycle.cs`: artifact lifecycle as a consumer contract: declare, populate, discover, assert
 - `15_ErrorPaths.cs`: timeout exhaustion, discovery mismatches, and reading formatted recovery output
 - `16_InteractiveTriggers.cs`: a trigger that opens a real message box and waits for the person watching
+- `17_Mocking.cs`: the system under test hosted in-process, one dependency replaced by a declared double
 
 ## Web Chapter Map
 
