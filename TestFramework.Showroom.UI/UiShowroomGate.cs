@@ -1,6 +1,4 @@
 ﻿using System;
-using System.IO;
-using TestFramework.Container;
 using TestFramework.UI.Browser;
 using TestFramework.UI.Browser.Runtime;
 using Xunit;
@@ -24,14 +22,12 @@ namespace TestFramework.Showroom.UI;
 /// choice; it no longer decides whether the lane runs at all.
 /// </para>
 /// <para>
-/// The Docker probe belongs to <c>TestFramework.Container</c> - <c>ContainerDockerHost</c> is public and
-/// knows both pipes Docker Desktop uses. This file used to carry its own copy of it, which read as
-/// duplication worth extracting somewhere; what was duplicated was already shipped, one dependency away.
+/// The Docker half is the gate every Docker lane shares (<c>ShowroomEnvironmentGate</c>, linked from
+/// <c>Shared/</c>), so this lane judges a machine the way the Web and Azure lanes do.
 /// </para>
 /// </remarks>
 internal static class UiShowroomGate
 {
-    private const string DockerHostEnvironmentVariable = "DOCKER_HOST";
     private const string BrowserEnvironmentVariable = "TESTFRAMEWORK_UI_BROWSER";
 
     private static readonly Lazy<UiAvailableBrowser?> Available = new Lazy<UiAvailableBrowser?>(Choose);
@@ -56,40 +52,13 @@ internal static class UiShowroomGate
             return false;
         }
 
-        return TryEnableDockerHost(out reason);
+        return ShowroomEnvironmentGate.TryEnableDockerHost(out reason);
     }
 
     private static UiAvailableBrowser? Choose()
         => Environment.GetEnvironmentVariable(BrowserEnvironmentVariable) is { Length: > 0 } requested
             ? BrowserExt.Tooling.FindAvailableBrowser(requested)
             : BrowserExt.Tooling.FindAvailableBrowser();
-
-    private static bool TryEnableDockerHost(out string reason)
-    {
-        // Repairs the run rather than only judging it: a machine with Docker running but no DOCKER_HOST
-        // set would otherwise be skipped with the daemon right there.
-        ContainerDockerHost.EnsureConfigured();
-
-        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(DockerHostEnvironmentVariable)))
-        {
-            reason = string.Empty;
-
-            return true;
-        }
-
-        if (!OperatingSystem.IsWindows() && File.Exists("/var/run/docker.sock"))
-        {
-            reason = string.Empty;
-
-            return true;
-        }
-
-        reason = OperatingSystem.IsWindows()
-            ? "Requires Docker Desktop or another reachable Windows Docker named pipe."
-            : "Requires a reachable Docker host or local Docker socket.";
-
-        return false;
-    }
 }
 
 /// <summary>

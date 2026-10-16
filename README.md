@@ -109,6 +109,10 @@ it in an image, and the test assembly never loads a line of it.
 That is what makes "the test does not depend on the implementation" a fact rather than a habit. The
 API is reached by path and identifier, exactly as a deployed one would be.
 
+The Azure lane does reference its Function App project, and that is the exception with a reason: a
+Cosmos container is declared from its model type (`DockerCosmosDefinition<CandidateProfile>`), so the
+test needs the type the application stores. It uses the model and nothing else from that project.
+
 ### Why The Web Modules Run Serially
 
 `W0_FacilityRules.cs` disables test parallelisation for this project. Several modules building the

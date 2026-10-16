@@ -7,6 +7,11 @@
 		<IsTestProject>true</IsTestProject>
 	</PropertyGroup>
 
+	<!-- The Docker gate is one file for every lane that needs a daemon, so one machine is judged one way. -->
+	<ItemGroup>
+		<Compile Include="..\Shared\ShowroomEnvironmentGate.cs" Link="ShowroomEnvironmentGate.cs" />
+	</ItemGroup>
+
 	<ItemGroup>
 		<PackageReference Include="coverlet.collector" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" />

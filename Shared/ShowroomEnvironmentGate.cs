@@ -3,16 +3,17 @@ using System.IO;
 using TestFramework.Container;
 using Xunit;
 
-namespace TestFramework.Showroom.Azure;
+namespace TestFramework.Showroom;
 
 /// <summary>
 /// Decides whether this machine can run Docker-backed chapters, and tells the runner why not.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Every chapter in this lane needs a container daemon. Without the gate the whole project failed
-/// with raw container errors before the first line of any sample was reached, which taught a reader
-/// nothing except that the showroom is broken.
+/// One copy for every lane that needs a container daemon - Web, Azure and the UI lane's site chapters - linked
+/// into each project from <c>Shared/</c>. Three copies of one probe were three chances for one machine to be
+/// judged three different ways. A chapter that needs no daemon stays a plain <c>[Fact]</c>, so the code says
+/// which ones do.
 /// </para>
 /// <para>
 /// The probe itself is <c>TestFramework.Container</c>'s and always was - <c>ContainerDockerHost</c> is
