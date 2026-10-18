@@ -276,6 +276,8 @@ Use Showroom to see those ideas in context, but use the Core docs when you need 
 - Read `15_ErrorPaths.cs` when you want to see how failure and recovery guidance show up in executable tests instead of only in docs
 - Follow with `13_Parallel.cs` when you want to see how the scheduler groups Prepare work, honors `.DoNotParallelize()`, and still serializes setup for artifact types that require it
 - Use `TestFramework.Showroom.Basic/12_PersistentEnvironment.cs` when you want the Core-only persistent environment reuse primitive before moving to hosted/container wrappers
+- Read `16_InteractiveTriggers.cs` for inline actions and the message box a person sitting in front of the run answers
+- Read `17_Mocking.cs` when the system under test runs in-process and its dependencies are replaced by doubles
 - Move to `TestFramework.Showroom.Web/W1_RestApi.cs` through `W5_ContainerLane.cs` for APIs, SQL Server and stubs
 - Move to `TestFramework.Showroom.UI/U1_Storefront.cs` through `U3_Evidence.cs` for browser tests
 - Move to `TestFramework.Showroom.Azure/A1_BlobStorage.cs` through `A6_IntegratedAzure.cs` when you want cloud-backed scenarios

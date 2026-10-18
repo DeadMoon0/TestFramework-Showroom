@@ -59,7 +59,7 @@ This keeps learning incremental: first understand timeline mechanics, then move 
 
 Main building blocks:
 
-- `TestFramework.Showroom.Basic`: sixteen focused samples, from the minimal timeline through variables, artifacts, events, control flow, assertions, IO contracts, retry, persistent environments, parallelism, the artifact lifecycle, error paths and interactive triggers
+- `TestFramework.Showroom.Basic`: seventeen focused samples, from the minimal timeline through variables, artifacts, events, control flow, assertions, IO contracts, retry, persistent environments, parallelism, the artifact lifecycle, error paths, interactive triggers and in-process mocking
 - `TestFramework.Showroom.Web`: a facility declaration and five modules covering REST, SQL Server, schema from models, stubs and the full container lane
 - `TestFramework.Showroom.UI`: a facility declaration and three modules covering shopping in a browser, real interactions and the evidence a run keeps
 - `TestFramework.Showroom.Azure`: ten modules covering configuration, Blob Storage, Table Storage, Cosmos DB, Service Bus, SQL Server, integrated orchestration, composition rules, Function Apps and a persistent hosted fixture

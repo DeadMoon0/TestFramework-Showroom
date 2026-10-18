@@ -13,7 +13,7 @@ Nothing else reads configuration, and that is the whole point of this note.
 using TestFramework.Config;
 
 ConfigInstance config = ConfigInstance
-    .FromJsonFile("local.testSettings.json")
+    .FromJsonFile("local.testsettings.json")
     .LoadAzureConfig()
     .Build();
 

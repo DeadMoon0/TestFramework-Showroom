@@ -58,7 +58,7 @@ internal static class UiShowroom
             //   address among them. An empty shelf is still a shelf.
             .AddService((services, _) =>
             {
-                services.AddUiBrowser(apps => apps.Add("storefront", BrowserEntry(capture)));
+                services.AddUi(apps => apps.Add("storefront", BrowserEntry(capture)));
                 // ^ One call declares the application AND registers what drives it: the observer
                 //   that gathers evidence when a step fails, and the capture source that answers a
                 //   paused run asking to see the page. There is deliberately no way to do only the
